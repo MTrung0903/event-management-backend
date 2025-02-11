@@ -41,24 +41,10 @@ public class Event {
     @Column(name = "event_attendee")
     private String eventAttendee;
 
-    @ManyToOne
-    @JoinColumn(name = "man_id")
-    private Manager manager;
-    @ManyToOne
-    @JoinColumn(name = "mc_id")
-    private Mc mc;
+    @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Segment> segments;
 
+    @OneToMany(mappedBy = "event", cascade = CascadeType.ALL)
+    private List<Ticket> tickets;
 
-    @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Invite> listInvites;
-    @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<ProviderEvent> listProviderEvents;
-    @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Section> listSections;
-    @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<SponsorEvent> listSponsorEvents;
-    @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Task> listTasks;
-    @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Team> listTeams;
 }

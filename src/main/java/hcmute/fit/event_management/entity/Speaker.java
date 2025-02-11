@@ -6,7 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.List;
-import java.util.Set;
+
 
 @Entity
 @Data
@@ -17,21 +17,22 @@ public class Speaker {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "speaker_id")
-    private int id;
+    private int speakerId;
     @Column(name = "image")
-    private String image;
+    private String speakerImage;
     @Column(name = "speaker_name")
-    private String name;
+    private String speakerName;
     @Column(name = "speaker_email")
-    private String email;
+    private String speakerEmail;
     @Column(name = "speaker_title")
-    private String title;
+    private String speakerTitle;
     @Column(name = "speaker_phone")
-    private String phone;
+    private String speakerPhone;
     @Column(name = "speaker_address")
-    private String address;
+    private String speakerAddress;
     @Column(name = "speaker_desc")
-    private String description;
+    private String speakerDesc;
 
-
+    @OneToMany(mappedBy = "speaker",cascade = CascadeType.ALL)
+    private List<Segment> segments;
 }

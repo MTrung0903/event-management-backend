@@ -24,8 +24,14 @@ public class Role {
     @OneToMany(mappedBy = "role")
     private List<AccountRole> listAccountRoles;
 
+    @OneToOne(mappedBy = "role")
+    private User user;
+
+
     public Role(int roleID, String name) {
         this.roleID = roleID;
         this.name = name;
     }
+
+
 }

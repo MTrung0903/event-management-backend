@@ -17,21 +17,21 @@ public class Sponsor {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "sponsor_id")
-    private int id;
+    private int sponsorId;
     @Column(name = "sponsor_logo")
     private String sponsorLogo;
     @Column(name = "sponsor_name")
-    private String name;
+    private String sponsorName;
     @Column(name = "contact_person")
-    private String contact;
+    private String sponsorContact;
     @Column(name = "contact_email")
-    private String email;
+    private String sponsorEmail;
     @Column(name = "contact_phone")
-    private String phone;
+    private String sponsorPhone;
     @Column(name = "website")
-    private String website;
+    private String sponsorWebsite;
     @Column(name = "address")
-    private String address;
+    private String sponsorAddress;
 
     @ManyToOne
     @JoinColumn(name = "sponsor_ship_id", referencedColumnName = "sponsor_ship_id")
