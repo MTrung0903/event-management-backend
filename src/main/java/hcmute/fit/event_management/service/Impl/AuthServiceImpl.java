@@ -1,10 +1,10 @@
 package hcmute.fit.event_management.service.Impl;
 
-import hcmute.fit.event_management.dto.AccountDTO;
+import hcmute.fit.event_management.dto.UserDTO;
 import hcmute.fit.event_management.dto.ResetPasswordDTO;
-import hcmute.fit.event_management.entity.Account;
+import hcmute.fit.event_management.entity.User;
 import hcmute.fit.event_management.entity.PasswordResetToken;
-import hcmute.fit.event_management.repository.AccountRepository;
+import hcmute.fit.event_management.repository.UserRepository;
 import hcmute.fit.event_management.repository.PasswordResetTokenRepository;
 import hcmute.fit.event_management.service.AuthService;
 import hcmute.fit.event_management.util.JwtTokenUtil;
@@ -37,14 +37,14 @@ public class AuthServiceImpl implements AuthService {
     @Autowired
     private PasswordResetTokenRepository passwordResetTokenRepository;
     @Autowired
-    private AccountRepository accountRepository;
+    private UserRepository userRepository;
     @Autowired
     EmailServiceImpl emailService;
     @Autowired
     private JwtTokenUtil jwtTokenUtil;
     Logger logger = LoggerFactory.getLogger(this.getClass());
     @Override
-    public ResponseEntity<Response> signIn(AccountDTO account) {
+    public ResponseEntity<Response> signIn(UserDTO account) {
         Response response;
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(account.getEmail(), account.getPassword()));
@@ -65,22 +65,22 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public ResponseEntity<Response> sendResetPassword(String email) {
         // Tìm tài khoản theo email
-        Optional<Account> accountOpt = accountRepository.findByEmail(email);
+        Optional<User> accountOpt = userRepository.findByEmail(email);
         if (accountOpt.isEmpty()) {
             logger.warn("Account not found with password reset request for email: {}", email);
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(new Response(404, "Not Found", "Account with this email does not exist"));
         }
 
-        Account account = accountOpt.get(); // Tài khoản tồn tại
+        User user = accountOpt.get(); // Tài khoản tồn tại
         String newToken = jwtTokenUtil.generateResetToken(email);
 
         // Kiểm tra và cập nhật/đặt mới token
         PasswordResetToken resetToken = passwordResetTokenRepository
-                .findByAccountID(account.getAccountID())
+                .findByUserId(user.getUserId())
                 .orElse(new PasswordResetToken());
 
-        resetToken.setAccount(account);
+        resetToken.setUserId(user.getUserId());
         resetToken.setToken(newToken);
         passwordResetTokenRepository.save(resetToken);
 
@@ -100,13 +100,13 @@ public class AuthServiceImpl implements AuthService {
         if (jwtTokenUtil.validateToken(token)) {
             Optional<PasswordResetToken> passwordResetToken = passwordResetTokenRepository.findByToken(token);
             if (passwordResetToken.isPresent()) {
-                Account account = passwordResetToken.get().getAccount();
+                User user = passwordResetToken.get().getUser();
                 // Set the new password for the account
-                account.setPassword(passwordEncoder.encode(resetPasswordDTO.getNewPassword()));
+                user.setPassword(passwordEncoder.encode(resetPasswordDTO.getNewPassword()));
                 passwordResetTokenRepository.delete(passwordResetToken.get());
                 // Remove the relationship to the deleted token to avoid cascade persistence
-                account.setToken(null);
-                accountRepository.save(account);
+                user.setToken(null);
+                userRepository.save(user);
                 response = new Response(200, "Password successfully reset", "True");
                 logger.info("The account's password has been reset successfully");
                 return new ResponseEntity<>(response, HttpStatus.OK);

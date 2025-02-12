@@ -51,13 +51,7 @@ public class SponsorController {
         response.setData(sponsorService.updateSponsor(logo,sponsorDTO));
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
-//    @PutMapping("")
-//    public ResponseEntity<?> updateSponsorNoLogo(@RequestParam SponsorDTO sponsorDTO) {
-//        Response response = new Response();
-//
-//        response.setData(sponsorService.updateSponsor(sponsorDTO));
-//        return new ResponseEntity<>(response, HttpStatus.OK);
-//    }
+
 
 
     @DeleteMapping("/{id}")

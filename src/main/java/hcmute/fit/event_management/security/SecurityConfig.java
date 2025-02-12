@@ -1,7 +1,7 @@
 package hcmute.fit.event_management.security;
 
 
-import hcmute.fit.event_management.service.Impl.AccountDetailService;
+import hcmute.fit.event_management.service.Impl.UserDetailService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -30,7 +30,7 @@ public class SecurityConfig {
     private CustomAccessDeniedHandler accessDeniedHandler;
 
     @Autowired
-    AccountDetailService accountDetailService;
+    UserDetailService userDetailService;
 
     @Autowired
     public AuthTokenFilter authTokenFilter;
@@ -38,13 +38,13 @@ public class SecurityConfig {
     @Bean
     public AuthenticationManager authenticationManager(HttpSecurity httpSecurity) throws Exception {
         AuthenticationManagerBuilder authenticationManagerBuilder = httpSecurity.getSharedObject(AuthenticationManagerBuilder.class);
-        authenticationManagerBuilder.userDetailsService(accountDetailService).passwordEncoder(passwordEncoder());
+        authenticationManagerBuilder.userDetailsService(userDetailService).passwordEncoder(passwordEncoder());
         return authenticationManagerBuilder.build();
     }
     @Bean
     public DaoAuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
-        authProvider.setUserDetailsService(accountDetailService);
+        authProvider.setUserDetailsService(userDetailService);
         authProvider.setPasswordEncoder(passwordEncoder());
         return authProvider;
     }

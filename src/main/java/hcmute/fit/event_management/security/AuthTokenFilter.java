@@ -1,6 +1,6 @@
 package hcmute.fit.event_management.security;
 
-import hcmute.fit.event_management.dto.AccountDetail;
+import hcmute.fit.event_management.dto.UserDetail;
 import hcmute.fit.event_management.util.JwtTokenUtil;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -17,7 +17,6 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -38,9 +37,9 @@ public class AuthTokenFilter extends OncePerRequestFilter {
                 List<GrantedAuthority> authorities = roles.stream()
                         .map(SimpleGrantedAuthority::new)
                         .collect(Collectors.toList());
-                AccountDetail accountDetail = new AccountDetail(email, null, authorities);
+                UserDetail userDetail = new UserDetail(email, null, authorities);
                 UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken =
-                        new UsernamePasswordAuthenticationToken(accountDetail, null, accountDetail.getAuthorities());
+                        new UsernamePasswordAuthenticationToken(userDetail, null, userDetail.getAuthorities());
                 SecurityContext securityContext = SecurityContextHolder.getContext();
                 securityContext.setAuthentication(usernamePasswordAuthenticationToken);
             }

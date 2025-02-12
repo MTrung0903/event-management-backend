@@ -11,14 +11,14 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class PasswordResetToken {
     @Id
-    @Column(name = "account_id")
-    private int accountID;
+    @Column(name = "user_id")
+    private int userId;
     @Column(name = "token")
     private String token;
 
     @OneToOne
     @MapsId
-    @JoinColumn(name = "account_id")
-    private Account account;
+    @JoinColumn(name = "user_id")
+    private User user;
 
 }

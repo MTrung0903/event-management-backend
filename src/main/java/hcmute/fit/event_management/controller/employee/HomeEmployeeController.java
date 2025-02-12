@@ -13,14 +13,5 @@ import java.util.List;
 @RestController
 @RequestMapping("/emp")
 public class HomeEmployeeController {
-    @Autowired
-    IEventService eventService;
 
-    @GetMapping("/event/{empId}")
-    public ResponseEntity<?> findEventId(@PathVariable int empId) {
-        List<EventDTO> events = eventService.getAllEventByEmp(empId);
-        Response response = new Response();
-        response.setData(events);
-        return new ResponseEntity<>(response, HttpStatus.OK);
-    }
 }

@@ -22,7 +22,7 @@ public class Role {
     private String name;
 
     @OneToMany(mappedBy = "role")
-    private List<AccountRole> listAccountRoles;
+    private List<UserRole> listUserRoles;
 
     @OneToOne(mappedBy = "role")
     private User user;

@@ -12,14 +12,14 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 public class SponsorDTO {
-    private int id;
-    private String name;
+    private int sponsorId;
     private String sponsorLogo;
-    private String contact;
-    private String email;
-    private String phone;
-    private String website;
-    private String address;
+    private String sponsorName;
+    private String sponsorContact;
+    private String sponsorEmail;
+    private String sponsorPhone;
+    private String sponsorWebsite;
+    private String sponsorAddress;
     private int sponsorshipId;
     private String sponsorshipLevel;
     private List<SponsorEventDTO> listSponsorEvents;

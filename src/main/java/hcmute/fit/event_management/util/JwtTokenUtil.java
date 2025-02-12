@@ -1,8 +1,8 @@
 package hcmute.fit.event_management.util;
 
-import hcmute.fit.event_management.dto.AccountDetail;
-import hcmute.fit.event_management.entity.Account;
-import hcmute.fit.event_management.service.IAccountService;
+import hcmute.fit.event_management.dto.UserDetail;
+import hcmute.fit.event_management.entity.User;
+import hcmute.fit.event_management.service.IUserService;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
@@ -11,14 +11,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
 
 import java.util.Date;
 import java.util.List;
-import java.util.Optional;
 
 @Component
 public class JwtTokenUtil {
@@ -29,23 +27,23 @@ public class JwtTokenUtil {
     @Value("${jwt.expirationLoginMs}")
     private Long expirationLoginMs;
     @Autowired
-    private IAccountService accountService;
+    private IUserService accountService;
 
     Logger logger = LoggerFactory.getLogger(this.getClass());
 
     public String generateToken(Authentication authentication, List<String> roles) {
-        AccountDetail accountPrincipal = (AccountDetail) authentication.getPrincipal();
+        UserDetail accountPrincipal = (UserDetail) authentication.getPrincipal();
         SecretKey key = Keys.hmacShaKeyFor(Decoders.BASE64.decode(privateKey));
         Date now = new Date();
         Date expiration = new Date(now.getTime() + expirationLoginMs);
-        Account acc = accountService.findbyEmail(accountPrincipal.getUsername())
-                .orElse(new Account());
+        User acc = accountService.findbyEmail(accountPrincipal.getUsername())
+                .orElse(new User());
         return Jwts.builder()
                 .subject(accountPrincipal.getUsername())
                 .issuedAt(now)
                 .expiration(expiration)
                 .claim("roles", roles)
-                .claim("userId", acc.getAccountID())
+                .claim("userId", acc.getUserId())
                 .signWith(key)
                 .compact();
     }

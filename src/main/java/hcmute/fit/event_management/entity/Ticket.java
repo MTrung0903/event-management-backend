@@ -31,8 +31,7 @@ public class Ticket {
     @JoinColumn(name ="event_id")
     private Event event;
 
-    @OneToMany(mappedBy = "ticket", cascade = CascadeType.ALL)
-    private List<Ticket> tickets;
+
 
     @OneToMany(mappedBy = "ticket", cascade = CascadeType.ALL)
     private List<RefundDetails> refundDetails;

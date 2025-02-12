@@ -44,7 +44,7 @@ public class SponsorServiceImpl implements ISponsorService {
         List<SponsorDTO> sponsorDTOs = new ArrayList<>();
         for (Sponsor sponsor : sponsors) {
             SponsorDTO sponsorDTO = new SponsorDTO();
-            sponsorDTO.setId(sponsor.getId());
+            sponsorDTO.setSponsorId(sponsor.getSponsorId());
 
             BeanUtils.copyProperties(sponsor, sponsorDTO);
             sponsorDTO.setSponsorLogo(sponsor.getSponsorLogo());
@@ -83,13 +83,13 @@ public class SponsorServiceImpl implements ISponsorService {
             try{
                 if(sponsorShipRepository.findById(sponsorDTO.getSponsorshipId()).isPresent()){
                     Sponsor sponsor = new Sponsor();
-                    sponsor.setName(sponsorDTO.getName());
+                    sponsor.setSponsorName(sponsorDTO.getSponsorName());
                     sponsor.setSponsorLogo(sponsorLogo.getOriginalFilename());
-                    sponsor.setContact(sponsorDTO.getContact());
-                    sponsor.setEmail(sponsorDTO.getEmail());
-                    sponsor.setPhone(sponsorDTO.getPhone());
-                    sponsor.setWebsite(sponsorDTO.getWebsite());
-                    sponsor.setAddress(sponsorDTO.getAddress());
+                    sponsor.setSponsorContact(sponsorDTO.getSponsorContact());
+                    sponsor.setSponsorEmail(sponsorDTO.getSponsorEmail());
+                    sponsor.setSponsorPhone(sponsorDTO.getSponsorPhone());
+                    sponsor.setSponsorWebsite(sponsorDTO.getSponsorWebsite());
+                    sponsor.setSponsorAddress(sponsorDTO.getSponsorAddress());
                     sponsor.setSponsorship(sponsorShipRepository.findById(sponsorDTO.getSponsorshipId()).get());
                     sponsorRepository.save(sponsor);
                     isSuccess = true;
@@ -108,16 +108,17 @@ public class SponsorServiceImpl implements ISponsorService {
         boolean isUoloadImg = fileService.saveFiles(sponsorLogo);
         if(isUoloadImg){
             try{
-                if(sponsorRepository.findById(sponsorDTO.getId()).isPresent()
+                if(sponsorRepository.findById(sponsorDTO.getSponsorId()).isPresent()
                         &&sponsorShipRepository.findById(sponsorDTO.getSponsorshipId()).isPresent()){
-                    Sponsor sponsor = sponsorRepository.findById(sponsorDTO.getId()).get();
-                    sponsor.setName(sponsorDTO.getName());
+                    Sponsor sponsor = sponsorRepository.findById(sponsorDTO.getSponsorId()).get();
                     sponsor.setSponsorLogo(sponsorLogo.getOriginalFilename());
-                    sponsor.setContact(sponsorDTO.getContact());
-                    sponsor.setEmail(sponsorDTO.getEmail());
-                    sponsor.setPhone(sponsorDTO.getPhone());
-                    sponsor.setWebsite(sponsorDTO.getWebsite());
-                    sponsor.setAddress(sponsorDTO.getAddress());
+                    sponsor.setSponsorName(sponsorDTO.getSponsorName());
+                    sponsor.setSponsorLogo(sponsorLogo.getOriginalFilename());
+                    sponsor.setSponsorContact(sponsorDTO.getSponsorContact());
+                    sponsor.setSponsorEmail(sponsorDTO.getSponsorEmail());
+                    sponsor.setSponsorPhone(sponsorDTO.getSponsorPhone());
+                    sponsor.setSponsorWebsite(sponsorDTO.getSponsorWebsite());
+                    sponsor.setSponsorAddress(sponsorDTO.getSponsorAddress());
                     sponsor.setSponsorship(sponsorShipRepository.findById(sponsorDTO.getSponsorshipId()).get());
                     sponsorRepository.save(sponsor);
                     isSuccess = true;
@@ -135,16 +136,18 @@ public class SponsorServiceImpl implements ISponsorService {
         boolean isSuccess = false;
 
             try{
-                if(sponsorRepository.findById(sponsorDTO.getId()).isPresent()
+                if(sponsorRepository.findById(sponsorDTO.getSponsorId()).isPresent()
                         &&sponsorShipRepository.findById(sponsorDTO.getSponsorshipId()).isPresent()){
-                    Sponsor sponsor = sponsorRepository.findById(sponsorDTO.getId()).get();
-                    sponsor.setName(sponsorDTO.getName());
+                    Sponsor sponsor = sponsorRepository.findById(sponsorDTO.getSponsorId()).get();
+
                     sponsor.setSponsorLogo(sponsorDTO.getSponsorLogo());
-                    sponsor.setContact(sponsorDTO.getContact());
-                    sponsor.setEmail(sponsorDTO.getEmail());
-                    sponsor.setPhone(sponsorDTO.getPhone());
-                    sponsor.setWebsite(sponsorDTO.getWebsite());
-                    sponsor.setAddress(sponsorDTO.getAddress());
+                    sponsor.setSponsorName(sponsorDTO.getSponsorName());
+
+                    sponsor.setSponsorContact(sponsorDTO.getSponsorContact());
+                    sponsor.setSponsorEmail(sponsorDTO.getSponsorEmail());
+                    sponsor.setSponsorPhone(sponsorDTO.getSponsorPhone());
+                    sponsor.setSponsorWebsite(sponsorDTO.getSponsorWebsite());
+                    sponsor.setSponsorAddress(sponsorDTO.getSponsorAddress());
                     sponsor.setSponsorship(sponsorShipRepository.findById(sponsorDTO.getSponsorshipId()).get());
                     sponsorRepository.save(sponsor);
                     isSuccess = true;
@@ -191,7 +194,7 @@ public class SponsorServiceImpl implements ISponsorService {
         boolean isSuccess = false;
         try{
             addSponsor(logo,sponsorDTO);
-            addSponsorForEvent(eventId,sponsorDTO.getId());
+            addSponsorForEvent(eventId,sponsorDTO.getSponsorId());
             isSuccess = true;
 
         } catch (Exception e) {
@@ -205,7 +208,7 @@ public class SponsorServiceImpl implements ISponsorService {
             List<SponsorEvent> list = sponsorEventRepository.findByEventId(eventId);
             List<SponsorDTO> listDTO = new ArrayList<>();
             for(SponsorEvent sponsorEvent : list){
-                Optional<Sponsor> sponsor = sponsorRepository.findById(sponsorEvent.getSponsor().getId());
+                Optional<Sponsor> sponsor = sponsorRepository.findById(sponsorEvent.getSponsor().getSponsorId());
                 if(sponsor.isPresent()){
                    SponsorDTO sponsorDTO = new SponsorDTO();
                    BeanUtils.copyProperties(sponsor.get(), sponsorDTO);
@@ -227,12 +230,12 @@ public class SponsorServiceImpl implements ISponsorService {
         try{
             List<SponsorEvent> list = sponsorEventRepository.findByEventId(eventId);
             for (SponsorEvent sponsorEvent : list) {
-                oldSponsor.add(sponsorEvent.getSponsor().getId());
+                oldSponsor.add(sponsorEvent.getSponsor().getSponsorId());
             }
             List<Sponsor> sponsorList = sponsorRepository.findAll();
 
             for(Sponsor sponsor : sponsorList){
-                if(!oldSponsor.contains(sponsor.getId())){
+                if(!oldSponsor.contains(sponsor.getSponsorId())){
                     SponsorDTO sponsorDTO = new SponsorDTO();
                     BeanUtils.copyProperties(sponsor, sponsorDTO);
                     sponsorDTO.setSponsorshipLevel(sponsor.getSponsorship().getLevel());
