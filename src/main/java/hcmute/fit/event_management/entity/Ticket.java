@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.Date;
 import java.util.List;
 
 @Entity
@@ -28,6 +29,11 @@ public class Ticket {
 
     @Column(name = "quantity")
     private int quantity;
+
+    @Column(name = "start_time")
+    private Date startTime;
+    @Column(name = "end_time")
+    private Date endTime;
 
     @ManyToOne
     @JoinColumn(name ="event_id")

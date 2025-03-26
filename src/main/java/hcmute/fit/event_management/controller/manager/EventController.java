@@ -1,5 +1,6 @@
 package hcmute.fit.event_management.controller.manager;
 
+import hcmute.fit.event_management.dto.EventDTO;
 import hcmute.fit.event_management.entity.Event;
 import hcmute.fit.event_management.service.Impl.EventServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,8 +17,8 @@ public class EventController {
     @Autowired
     private EventServiceImpl eventService;
 
-    @PostMapping(consumes = "application/json") // Chỉ nhận JSON
-    public ResponseEntity<Event> createEvent(@RequestBody Event event) throws IOException {
+    @PostMapping("/create")
+    public ResponseEntity<Event> createEvent(@RequestBody EventDTO event) throws IOException {
         Event savedEvent = eventService.saveEvent(event);
         return ResponseEntity.ok(savedEvent);
     }

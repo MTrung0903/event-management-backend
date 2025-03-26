@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class SegmentDTO {
-    private int segmentID;
+    private int segmentId;
     private String segmentTitle;
     private int speakerID;
     private String speakerName;
@@ -17,6 +17,4 @@ public class SegmentDTO {
     private String segmentDesc;
     private Data startTime;
     private Data endTime;
-    private String segmentHandout;
-
 }

@@ -21,35 +21,27 @@ public class Event {
     @Column(name = "event_id")
     private int eventID;
 
-    private String eventDesc;
-    private String eventImage;
     private String eventName;
+    private String eventDesc;
     private String eventType;
     private String eventHost;
-    private String eventLocation;
     private String eventStatus;
-    private LocalDateTime eventStart;
-    private LocalDateTime eventEnd;
-
-    @ElementCollection
-    private List<String> tags;
-
+    private String eventStart;
+    private String eventEnd;
+    private String eventLocation;
+    private String tags;
     private String eventVisibility;
     private String publishTime;
     private String refunds;
-    private Integer validityDays;
-
-    private String eventTitle;
-    private String summary;
+    private int validityDays;
 
     @ElementCollection
-    private List<String> uploadedImages;
+    private List<String> eventImages;
 
-    @Column(columnDefinition = "TEXT")
-    private String overviewContentText;
+    private String textContent;
 
     @ElementCollection
-    private List<String> overviewContentMedia;
+    private List<String> mediaContent;
 
     @Column(name = "event_attendee")
     private String eventAttendee;

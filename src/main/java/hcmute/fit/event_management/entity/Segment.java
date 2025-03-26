@@ -21,12 +21,12 @@ public class Segment {
     private String segmentTitle;
     @Column(name = "segment_description")
     private String segmentDesc;
-    @Column(name = "start_date")
-    private Date startDate;
-    @Column(name = "end_date")
-    private Date endDate;
-    @Column(name = "segment_handout")
-    private String segmentHandout;
+    @Column(name = "start_time")
+    private Date startTime;
+    @Column(name = "end_time")
+    private Date endTime;
+
+    private String speakerName;
 
     @ManyToOne
     @JoinColumn(name = "speaker_id")

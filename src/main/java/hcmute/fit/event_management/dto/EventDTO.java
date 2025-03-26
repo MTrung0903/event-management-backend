@@ -15,17 +15,18 @@ public class EventDTO {
     private String eventName;
     private String eventDesc;
     private String eventType;
-    private String eventImage;
     private String eventHost;
     private String eventStatus;
     private String eventStart;
     private String eventEnd;
     private String eventLocation;
-    private String eventOverView;
-    private boolean isRefund;
-    private int dayAllowRefund;
-    private boolean isSchedulePublic;
-    private String dateSchedulePublic;
-    private String eventTag;
+    private String tags;
+    private String eventVisibility;
+    private String publishTime;
+    private String refunds;
+    private int validityDays;
+    private List<String> eventImages;
+    private String textContent;
+    private List<String> mediaContent;
 
 }

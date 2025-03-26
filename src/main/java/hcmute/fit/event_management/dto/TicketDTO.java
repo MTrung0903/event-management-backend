@@ -9,9 +9,11 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class TicketDTO {
     private int ticketId;
+    private String ticketName;
     private String ticketType;
     private double price;
     private int quantity;
-    private int eventId;
-    private String eventName;
+    private Data startTime;
+    private Data endTime;
+
 }
