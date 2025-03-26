@@ -20,7 +20,7 @@ public class Segment {
     @Column(name = "segment_title")
     private String segmentTitle;
     @Column(name = "segment_description")
-    private String segmentDes;
+    private String segmentDesc;
     @Column(name = "start_date")
     private Date startDate;
     @Column(name = "end_date")

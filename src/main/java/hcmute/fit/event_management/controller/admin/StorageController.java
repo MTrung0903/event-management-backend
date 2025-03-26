@@ -1,4 +1,39 @@
 package hcmute.fit.event_management.controller.admin;
 
+import hcmute.fit.event_management.service.Impl.CloudinaryService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
+
+@RestController
+@RequestMapping("/api/storage")
 public class StorageController {
+
+    @Autowired
+    private CloudinaryService cloudinaryService;
+
+    @PostMapping("/upload")
+    public ResponseEntity<String> uploadFile(@RequestParam("file") MultipartFile file) throws IOException {
+        String fileUrl = cloudinaryService.uploadFile(file);
+        return ResponseEntity.ok("File uploaded: " + fileUrl);
+    }
+
+    @GetMapping("/download/{publicId}")
+    public ResponseEntity<String> getFileUrl(@PathVariable String publicId) {
+        String fileUrl = cloudinaryService.getFileUrl(publicId);
+        return ResponseEntity.ok(fileUrl);
+    }
+
+    @DeleteMapping("/delete/{publicId}")
+    public ResponseEntity<String> deleteFile(@PathVariable String publicId) throws IOException {
+        boolean deleted = cloudinaryService.deleteFile(publicId);
+        if (deleted) {
+            return ResponseEntity.ok("File deleted: " + publicId);
+        } else {
+            return ResponseEntity.status(404).body("File not found: " + publicId);
+        }
+    }
 }

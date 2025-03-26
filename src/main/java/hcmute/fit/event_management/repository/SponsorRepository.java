@@ -10,8 +10,7 @@ import java.util.List;
 
 @Repository
 public interface SponsorRepository extends JpaRepository<Sponsor, Integer> {
-    @Query("select s from Sponsor s join SponsorEvent se on s.id = se.event.eventID where se.event.eventID =:eventid")
-    List<Sponsor> findSponsorsByEventId(@Param("eventid") int eventid);
+
 
     @Query("select s from Sponsor s where s.sponsorship.sponsorShipID = :id")
     List<Sponsor> findSponsorsBySponsorshipId(@Param("id") int id);

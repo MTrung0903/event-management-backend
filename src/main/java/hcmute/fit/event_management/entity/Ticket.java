@@ -17,6 +17,8 @@ public class Ticket {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "ticket_id")
     private int ticketId;
+    @Column(name = "ticket_name")
+    private String ticketName;
 
     @Column(name = "ticket_type")
     private String ticketType;

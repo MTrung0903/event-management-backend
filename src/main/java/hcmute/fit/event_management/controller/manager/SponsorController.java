@@ -17,48 +17,5 @@ import java.util.List;
 @RestController
 @RequestMapping("/man/sponsor")
 public class SponsorController {
-    @Autowired
-    private  ISponsorService sponsorService;
-
-    @GetMapping("")
-    public ResponseEntity<?> getAllSponsors() {
-        List<SponsorDTO> list = sponsorService.getAllSponsors();
-        Response response = new Response();
-        response.setData(list);
-        return new ResponseEntity<>(response, HttpStatus.OK);
-    }
-
-    @GetMapping("/{sponsorId}")
-    public ResponseEntity<?> findSponsorById(@PathVariable int sponsorId) {
-        SponsorDTO sponsor = sponsorService.getSponsorById(sponsorId);
-        Response response = new Response();
-        response.setData(sponsor);
-        return new ResponseEntity<>(response, HttpStatus.OK);
-    }
-
-    @PostMapping("")
-    public ResponseEntity<?> addSponsor(@RequestParam("logo") MultipartFile logo,
-                                        @ModelAttribute SponsorDTO sponsorDTO) {
-        Response response = new Response();
-        response.setData(sponsorService.addSponsor(logo,sponsorDTO));
-        return new ResponseEntity<>(response, HttpStatus.OK);
-    }
-
-    @PutMapping("")
-    public ResponseEntity<?> updateSponsor(@RequestParam("logo") MultipartFile logo,
-                                        @ModelAttribute SponsorDTO sponsorDTO) {
-        Response response = new Response();
-        response.setData(sponsorService.updateSponsor(logo,sponsorDTO));
-        return new ResponseEntity<>(response, HttpStatus.OK);
-    }
-
-
-
-    @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteSponsor(@PathVariable int id) {
-        Response response = new Response();
-        response.setData(sponsorService.deleteSponsor(id));
-        return new ResponseEntity<>(response, HttpStatus.OK);
-    }
 
 }

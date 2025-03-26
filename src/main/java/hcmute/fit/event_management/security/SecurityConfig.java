@@ -56,28 +56,22 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+
         http
                 .cors(cors -> cors.configurationSource(request -> {
                     org.springframework.web.cors.CorsConfiguration config = new org.springframework.web.cors.CorsConfiguration();
-                    config.setAllowedOrigins(List.of("http://localhost:3000")); // Thêm domain React của bạn
+                    config.setAllowedOrigins(List.of("http://localhost:3000"));
                     config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
                     config.setAllowedHeaders(List.of("Authorization", "Content-Type"));
                     config.setAllowCredentials(true);
                     return config;
                 }))
-                .csrf(AbstractHttpConfigurer::disable)
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/login","/forgot","/reset-password","/file").permitAll()
-                        .requestMatchers("/admin/**").hasRole("ADMIN")
-                        .requestMatchers("/man/**").hasAnyRole("MANAGER", "ADMIN")
-                        .requestMatchers("/emp/**").hasAnyRole("EMPLOYEE","MANAGER", "ADMIN")
-                        .anyRequest().authenticated()
-                ).addFilterBefore(authTokenFilter, UsernamePasswordAuthenticationFilter.class)
-                .exceptionHandling(configurer -> configurer
-                                .accessDeniedHandler(accessDeniedHandler) // Xử lý lỗi 403;
-                                .authenticationEntryPoint(unauthorizedHandler)  // Xử lý lỗi 401
+                        .anyRequest().permitAll()
                 );
+
+
         return http.build();
     }
 }
