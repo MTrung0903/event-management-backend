@@ -26,8 +26,6 @@ public class Segment {
     @Column(name = "end_time")
     private Date endTime;
 
-    private String speakerName;
-
     @ManyToOne
     @JoinColumn(name = "speaker_id")
     private Speaker speaker;

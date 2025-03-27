@@ -15,4 +15,6 @@ public interface IEventService {
 
 
     Optional<Event> findById(Integer integer);
+
+    EventDTO getEventById(int eventId);
 }

@@ -20,7 +20,7 @@ public class EventDTO {
     private String eventStart;
     private String eventEnd;
     private String eventLocation;
-    private String tags;
+    private String[] tags;
     private String eventVisibility;
     private String publishTime;
     private String refunds;

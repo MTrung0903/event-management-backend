@@ -4,17 +4,17 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.Date;
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 public class SegmentDTO {
     private int segmentId;
     private String segmentTitle;
-    private int speakerID;
-    private String speakerName;
-    private String speakerTitle;
+    private SpeakerDTO speaker;
     private int eventID;
     private String segmentDesc;
-    private Data startTime;
-    private Data endTime;
+    private Date startTime;
+    private Date endTime;
 }

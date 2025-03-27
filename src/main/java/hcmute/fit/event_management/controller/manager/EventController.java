@@ -24,8 +24,11 @@ public class EventController {
     }
 
     @GetMapping("/{eventId}")
-    public ResponseEntity<Event> getEvent(@PathVariable Integer eventId) {
-        Event event = eventService.getEvent(eventId);
+    public ResponseEntity<EventDTO> getEventById(@PathVariable int eventId) {
+        EventDTO event = eventService.getEventById(eventId);
+        if (event == null) {
+            return ResponseEntity.notFound().build();
+        }
         return ResponseEntity.ok(event);
     }
 }
