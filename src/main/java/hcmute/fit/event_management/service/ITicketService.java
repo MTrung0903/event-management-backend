@@ -9,5 +9,6 @@ import java.util.Optional;
 public interface ITicketService {
     Optional<Ticket> findById(Integer integer);
 
+
     void addTicket(int eventId, TicketDTO ticketDTO);
 }

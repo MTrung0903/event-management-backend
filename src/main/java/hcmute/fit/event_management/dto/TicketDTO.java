@@ -4,6 +4,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.Date;
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -13,7 +15,7 @@ public class TicketDTO {
     private String ticketType;
     private double price;
     private int quantity;
-    private Data startTime;
-    private Data endTime;
+    private Date startTime;
+    private Date endTime;
 
 }

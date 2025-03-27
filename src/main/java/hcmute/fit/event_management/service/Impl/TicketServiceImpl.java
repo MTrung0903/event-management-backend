@@ -1,6 +1,7 @@
 package hcmute.fit.event_management.service.Impl;
 
 import hcmute.fit.event_management.dto.TicketDTO;
+import hcmute.fit.event_management.entity.Event;
 import hcmute.fit.event_management.entity.Ticket;
 import hcmute.fit.event_management.repository.TicketRepository;
 import hcmute.fit.event_management.service.IEventService;
@@ -26,11 +27,17 @@ public class TicketServiceImpl implements ITicketService {
     public Optional<Ticket> findById(Integer integer) {
         return ticketRepository.findById(integer);
     }
+
     @Override
     public void addTicket(int eventId, TicketDTO ticketDTO) {
         Ticket ticket = new Ticket();
         BeanUtils.copyProperties(ticketDTO, ticket);
-        ticket.setEvent(eventService.findById(eventId).get());
+        Optional<Event> optionalEvent = eventService.findById(eventId);
+        if (optionalEvent.isEmpty()) {
+            throw new RuntimeException("Event not found with id: " + eventId);
+        }
+        ticket.setEvent(optionalEvent.get());
+
         ticketRepository.save(ticket);
     }
 
