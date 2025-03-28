@@ -1,5 +1,6 @@
 package hcmute.fit.event_management.service.Impl;
 
+import com.cloudinary.Cloudinary;
 import hcmute.fit.event_management.dto.SegmentDTO;
 import hcmute.fit.event_management.dto.SpeakerDTO;
 import hcmute.fit.event_management.entity.Segment;
@@ -23,6 +24,8 @@ public class SegmentServiceImpl implements ISegmentService {
     private IEventService eventService;
     @Autowired
     private ISpeakerService speakerService;
+    @Autowired
+    private CloudinaryService cloudinary;
 
     public SegmentServiceImpl(SegmentRepository segmentRepository) {
         this.segmentRepository = segmentRepository;
@@ -30,10 +33,16 @@ public class SegmentServiceImpl implements ISegmentService {
 
     @Override
     public void addSegment(int eventId, SegmentDTO segment) {
+        SpeakerDTO speakerDTO = new SpeakerDTO();
+        speakerDTO.setSpeakerName(segment.getSpeaker().getSpeakerName());
+        speakerDTO.setSpeakerDesc(segment.getSpeaker().getSpeakerDesc());
+        speakerDTO.setSpeakerImage(segment.getSpeaker().getSpeakerImage());
+        Speaker speaker = speakerService.addSpeaker(speakerDTO);
+
         Segment newSegment = new Segment();
         BeanUtils.copyProperties(segment, newSegment);
         newSegment.setEvent(eventService.findById(eventId).get());
-        newSegment.setSpeaker(speakerService.findById(segment.getSpeaker().getSpeakerId()).get());
+        newSegment.setSpeaker(speaker);
         segmentRepository.save(newSegment);
     }
     @Override
