@@ -11,7 +11,4 @@ import java.util.List;
 @Repository
 public interface SponsorRepository extends JpaRepository<Sponsor, Integer> {
 
-
-    @Query("select s from Sponsor s where s.sponsorship.sponsorShipID = :id")
-    List<Sponsor> findSponsorsBySponsorshipId(@Param("id") int id);
 }

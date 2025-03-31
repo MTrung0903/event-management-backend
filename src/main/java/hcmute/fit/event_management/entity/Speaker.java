@@ -34,5 +34,5 @@ public class Speaker {
     private String speakerDesc;
 
     @OneToMany(mappedBy = "speaker",cascade = CascadeType.ALL)
-    private List<Segment> segments;
+    private List<Session> sessions;
 }

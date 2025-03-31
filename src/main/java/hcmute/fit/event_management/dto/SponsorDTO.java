@@ -1,7 +1,7 @@
 package hcmute.fit.event_management.dto;
 
 import hcmute.fit.event_management.entity.SponsorEvent;
-import hcmute.fit.event_management.entity.SponsorShip;
+
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
