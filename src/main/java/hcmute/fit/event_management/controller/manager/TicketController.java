@@ -17,4 +17,5 @@ public class TicketController {
         ticketService.addTicket(eventId, ticketDTO);
         return ResponseEntity.ok(ticketDTO);
     }
+
 }

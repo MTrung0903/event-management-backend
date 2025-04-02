@@ -10,6 +10,8 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -40,6 +42,20 @@ public class TicketServiceImpl implements ITicketService {
 
         ticketRepository.save(ticket);
     }
-
+    public TicketDTO convertToDTO(Ticket ticket) {
+        TicketDTO ticketDTO = new TicketDTO();
+        BeanUtils.copyProperties(ticket, ticketDTO);
+        return ticketDTO;
+    }
+    @Override
+    public List<TicketDTO> getTicketsByEventId(int eventId) {
+        List<Ticket> tickets = ticketRepository.findByEventID(eventId);
+        List<TicketDTO> ticketDTOs = new ArrayList<>();
+        for (Ticket ticket : tickets) {
+            TicketDTO ticketDTO = convertToDTO(ticket);
+            ticketDTOs.add(ticketDTO);
+        }
+        return ticketDTOs;
+    }
 
 }

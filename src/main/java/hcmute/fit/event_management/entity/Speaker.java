@@ -18,7 +18,7 @@ public class Speaker {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "speaker_id")
     private int speakerId;
-    @Column(name = "image")
+    @Column(name = "speakerImage")
     private String speakerImage;
     @Column(name = "speaker_name")
     private String speakerName;
