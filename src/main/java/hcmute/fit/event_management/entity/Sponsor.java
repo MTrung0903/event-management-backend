@@ -18,24 +18,27 @@ public class Sponsor {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "sponsor_id")
     private int sponsorId;
-    @Column(name = "sponsor_logo")
-    private String sponsorLogo;
     @Column(name = "sponsor_name")
     private String sponsorName;
-    @Column(name = "contact_person")
-    private String sponsorContact;
+    @Column(name = "sponsor_logo")
+    private String sponsorLogo;
     @Column(name = "contact_email")
     private String sponsorEmail;
-    @Column(name = "contact_phone")
+    @Column(name = "address")
+    private String sponsorAddress;
+    @Column(name = "phone")
     private String sponsorPhone;
     @Column(name = "website")
     private String sponsorWebsite;
-    @Column(name = "address")
-    private String sponsorAddress;
+    @Column(name = "representative_name")
+    private String sponsorRepresentativeName;
+    @Column(name = "representative_position")
+    private String sponsorRepresentativePosition;
+    @Column(name = "representative_email")
+    private String sponsorRepresentativeEmail;
+    @Column(name = "representative_phone")
+    private String sponsorRepresentativePhone;
 
-    @ManyToOne
-    @JoinColumn(name = "sponsor_ship_id", referencedColumnName = "sponsor_ship_id")
-    private SponsorShip sponsorship;
 
     @OneToMany(mappedBy = "sponsor")
     private List<SponsorEvent> listSponsorEvents;
