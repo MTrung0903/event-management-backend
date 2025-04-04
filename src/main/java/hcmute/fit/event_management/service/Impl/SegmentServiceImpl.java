@@ -1,5 +1,6 @@
 package hcmute.fit.event_management.service.Impl;
 
+
 import com.cloudinary.Cloudinary;
 import hcmute.fit.event_management.dto.SegmentDTO;
 import hcmute.fit.event_management.dto.SpeakerDTO;
@@ -15,6 +16,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class SegmentServiceImpl implements ISegmentService {
@@ -25,7 +27,7 @@ public class SegmentServiceImpl implements ISegmentService {
     @Autowired
     private ISpeakerService speakerService;
     @Autowired
-    private CloudinaryService cloudinary;
+    private Cloudinary cloudinary;
 
     public SegmentServiceImpl(SegmentRepository segmentRepository) {
         this.segmentRepository = segmentRepository;
@@ -54,6 +56,12 @@ public class SegmentServiceImpl implements ISegmentService {
             Speaker speaker = segment.getSpeaker();
             SpeakerDTO speakerDTO = new SpeakerDTO();
             BeanUtils.copyProperties(speaker, speakerDTO);
+            // Tạo URL từ public_id cho speakerImage
+            String urlImage = cloudinary.url().generate(speaker.getSpeakerImage());
+            System.out.println("day la url image cua speaker : " + urlImage);
+
+            speakerDTO.setSpeakerImage(urlImage);
+
             BeanUtils.copyProperties(segment, dto);
             dto.setEventID(eventId);
             dto.setStartTime(segment.getStartTime());

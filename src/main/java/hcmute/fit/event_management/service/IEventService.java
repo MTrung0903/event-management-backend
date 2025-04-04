@@ -2,6 +2,7 @@ package hcmute.fit.event_management.service;
 
 
 import hcmute.fit.event_management.dto.EventDTO;
+import hcmute.fit.event_management.dto.EventEditDTO;
 import hcmute.fit.event_management.entity.Event;
 
 import java.io.IOException;
@@ -31,5 +32,11 @@ public interface IEventService {
 
     List<EventDTO> findEventsByTags(String tag);
 
+    List<EventDTO> getAllEvent();
+
     List<EventDTO> findEventsByType(String eventType);
+
+    void editEvent(EventDTO eventDTO) throws Exception;
+
+    EventEditDTO getEventForEdit(int eventId);
 }

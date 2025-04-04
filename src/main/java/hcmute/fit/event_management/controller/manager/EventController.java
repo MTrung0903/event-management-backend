@@ -1,6 +1,7 @@
 package hcmute.fit.event_management.controller.manager;
 
 import hcmute.fit.event_management.dto.EventDTO;
+import hcmute.fit.event_management.dto.EventEditDTO;
 import hcmute.fit.event_management.entity.Event;
 import hcmute.fit.event_management.service.Impl.EventServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,7 +23,11 @@ public class EventController {
         Event savedEvent = eventService.saveEvent(event);
         return ResponseEntity.ok(savedEvent.getEventID());
     }
-
+    @GetMapping("/all")
+    public ResponseEntity<List<EventDTO>> getAllEvents() {
+        List<EventDTO> events = eventService.getAllEvent();
+        return ResponseEntity.ok(events);
+    }
     @GetMapping("/{eventId}")
     public ResponseEntity<EventDTO> getEventById(@PathVariable int eventId) {
         EventDTO event = eventService.getEventById(eventId);
@@ -89,5 +94,10 @@ public class EventController {
         return events.isEmpty() ?
                 ResponseEntity.noContent().build() :
                 ResponseEntity.ok(events);
+    }
+    @GetMapping("/edit/{eventId}")
+    public ResponseEntity<EventEditDTO> editEvent(@PathVariable int eventId) {
+        EventEditDTO eventEdit = eventService.getEventForEdit(eventId);
+        return ResponseEntity.ok(eventEdit);
     }
 }
