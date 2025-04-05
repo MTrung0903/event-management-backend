@@ -4,7 +4,6 @@ import com.cloudinary.Cloudinary;
 import hcmute.fit.event_management.CloudinaryConfig;
 import hcmute.fit.event_management.dto.SponsorDTO;
 import hcmute.fit.event_management.dto.SponsorEventDTO;
-import hcmute.fit.event_management.dto.SponsorShipDTO;
 import hcmute.fit.event_management.entity.Event;
 import hcmute.fit.event_management.entity.Sponsor;
 import hcmute.fit.event_management.entity.SponsorEvent;
