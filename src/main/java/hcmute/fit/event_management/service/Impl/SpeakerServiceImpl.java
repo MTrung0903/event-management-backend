@@ -7,8 +7,12 @@ import hcmute.fit.event_management.repository.SpeakerRepository;
 import hcmute.fit.event_management.service.ISpeakerService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -36,6 +40,22 @@ public class SpeakerServiceImpl implements ISpeakerService {
         BeanUtils.copyProperties(speakerDTO, speaker);
 
         return  speakerRepository.save(speaker);
-
+    }
+    @Override
+    public <S extends Speaker> S save(S entity) {
+        return speakerRepository.save(entity);
+    }
+    @Override
+    public Page<Speaker> findAll(Pageable pageable) {
+        return speakerRepository.findAll(pageable);
+    }
+    @Override
+    public List<Speaker> findAll(Sort sort) {
+        return speakerRepository.findAll(sort);
+    }
+    @Override
+    public long count() {
+        return speakerRepository.count();
     }
 }
+
