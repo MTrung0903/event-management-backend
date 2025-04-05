@@ -9,11 +9,12 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class SpeakerDTO {
     private int speakerId;
-    private String speakerImage;
     private String speakerName;
+    private String speakerImage;
     private String speakerEmail;
-    private String speakerTitle;
     private String speakerPhone;
-    private String speakerAddress;
     private String speakerDesc;
+    private String speakerExperience;
+    private String speakerSocialMedia;
+    private String speakerStatus;
 }

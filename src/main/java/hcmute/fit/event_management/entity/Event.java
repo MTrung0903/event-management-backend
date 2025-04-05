@@ -49,4 +49,10 @@ public class Event {
     @OneToMany(mappedBy = "event", cascade = CascadeType.ALL)
     private List<Ticket> tickets;
 
+    @OneToMany(mappedBy = "event", cascade = CascadeType.ALL)
+    private List<SponsorEvent> sponsorEvents;
+
+    @OneToMany(mappedBy = "event", cascade = CascadeType.ALL)
+    private List<SpeakerEvent> speakerEvents;
+
 }
