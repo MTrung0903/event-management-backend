@@ -1,5 +1,6 @@
 package hcmute.fit.event_management.service.Impl;
 
+import com.cloudinary.Cloudinary;
 import hcmute.fit.event_management.dto.SpeakerDTO;
 import hcmute.fit.event_management.entity.Speaker;
 import hcmute.fit.event_management.repository.SpeakerRepository;
@@ -18,6 +19,7 @@ import java.util.Optional;
 public class SpeakerServiceImpl implements ISpeakerService {
     @Autowired
     private SpeakerRepository speakerRepository;
+
 
     public SpeakerServiceImpl(SpeakerRepository speakerRepository) {
         this.speakerRepository = speakerRepository;

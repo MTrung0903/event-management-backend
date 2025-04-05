@@ -6,6 +6,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/ticket")
 public class TicketController {
@@ -17,4 +19,11 @@ public class TicketController {
         ticketService.addTicket(eventId, ticketDTO);
         return ResponseEntity.ok(ticketDTO);
     }
+
+    @GetMapping("list/{eventId}")
+    public ResponseEntity<List<TicketDTO>> getTicket(@PathVariable int eventId) {
+        List<TicketDTO> list = ticketService.getTicketsByEventId(eventId);
+        return ResponseEntity.ok(list);
+    }
+
 }

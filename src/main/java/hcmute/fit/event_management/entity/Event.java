@@ -40,9 +40,6 @@ public class Event {
     @ElementCollection
     private List<String> mediaContent;
 
-    @Column(name = "event_attendee")
-    private String eventAttendee;
-
     @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Session> sessions;
 

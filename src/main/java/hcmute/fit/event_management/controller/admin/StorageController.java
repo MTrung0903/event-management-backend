@@ -17,8 +17,8 @@ public class StorageController {
 
     @PostMapping("/upload")
     public ResponseEntity<String> uploadFile(@RequestParam("file") MultipartFile file) throws IOException {
-        String fileUrl = cloudinaryService.uploadFile(file);
-        return ResponseEntity.ok("File uploaded: " + fileUrl);
+        String publicId = cloudinaryService.uploadFile(file);
+        return ResponseEntity.ok(publicId);
     }
 
     @GetMapping("/download/{publicId}")
