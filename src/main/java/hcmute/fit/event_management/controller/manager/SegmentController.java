@@ -20,7 +20,7 @@ public class SegmentController {
         return ResponseEntity.ok(list);
     }
     @PostMapping("/{eventId}")
-    public ResponseEntity<SegmentDTO> createSegment(@PathVariable("eventId") int eventId, @RequestBody SegmentDTO segmentDTO) {
+    public ResponseEntity<SegmentDTO> createSegment(@PathVariable("eventId") int eventId, @RequestBody SegmentDTO segmentDTO) throws Exception {
         segmentService.addSegment(eventId, segmentDTO);
         return ResponseEntity.ok(segmentDTO);
     }

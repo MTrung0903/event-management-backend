@@ -28,12 +28,16 @@ public class EventServiceImpl implements IEventService {
     private EventRepository eventRepository;
     @Autowired
     private Cloudinary cloudinary;
-
     @Autowired
     private TicketRepository ticketRepository;
     @Autowired
     private SegmentRepository segmentRepository;
 
+    @Autowired
+    private ISegmentService segmentService;
+
+    @Autowired
+    private ITicketService ticketService;
 
     @Override
     public Event saveEvent(EventDTO eventDTO) throws IOException {
@@ -242,5 +246,24 @@ public class EventServiceImpl implements IEventService {
         eventEdit.setTicket(ticketDTOs);
         eventEdit.setSegment(segments);
         return eventEdit;
+    }
+
+    @Override
+    public EventEditDTO saveEditEvent(EventEditDTO eventEditDTO) throws Exception{
+
+        Event event = eventRepository.findById(eventEditDTO.getEvent().getEventId()).orElseThrow(() ->
+                new Exception("Event with ID " + eventEditDTO.getEvent().getEventId() + " not found"));
+        int eventId = eventEditDTO.getEvent().getEventId();
+        BeanUtils.copyProperties(eventEditDTO.getEvent(), event);
+        for(TicketDTO ticketDTO : eventEditDTO.getTicket()){
+            ticketService.saveEditTicket(eventId,ticketDTO);
+        }
+        for(SegmentDTO segmentDTO : eventEditDTO.getSegment()){
+           segmentService.saveEditSegment(eventId,segmentDTO);
+        }
+        eventRepository.save(event);
+
+        EventEditDTO editDTO = getEventForEdit(eventId);
+        return editDTO;
     }
 }

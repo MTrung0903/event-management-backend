@@ -36,6 +36,11 @@ public class EventController {
         }
         return ResponseEntity.ok(event);
     }
+    @PutMapping("/edit")
+    public ResponseEntity<EventEditDTO> editEvent( @RequestBody EventEditDTO eventEditDTO) throws Exception {
+       EventEditDTO eventEdit = eventService.saveEditEvent(eventEditDTO);
+       return ResponseEntity.ok(eventEdit);
+    }
     // Tìm kiếm sự kiện theo tên
     @GetMapping("/search/name")
     public ResponseEntity<List<EventDTO>> getEventsByName(

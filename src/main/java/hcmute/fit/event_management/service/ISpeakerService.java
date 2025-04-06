@@ -11,4 +11,6 @@ public interface ISpeakerService {
     void deleteById(Integer integer);
 
     Speaker addSpeaker(SpeakerDTO speakerDTO);
+
+    Speaker saveSpeakerEdit(SpeakerDTO speakerDTO);
 }

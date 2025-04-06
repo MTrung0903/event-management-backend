@@ -1,6 +1,5 @@
 package hcmute.fit.event_management.service.Impl;
 
-import com.cloudinary.Cloudinary;
 import hcmute.fit.event_management.dto.SpeakerDTO;
 import hcmute.fit.event_management.entity.Speaker;
 import hcmute.fit.event_management.repository.SpeakerRepository;
@@ -36,6 +35,13 @@ public class SpeakerServiceImpl implements ISpeakerService {
         BeanUtils.copyProperties(speakerDTO, speaker);
 
         return  speakerRepository.save(speaker);
+    }
 
+    @Override
+    public Speaker saveSpeakerEdit(SpeakerDTO speakerDTO) {
+        Speaker speaker = new Speaker();
+        BeanUtils.copyProperties(speakerDTO, speaker);
+
+        return speakerRepository.save(speaker);
     }
 }

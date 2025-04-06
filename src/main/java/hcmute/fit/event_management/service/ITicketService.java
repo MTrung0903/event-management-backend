@@ -14,4 +14,6 @@ public interface ITicketService {
     void addTicket(int eventId, TicketDTO ticketDTO);
 
     List<TicketDTO> getTicketsByEventId(int eventId);
+
+    void saveEditTicket(int eventId, TicketDTO ticketDTO) throws Exception;
 }
