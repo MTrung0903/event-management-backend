@@ -266,4 +266,15 @@ public class EventServiceImpl implements IEventService {
         EventEditDTO editDTO = getEventForEdit(eventId);
         return editDTO;
     }
+    @Override
+    public void deleteEvent(int eventId){
+        Optional<Event> event = eventRepository.findById(eventId);
+        if(event.isEmpty()){
+            throw new RuntimeException("Event not found with id "+ eventId);
+        }else{
+            segmentService.deleteSegmentByEventId(eventId);
+            ticketService.deleteTicketByEventId(eventId);
+            eventRepository.delete(event.get());
+        }
+    }
 }

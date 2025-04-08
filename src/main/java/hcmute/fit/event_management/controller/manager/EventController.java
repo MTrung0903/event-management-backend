@@ -41,6 +41,11 @@ public class EventController {
        EventEditDTO eventEdit = eventService.saveEditEvent(eventEditDTO);
        return ResponseEntity.ok(eventEdit);
     }
+    @DeleteMapping("/delete/{eventId}")
+    public ResponseEntity<Boolean> deleteEvent(@PathVariable int eventId) {
+        eventService.deleteEvent(eventId);
+        return ResponseEntity.ok(true);
+    }
     // Tìm kiếm sự kiện theo tên
     @GetMapping("/search/name")
     public ResponseEntity<List<EventDTO>> getEventsByName(

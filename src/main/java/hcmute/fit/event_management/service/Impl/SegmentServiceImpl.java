@@ -73,6 +73,12 @@ public class SegmentServiceImpl implements ISegmentService {
         return dtos;
 
     }
+
+    @Override
+    public void deleteById(Integer integer) {
+        segmentRepository.deleteById(integer);
+    }
+
     @Override
     public void saveEditSegment(int eventId, SegmentDTO segmentDTO) throws Exception {
         SpeakerDTO speakerDTO = new SpeakerDTO();
@@ -87,6 +93,16 @@ public class SegmentServiceImpl implements ISegmentService {
         newSegment.setEvent(eventRepository.findById(eventId).orElseThrow(()-> new Exception("Not found event by eventId "+eventId)));
         newSegment.setSpeaker(speaker);
         segmentRepository.save(newSegment);
+    }
+    @Override
+    public void deleteSegmentByEventId(int eventId){
+        List<Segment> list = segmentRepository.findByEventId(eventId);
+        if(!list.isEmpty()){
+            for(Segment segment : list){
+                speakerService.deleteById(segment.getSpeaker().getSpeakerId());
+                segmentRepository.delete(segment);
+            }
+        }
 
     }
 }

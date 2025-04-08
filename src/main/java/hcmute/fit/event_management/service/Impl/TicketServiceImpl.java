@@ -5,7 +5,6 @@ import hcmute.fit.event_management.entity.Event;
 import hcmute.fit.event_management.entity.Ticket;
 import hcmute.fit.event_management.repository.EventRepository;
 import hcmute.fit.event_management.repository.TicketRepository;
-import hcmute.fit.event_management.service.IEventService;
 import hcmute.fit.event_management.service.ITicketService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,6 +28,11 @@ public class TicketServiceImpl implements ITicketService {
     @Override
     public Optional<Ticket> findById(Integer integer) {
         return ticketRepository.findById(integer);
+    }
+
+    @Override
+    public void deleteById(Integer integer) {
+        ticketRepository.deleteById(integer);
     }
 
     @Override
@@ -69,6 +73,17 @@ public class TicketServiceImpl implements ITicketService {
         }
         ticket.setEvent(optionalEvent.get());
         ticketRepository.save(ticket);
+    }
+
+
+    @Override
+    public void deleteTicketByEventId(int eventId){
+        List<Ticket> tickets = ticketRepository.findByEventID(eventId);
+        if (!tickets.isEmpty()) {
+            for (Ticket ticket : tickets) {
+                ticketRepository.delete(ticket);
+            }
+        }
     }
 
 }

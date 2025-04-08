@@ -46,7 +46,9 @@ public class Event {
     @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Segment> segments;
 
-    @OneToMany(mappedBy = "event", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Ticket> tickets;
 
+    @OneToMany(mappedBy = "event",cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<SponsorEvent> sponsorEvents;
 }

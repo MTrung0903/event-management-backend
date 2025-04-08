@@ -24,6 +24,11 @@ public class SegmentController {
         segmentService.addSegment(eventId, segmentDTO);
         return ResponseEntity.ok(segmentDTO);
     }
+    @DeleteMapping("/delete/{segmentId}")
+    public ResponseEntity<Boolean> deleteSegment(@PathVariable("segmentId") int segmentId) {
+        segmentService.deleteById(segmentId);
+        return ResponseEntity.ok(true);
+    }
 }
 
 

@@ -9,5 +9,9 @@ public interface ISegmentService {
 
     List<SegmentDTO> getAllSegments(int eventId);
 
+    void deleteById(Integer integer);
+
     void saveEditSegment(int eventId, SegmentDTO segmentDTO) throws Exception;
+
+    void deleteSegmentByEventId(int eventId);
 }

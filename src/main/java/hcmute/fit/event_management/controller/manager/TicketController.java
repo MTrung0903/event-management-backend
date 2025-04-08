@@ -25,5 +25,9 @@ public class TicketController {
         List<TicketDTO> list = ticketService.getTicketsByEventId(eventId);
         return ResponseEntity.ok(list);
     }
-
+    @DeleteMapping("delete/{ticketId}")
+    public ResponseEntity<Boolean> deleteTicket(@PathVariable int ticketId) {
+        ticketService.deleteById(ticketId);
+        return ResponseEntity.ok(true);
+    }
 }

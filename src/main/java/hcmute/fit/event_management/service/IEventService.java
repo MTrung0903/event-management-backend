@@ -41,4 +41,6 @@ public interface IEventService {
     EventEditDTO getEventForEdit(int eventId);
 
     EventEditDTO saveEditEvent(EventEditDTO eventEditDTO) throws Exception;
+
+    void deleteEvent(int eventId);
 }
