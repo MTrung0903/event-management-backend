@@ -67,4 +67,17 @@ public class EventController {
             return ResponseEntity.status(500).body(null);
         }
     }
+    @GetMapping("/search/by-name-and-city")
+    public ResponseEntity<List<EventDTO>> searchEventsByNameAndCity(
+            @RequestParam("term") String searchTerm,
+            @RequestParam("city") String cityKey) {
+        try {
+            List<EventDTO> results = eventService.searchEventsByNameAndCity(searchTerm, cityKey);
+            return ResponseEntity.ok(results);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(null);
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(null);
+        }
+    }
 }

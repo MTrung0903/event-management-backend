@@ -29,4 +29,5 @@ public interface EventRepository extends JpaRepository<Event, Integer> {
 
     // Tìm kiếm theo tên địa điểm trong eventLocation (không phân biệt hoa thường)
     List<Event> findByEventLocationVenueNameContainingIgnoreCase(String venueName);
+
 }

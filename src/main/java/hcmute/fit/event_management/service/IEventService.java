@@ -28,4 +28,6 @@ public interface IEventService {
     List<EventDTO> findEventsByType(String eventType);
     List<EventDTO> findEventsByNameAndLocation(String name, String location);
     List<EventDTO> searchEvents(String searchTerm, String searchType);
+
+    List<EventDTO> searchEventsByNameAndCity(String searchTerm, String cityKey);
 }
