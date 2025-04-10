@@ -3,6 +3,7 @@ package hcmute.fit.event_management.service.Impl;
 import com.cloudinary.Cloudinary;
 import hcmute.fit.event_management.dto.*;
 import hcmute.fit.event_management.entity.Event;
+import hcmute.fit.event_management.entity.EventLocation;
 import hcmute.fit.event_management.entity.Segment;
 import hcmute.fit.event_management.entity.Speaker;
 import hcmute.fit.event_management.entity.Ticket;
@@ -19,6 +20,7 @@ import org.springframework.stereotype.Service;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -39,10 +41,37 @@ public class EventServiceImpl implements IEventService {
     @Autowired
     private ITicketService ticketService;
 
+    // Map ánh xạ slug city sang tên có dấu
+    private static final Map<String, String> cityMap = Map.of(
+            "ho-chi-minh", "TP. Hồ Chí Minh",
+            "ha-noi", "Hà Nội",
+            "da-nang", "Đà Nẵng",
+            "hai-phong", "Hải Phòng",
+            "can-tho", "Cần Thơ",
+            "nha-trang", "Nha Trang",
+            "da-lat", "Đà Lạt",
+            "binh-duong", "Bình Dương",
+            "dong-nai", "Đồng Nai",
+            "quang-ninh", "Quảng Ninh"
+    );
+
+    // Hàm lấy tên city có dấu từ slug
+    private String getCityDisplayName(String slug) {
+        return cityMap.getOrDefault(slug, slug);
+    }
+
     @Override
     public Event saveEvent(EventDTO eventDTO) throws IOException {
         Event event = new Event();
-        BeanUtils.copyProperties(eventDTO, event);
+        BeanUtils.copyProperties(eventDTO, event, "eventLocation");
+
+        EventLocation eventLocation = new EventLocation();
+        EventLocationDTO locationDTO = eventDTO.getEventLocation();
+        if (locationDTO != null) {
+            BeanUtils.copyProperties(locationDTO, eventLocation);
+            event.setEventLocation(eventLocation);
+        }
+
         return eventRepository.save(event);
     }
 
@@ -59,25 +88,24 @@ public class EventServiceImpl implements IEventService {
 
     @Override
     public EventDTO getEventById(int eventId) {
-        EventDTO dto = new EventDTO();
         Event event = findById(eventId).orElseThrow(() -> new RuntimeException("Event not found"));
-        BeanUtils.copyProperties(event, dto);
-        dto.setEventId(event.getEventID());
-        dto.setTags(event.getTags());
-        dto.setEventVisibility(event.getEventVisibility());
-        dto.setPublishTime(event.getPublishTime());
-        dto.setRefunds(event.getRefunds());
-        dto.setValidityDays(event.getValidityDays());
+        EventDTO dto = new EventDTO();
+        BeanUtils.copyProperties(event, dto, "eventLocation");
 
-        // Tạo URL từ public_id cho eventImages
+        EventLocationDTO locationDTO = new EventLocationDTO();
+        if (event.getEventLocation() != null) {
+            BeanUtils.copyProperties(event.getEventLocation(), locationDTO);
+            locationDTO.setCity(getCityDisplayName(locationDTO.getCity()));
+            dto.setEventLocation(locationDTO);
+        }
+
+        dto.setEventId(event.getEventID());
+
         List<String> imageUrls = event.getEventImages().stream()
                 .map(publicId -> cloudinary.url().generate(publicId))
                 .collect(Collectors.toList());
         dto.setEventImages(imageUrls);
 
-        dto.setTextContent(event.getTextContent());
-
-        // Tạo URL từ public_id cho mediaContent
         List<String> mediaUrls = event.getMediaContent().stream()
                 .map(publicId -> cloudinary.url().generate(publicId))
                 .collect(Collectors.toList());
@@ -89,149 +117,65 @@ public class EventServiceImpl implements IEventService {
     @Override
     public EventDTO convertToDTO(Event event) {
         EventDTO dto = new EventDTO();
+        BeanUtils.copyProperties(event, dto, "eventLocation");
         dto.setEventId(event.getEventID());
-        dto.setEventName(event.getEventName());
-        dto.setEventDesc(event.getEventDesc());
-        dto.setEventType(event.getEventType());
-        dto.setEventHost(event.getEventHost());
-        dto.setEventStatus(event.getEventStatus());
-        dto.setEventStart(event.getEventStart());
-        dto.setEventEnd(event.getEventEnd());
-        dto.setEventLocation(event.getEventLocation());
-        dto.setTags(event.getTags());
-        dto.setEventVisibility(event.getEventVisibility());
-        dto.setPublishTime(event.getPublishTime());
-        dto.setRefunds(event.getRefunds());
-        dto.setValidityDays(event.getValidityDays());
-        dto.setEventImages(event.getEventImages());
-        dto.setTextContent(event.getTextContent());
-        dto.setMediaContent(event.getMediaContent());
+        EventLocationDTO locationDTO = new EventLocationDTO();
+        if (event.getEventLocation() != null) {
+            BeanUtils.copyProperties(event.getEventLocation(), locationDTO);
+            locationDTO.setCity(getCityDisplayName(locationDTO.getCity()));
+            dto.setEventLocation(locationDTO);
+        }
+        List<String> imageUrls = event.getEventImages().stream()
+                .map(publicId -> cloudinary.url().generate(publicId))
+                .collect(Collectors.toList());
+        dto.setEventImages(imageUrls);
+
+        List<String> mediaUrls = event.getMediaContent().stream()
+                .map(publicId -> cloudinary.url().generate(publicId))
+                .collect(Collectors.toList());
+        dto.setMediaContent(mediaUrls);
+
         return dto;
     }
 
-
     @Override
-    public List<EventDTO> findEventsByName(String eventName) {
-        List<Event> events = eventRepository.findByEventNameContainingIgnoreCase(eventName);
-        return events.stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
-    }
-
-
-    @Override
-    public List<EventDTO> findEventsByDate(String eventStart) {
-        List<Event> events = eventRepository.findByEventStart(eventStart);
-        return events.stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
-    }
-
-
-    @Override
-    public List<EventDTO> findEventsByHost(String eventHost) {
-        List<Event> events = eventRepository.findByEventHost(eventHost);
-        return events.stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
-    }
-
-
-    @Override
-    public List<EventDTO> findEventsByLocation(String eventLocation) {
-        List<Event> events = eventRepository.findByEventLocationContainingIgnoreCase(eventLocation);
-        return events.stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
-    }
-
-
-    @Override
-    public List<EventDTO> findEventsByTags(String tag) {
-        List<Event> events = eventRepository.findByTagsContainingIgnoreCase(tag);
-        return events.stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
-    }
-
-    @Override
-    public List<EventDTO> getAllEvent(){
+    public List<EventDTO> getAllEvent() {
         List<Event> events = eventRepository.findAll();
-        List<EventDTO> dtos = new ArrayList<>();
-        for (Event event : events) {
-            EventDTO dto = convertToDTO(event);
-            // Tạo URL từ public_id cho eventImages
-            List<String> imageUrls = event.getEventImages().stream()
-                    .map(publicId -> cloudinary.url().generate(publicId))
-                    .collect(Collectors.toList());
-            dto.setEventImages(imageUrls);
-            dtos.add(dto);
-        }
-        return dtos;
-    }
-
-    @Override
-    public List<EventDTO> findEventsByType(String eventType) {
-        List<Event> events = eventRepository.findByEventType(eventType);
         return events.stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
-    public List<EventDTO> findEventsByNameAndLocation(String name, String location) {
-        List<Event> eventsByLocation = eventRepository.findByEventLocationContainingIgnoreCase(location);
-        List<Event> filteredEvents = eventsByLocation.stream()
-                .filter(event -> event.getEventName() != null &&
-                        event.getEventName().toLowerCase().contains(name.toLowerCase()))
-                .collect(Collectors.toList());
-        return filteredEvents.stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
-    }
-    @Override
-    public void editEvent(EventDTO eventDTO) throws Exception{
-        Optional<Event> existingEventOpt = eventRepository.findById(eventDTO.getEventId());
 
+    @Override
+    public void editEvent(EventDTO eventDTO) throws Exception {
+        Optional<Event> existingEventOpt = eventRepository.findById(eventDTO.getEventId());
         if (!existingEventOpt.isPresent()) {
             throw new Exception("Event with ID " + eventDTO.getEventId() + " not found");
         }
         Event event = existingEventOpt.get();
-        BeanUtils.copyProperties(eventDTO, event);
+        BeanUtils.copyProperties(eventDTO, event, "eventLocation");
+
+        EventLocation eventLocation = new EventLocation();
+        if (eventDTO.getEventLocation() != null) {
+            BeanUtils.copyProperties(eventDTO.getEventLocation(), eventLocation);
+            event.setEventLocation(eventLocation);
+        }
+
         if (eventDTO.getEventImages() != null) {
             event.getEventImages().clear();
             event.getEventImages().addAll(eventDTO.getEventImages());
         }
-        event.setTextContent(eventDTO.getTextContent());
+
         if (eventDTO.getMediaContent() != null) {
             event.getMediaContent().clear();
             event.getMediaContent().addAll(eventDTO.getMediaContent());
         }
+
         eventRepository.save(event);
     }
-    public List<SegmentDTO> getAllSegments(int eventId) {
-        List<Segment> list = segmentRepository.findByEventId(eventId);
-        List<SegmentDTO> dtos = new ArrayList<>();
-        for (Segment segment : list) {
-            SegmentDTO dto = new SegmentDTO();
-            Speaker speaker = segment.getSpeaker();
-            SpeakerDTO speakerDTO = new SpeakerDTO();
-            BeanUtils.copyProperties(speaker, speakerDTO);
-            String urlImage = cloudinary.url().generate(speaker.getSpeakerImage());
-            System.out.println("day la url image cua speaker : " + urlImage);
 
-            speakerDTO.setSpeakerImage(urlImage);
-            BeanUtils.copyProperties(segment, dto);
-            dto.setEventID(eventId);
-            dto.setStartTime(segment.getStartTime());
-            dto.setEndTime(segment.getEndTime());
-            dto.setSegmentId(segment.getSegmentId());
-            dto.setSpeaker(speakerDTO);
-            dtos.add(dto);
-        }
-        return dtos;
-
-    }
     @Override
-    public EventEditDTO getEventForEdit(int eventId){
+    public EventEditDTO getEventForEdit(int eventId) {
         EventDTO event = getEventById(eventId);
         List<Ticket> tickets = ticketRepository.findByEventID(eventId);
         List<TicketDTO> ticketDTOs = new ArrayList<>();
@@ -249,32 +193,154 @@ public class EventServiceImpl implements IEventService {
     }
 
     @Override
-    public EventEditDTO saveEditEvent(EventEditDTO eventEditDTO) throws Exception{
-
-        Event event = eventRepository.findById(eventEditDTO.getEvent().getEventId()).orElseThrow(() ->
-                new Exception("Event with ID " + eventEditDTO.getEvent().getEventId() + " not found"));
+    public EventEditDTO saveEditEvent(EventEditDTO eventEditDTO) throws Exception {
+        Event event = eventRepository.findById(eventEditDTO.getEvent().getEventId())
+                .orElseThrow(() -> new Exception("Event with ID " + eventEditDTO.getEvent().getEventId() + " not found"));
         int eventId = eventEditDTO.getEvent().getEventId();
-        BeanUtils.copyProperties(eventEditDTO.getEvent(), event);
-        for(TicketDTO ticketDTO : eventEditDTO.getTicket()){
-            ticketService.saveEditTicket(eventId,ticketDTO);
+        BeanUtils.copyProperties(eventEditDTO.getEvent(), event, "eventLocation");
+
+        EventLocation eventLocation = new EventLocation();
+        if (eventEditDTO.getEvent().getEventLocation() != null) {
+            BeanUtils.copyProperties(eventEditDTO.getEvent().getEventLocation(), eventLocation);
+            event.setEventLocation(eventLocation);
         }
-        for(SegmentDTO segmentDTO : eventEditDTO.getSegment()){
-           segmentService.saveEditSegment(eventId,segmentDTO);
+
+        for (TicketDTO ticketDTO : eventEditDTO.getTicket()) {
+            ticketService.saveEditTicket(eventId, ticketDTO);
+        }
+        for (SegmentDTO segmentDTO : eventEditDTO.getSegment()) {
+            segmentService.saveEditSegment(eventId, segmentDTO);
         }
         eventRepository.save(event);
 
-        EventEditDTO editDTO = getEventForEdit(eventId);
-        return editDTO;
+        return getEventForEdit(eventId);
     }
+
     @Override
-    public void deleteEvent(int eventId){
+    public void deleteEvent(int eventId) {
         Optional<Event> event = eventRepository.findById(eventId);
-        if(event.isEmpty()){
-            throw new RuntimeException("Event not found with id "+ eventId);
-        }else{
-            segmentService.deleteSegmentByEventId(eventId);
-            ticketService.deleteTicketByEventId(eventId);
-            eventRepository.delete(event.get());
+        if (event.isEmpty()) {
+            throw new RuntimeException("Event not found with id " + eventId);
         }
+        segmentService.deleteSegmentByEventId(eventId);
+        ticketService.deleteTicketByEventId(eventId);
+        eventRepository.delete(event.get());
+    }
+
+    @Override
+    public List<EventDTO> findEventsByName(String eventName) {
+        List<Event> events = eventRepository.findByEventNameContainingIgnoreCase(eventName);
+        return events.stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<EventDTO> findEventsByDate(String eventStart) {
+        List<Event> events = eventRepository.findByEventStart(eventStart);
+        return events.stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<EventDTO> findEventsByHost(String eventHost) {
+        List<Event> events = eventRepository.findByEventHostContainingIgnoreCase(eventHost);
+        return events.stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<EventDTO> findEventsByLocation(String eventLocation) {
+        List<Event> events = eventRepository.findByEventLocationCityContainingIgnoreCase(eventLocation);
+        return events.stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<EventDTO> findEventsByTags(String tag) {
+        List<Event> events = eventRepository.findByTagsContainingIgnoreCase(tag);
+        return events.stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<EventDTO> findEventsByType(String eventType) {
+        List<Event> events = eventRepository.findByEventTypeContainingIgnoreCase(eventType);
+        return events.stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<EventDTO> findEventsByNameAndLocation(String name, String location) {
+        List<Event> eventsByLocation = eventRepository.findByEventLocationCityContainingIgnoreCase(location);
+        List<Event> filteredEvents = eventsByLocation.stream()
+                .filter(event -> event.getEventName() != null &&
+                        event.getEventName().toLowerCase().contains(name.toLowerCase()))
+                .collect(Collectors.toList());
+        return filteredEvents.stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<EventDTO> searchEvents(String searchTerm, String searchType) {
+        if (searchTerm == null || searchTerm.trim().isEmpty() || searchType == null) {
+            return getAllEvent();
+        }
+
+        List<Event> events;
+        switch (searchType.toLowerCase()) {
+            case "eventname":
+                events = eventRepository.findByEventNameContainingIgnoreCase(searchTerm);
+                break;
+            case "city":
+                events = eventRepository.findByEventLocationCityContainingIgnoreCase(searchTerm);
+                break;
+            case "venuename":
+                events = eventRepository.findByEventLocationVenueNameContainingIgnoreCase(searchTerm);
+                break;
+            case "eventtag":
+                events = eventRepository.findByTagsContainingIgnoreCase(searchTerm);
+                break;
+            case "eventtype":
+                events = eventRepository.findByEventTypeContainingIgnoreCase(searchTerm);
+                break;
+            case "eventhost":
+                events = eventRepository.findByEventHostContainingIgnoreCase(searchTerm);
+                break;
+            default:
+                throw new IllegalArgumentException("Invalid search type: " + searchType);
+        }
+
+        return events.stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+
+    // Hàm phụ trợ để lấy danh sách segment
+    private List<SegmentDTO> getAllSegments(int eventId) {
+        List<Segment> list = segmentRepository.findByEventId(eventId);
+        List<SegmentDTO> dtos = new ArrayList<>();
+        for (Segment segment : list) {
+            SegmentDTO dto = new SegmentDTO();
+            Speaker speaker = segment.getSpeaker();
+            SpeakerDTO speakerDTO = new SpeakerDTO();
+            BeanUtils.copyProperties(speaker, speakerDTO);
+            String urlImage = cloudinary.url().generate(speaker.getSpeakerImage());
+            speakerDTO.setSpeakerImage(urlImage);
+            BeanUtils.copyProperties(segment, dto);
+            dto.setEventID(eventId);
+            dto.setStartTime(segment.getStartTime());
+            dto.setEndTime(segment.getEndTime());
+            dto.setSegmentId(segment.getSegmentId());
+            dto.setSpeaker(speakerDTO);
+            dtos.add(dto);
+        }
+        return dtos;
     }
 }

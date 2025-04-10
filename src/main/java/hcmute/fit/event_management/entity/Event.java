@@ -28,7 +28,8 @@ public class Event {
     private String eventStatus;
     private String eventStart;
     private String eventEnd;
-    private String eventLocation;
+    @Embedded
+    private EventLocation eventLocation;
     private String tags;
     private String eventVisibility;
     private String publishTime;
