@@ -347,25 +347,23 @@ public class EventServiceImpl implements IEventService {
     @Override
     public List<EventDTO> searchEventsByNameAndCity(String searchTerm, String cityKey) {
         if (searchTerm == null || searchTerm.trim().isEmpty() || cityKey == null || cityKey.trim().isEmpty()) {
-            return getAllEvent(); // Trả về tất cả sự kiện nếu input không hợp lệ
+            return getAllEvent();
         }
 
-        // Lấy tên thành phố có dấu từ cityMap dựa trên key (slug)
         String cityName = cityMap.getOrDefault(cityKey.toLowerCase(), null);
         if (cityName == null) {
             throw new IllegalArgumentException("Invalid city key: " + cityKey);
         }
 
-        // Lọc các sự kiện theo thành phố
+
         List<Event> eventsByCity = eventRepository.findByEventLocationCityContainingIgnoreCase(cityName);
 
-        // Lọc tiếp các sự kiện có eventName chứa searchTerm (không phân biệt hoa thường)
+
         List<Event> filteredEvents = eventsByCity.stream()
                 .filter(event -> event.getEventName() != null &&
                         event.getEventName().toLowerCase().contains(searchTerm.toLowerCase()))
                 .collect(Collectors.toList());
 
-        // Chuyển đổi sang DTO và trả về
         return filteredEvents.stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
