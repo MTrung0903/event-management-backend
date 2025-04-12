@@ -18,10 +18,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Service
@@ -41,7 +43,7 @@ public class EventServiceImpl implements IEventService {
     @Autowired
     private ITicketService ticketService;
 
-    // Map ánh xạ slug city sang tên có dấu
+
     private static final Map<String, String> cityMap = Map.of(
             "ho-chi-minh", "TP. Hồ Chí Minh",
             "ha-noi", "Hà Nội",
@@ -55,7 +57,7 @@ public class EventServiceImpl implements IEventService {
             "quang-ninh", "Quảng Ninh"
     );
 
-    // Hàm lấy tên city có dấu từ slug
+
     private String getCityDisplayName(String slug) {
         return cityMap.getOrDefault(slug, slug);
     }
@@ -69,6 +71,7 @@ public class EventServiceImpl implements IEventService {
         EventLocationDTO locationDTO = eventDTO.getEventLocation();
         if (locationDTO != null) {
             BeanUtils.copyProperties(locationDTO, eventLocation);
+
             event.setEventLocation(eventLocation);
         }
 
@@ -343,25 +346,26 @@ public class EventServiceImpl implements IEventService {
         }
         return dtos;
     }
-
+    // ham bo dau tieng viet
+    private String removeDiacritics(String str) {
+        if (str == null) return null;
+        String normalized = Normalizer.normalize(str, Normalizer.Form.NFD);
+        Pattern pattern = Pattern.compile("\\p{InCombiningDiacriticalMarks}+");
+        return pattern.matcher(normalized).replaceAll("").toLowerCase();
+    }
     @Override
     public List<EventDTO> searchEventsByNameAndCity(String searchTerm, String cityKey) {
         if (searchTerm == null || searchTerm.trim().isEmpty() || cityKey == null || cityKey.trim().isEmpty()) {
             return getAllEvent();
         }
-
-        String cityName = cityMap.getOrDefault(cityKey.toLowerCase(), null);
-        if (cityName == null) {
+        if (cityKey.isEmpty()) {
             throw new IllegalArgumentException("Invalid city key: " + cityKey);
         }
-
-
-        List<Event> eventsByCity = eventRepository.findByEventLocationCityContainingIgnoreCase(cityName);
-
+        List<Event> eventsByCity = eventRepository.findByEventLocationCityContainingIgnoreCase(cityKey);
 
         List<Event> filteredEvents = eventsByCity.stream()
                 .filter(event -> event.getEventName() != null &&
-                        event.getEventName().toLowerCase().contains(searchTerm.toLowerCase()))
+                        removeDiacritics(event.getEventName()).contains(searchTerm))
                 .collect(Collectors.toList());
 
         return filteredEvents.stream()

@@ -85,5 +85,10 @@ public class EventController {
         List<EventDTO> eventsSearchByType = eventService.findEventsByType(categoryName);
         return ResponseEntity.ok(eventsSearchByType);
     }
+    @GetMapping("search-by-city/{city}")
+    public ResponseEntity<List<EventDTO>> searchEventsByCity(@PathVariable String city){
+        List<EventDTO> events = eventService.findEventsByLocation( city );
+        return ResponseEntity.ok(events);
+    }
 
 }
