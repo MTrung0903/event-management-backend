@@ -151,7 +151,7 @@
 		<dependency>
 			<groupId>com.cloudinary</groupId>
 			<artifactId>cloudinary-http44</artifactId>
-			<version>1.38.0</version> <!-- Kiểm tra phiên bản mới nhất tại https://mvnrepository.com/artifact/com.cloudinary/cloudinary-http44 -->
+			<version>1.38.0</version>
 		</dependency>
 	</dependencies>
 

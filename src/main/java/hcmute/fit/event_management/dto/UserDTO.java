@@ -15,7 +15,6 @@ public class UserDTO {
     private int userId;
     private String email;
     private String password;
-    @JsonProperty
     private boolean isActive;
     private List<String> roles;
 }

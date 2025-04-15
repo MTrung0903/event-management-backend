@@ -8,15 +8,16 @@ import lombok.NoArgsConstructor;
 import java.util.List;
 
 
-@Entity(name = "Role")
+@Entity
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
+@Table(name = "role")
 public class Role {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "role_id")
-    private int roleID;
+    private int roleId;
 
     @Column(name = "name")
     private String name;
@@ -24,12 +25,16 @@ public class Role {
     @OneToMany(mappedBy = "role")
     private List<UserRole> listUserRoles;
 
-    @OneToOne(mappedBy = "role")
-    private User user;
 
-
+    @ManyToMany
+    @JoinTable(
+            name = "role_permission",
+            joinColumns = @JoinColumn(name = "role_id"),
+            inverseJoinColumns = @JoinColumn(name = "permission_id")
+    )
+    private List<Permission> permissions;
     public Role(int roleID, String name) {
-        this.roleID = roleID;
+        this.roleId = roleID;
         this.name = name;
     }
 

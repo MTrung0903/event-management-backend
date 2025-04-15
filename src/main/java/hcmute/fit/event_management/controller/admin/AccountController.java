@@ -23,11 +23,9 @@ public class AccountController {
     @Autowired
     UserServiceImpl userServiceImpl;
 
-    @Autowired
-    UserRoleServiceImpl userRoleServiceImpl;
 
-    @Autowired
-    PasswordEncoder passwordEncoder;
+
+
 
 
     @GetMapping()
