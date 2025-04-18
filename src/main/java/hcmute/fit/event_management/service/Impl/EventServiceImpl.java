@@ -8,11 +8,9 @@ import hcmute.fit.event_management.entity.Segment;
 import hcmute.fit.event_management.entity.Speaker;
 import hcmute.fit.event_management.entity.Ticket;
 import hcmute.fit.event_management.repository.EventRepository;
-import hcmute.fit.event_management.repository.SessionRepository;
+import hcmute.fit.event_management.repository.SegmentRepository;
 import hcmute.fit.event_management.repository.TicketRepository;
 import hcmute.fit.event_management.service.IEventService;
-import hcmute.fit.event_management.service.ISessionService;
-import hcmute.fit.event_management.service.ITicketService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -35,7 +33,7 @@ public class EventServiceImpl implements IEventService {
     @Autowired
     private TicketRepository ticketRepository;
     @Autowired
-    private SessionRepository sessionRepository;
+    private SegmentRepository segmentRepository;
 
     @Autowired
     private ISegmentService segmentService;
@@ -336,11 +334,11 @@ public class EventServiceImpl implements IEventService {
             BeanUtils.copyProperties(speaker, speakerDTO);
             String urlImage = cloudinary.url().generate(speaker.getSpeakerImage());
             speakerDTO.setSpeakerImage(urlImage);
-            BeanUtils.copyProperties(session, dto);
+            BeanUtils.copyProperties(segment, dto);
             dto.setEventID(eventId);
-            dto.setStartTime(session.getStartTime());
-            dto.setEndTime(session.getEndTime());
-            dto.setSessionId(session.getSessionId());
+            dto.setStartTime(segment.getStartTime());
+            dto.setEndTime(segment.getEndTime());
+            dto.setSegmentId(segment.getSegmentId());
             dto.setSpeaker(speakerDTO);
             dtos.add(dto);
         }
