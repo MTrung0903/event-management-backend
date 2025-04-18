@@ -1,10 +1,6 @@
 package hcmute.fit.event_management.controller.manager;
 
-import com.cloudinary.Cloudinary;
-import hcmute.fit.event_management.CloudinaryConfig;
-import hcmute.fit.event_management.dto.SponsorDTO;
 import hcmute.fit.event_management.dto.SponsorEventDTO;
-import hcmute.fit.event_management.entity.Event;
 import hcmute.fit.event_management.entity.Sponsor;
 import hcmute.fit.event_management.entity.SponsorEvent;
 import hcmute.fit.event_management.entity.keys.SponsorEventId;
@@ -24,7 +20,6 @@ import payload.Response;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1")
