@@ -23,4 +23,6 @@ public interface IUserService {
     UserDTO DTO(User user);
     List<UserDTO> getAllAccountDTOs();
     Optional<User> findbyEmail(String email);
+
+    Optional<User> findById(Integer integer);
 }

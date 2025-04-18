@@ -32,8 +32,9 @@ public class SponsorController {
     IEventService eventService;
     @Autowired
     CloudinaryService cloudinaryService;
-    @GetMapping("/myevent/sponsor")
-    public ResponseEntity<?> getSponsorsByEventId(@RequestParam("eid") int eid) {
+
+    @GetMapping("/myevent/{eid}/sponsor")
+    public ResponseEntity<?> getSponsorsByEventId(@PathVariable("eid") int eid) {
         List<SponsorEvent> sponsorEvents = sponsorEventService.findByEventId(eid);
         List<SponsorEventDTO> sponsorEventDTOs = new ArrayList<>();
         for (SponsorEvent sponsorEvent : sponsorEvents) {
@@ -59,16 +60,17 @@ public class SponsorController {
             sponsorEventDTO.setSponsorStatus(sponsorEvent.getSponsorStatus());
             sponsorEventDTOs.add(sponsorEventDTO);
         }
-        Response response = new Response(200,"",sponsorEventDTOs);
-        return new ResponseEntity<>(response,HttpStatus.OK);
+        Response response = new Response(200, "", sponsorEventDTOs);
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
-    @PostMapping("/myevent/sponsor")
-    public ResponseEntity<?> createSponsorByEventId(@RequestParam("eid") int eid,@ModelAttribute SponsorEventDTO sponsorEventDTO, // Nhận toàn bộ dữ liệu dạng text
+
+    @PostMapping("/myevent/{eid}/sponsor")
+    public ResponseEntity<?> createSponsorByEventId(@PathVariable("eid") int eid, @ModelAttribute SponsorEventDTO sponsorEventDTO, // Nhận toàn bộ dữ liệu dạng text
                                                     @RequestParam(value = "sponsorLogoFile", required = false) MultipartFile sponsorLogoFile,
                                                     @RequestParam(value = "sponsorContractFile", required = false) MultipartFile sponsorContract) throws IOException {
         System.out.println("Nhận sponsorLogoFile: " + (sponsorLogoFile != null ? sponsorLogoFile.getOriginalFilename() : "Không có file"));
         System.out.println("Nhận sponsorContractFile: " + (sponsorContract != null ? sponsorContract.getOriginalFilename() : "Không có file"));
-        Sponsor sponsor = sponsorService.findById(sponsorEventDTO.getSponsorId()).orElse(new Sponsor());
+        Sponsor sponsor = new Sponsor();
         String sponsorLogoUrl = null;
         String sponsorContractUrl = null;
         BeanUtils.copyProperties(sponsorEventDTO, sponsor);
@@ -89,14 +91,15 @@ public class SponsorController {
         sponsorEventId.setEventId(eid);
         sponsorEvent.setId(sponsorEventId);
         sponsorEventService.save(sponsorEvent);
-        Response response = new Response(200,"",null);
-        return new ResponseEntity<>(response,HttpStatus.OK);
+        Response response = new Response(200, "", null);
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
-    @PutMapping("/myevent/sponsor")
-    public ResponseEntity<?> updateSponsorByEventId(@RequestParam("eid") int eid, @ModelAttribute SponsorEventDTO sponsorEventDTO, // Nhận toàn bộ dữ liệu dạng text
+
+    @PutMapping("/myevent/{eid}/sponsor")
+    public ResponseEntity<?> updateSponsorByEventId(@PathVariable("eid") int eid, @ModelAttribute SponsorEventDTO sponsorEventDTO, // Nhận toàn bộ dữ liệu dạng text
                                                     @RequestParam(value = "sponsorLogoFile", required = false) MultipartFile sponsorLogoFile,
                                                     @RequestParam(value = "sponsorContractFile", required = false) MultipartFile sponsorContract) throws IOException {
-        Sponsor sponsor = new Sponsor();
+        Sponsor sponsor = sponsorService.findById(sponsorEventDTO.getSponsorId()).orElse(new Sponsor());
         SponsorEvent sponsorEvent = new SponsorEvent();
         String sponsorLogoUrl = null;
         String sponsorContractUrl = null;
@@ -116,17 +119,21 @@ public class SponsorController {
         sponsorEventId.setEventId(eid);
         sponsorEvent.setId(sponsorEventId);
         sponsorEventService.save(sponsorEvent);
-        Response response = new Response(200,"",null);
-        return new ResponseEntity<>(response,HttpStatus.OK);
+        Response response = new Response(200, "", null);
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
-    @DeleteMapping("/myevent/sponsor")
-    public ResponseEntity<?> deleteSponsorByEventId(@RequestParam("eid") int eid, @RequestParam("sponsorId") int sponsorId ) {
-        sponsorService.deleteById(sponsorId);
+    @DeleteMapping("/myevent/{eid}/sponsor/{sponsorId}")
+    public ResponseEntity<?> deleteSponsorByEventId(@PathVariable("eid") int eid, @PathVariable("sponsorId") int sponsorId) throws IOException {
         SponsorEventId sponsorEventId = new SponsorEventId();
         sponsorEventId.setSponsorId(sponsorId);
         sponsorEventId.setEventId(eid);
+        SponsorEvent sponsorEvent = sponsorEventService.findById(sponsorEventId).orElse(new SponsorEvent());
+        cloudinaryService.deleteFile(sponsorEvent.getSponsorContract());
         sponsorEventService.deleteById(sponsorEventId);
-        Response response = new Response(200,"",null);
-        return new ResponseEntity<>(response,HttpStatus.OK);
+        Sponsor sponsor = sponsorService.findById(sponsorId).orElse(new Sponsor());
+        cloudinaryService.deleteFile(sponsor.getSponsorLogo());
+        sponsorService.deleteById(sponsorId);
+        Response response = new Response(200, "", null);
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 }

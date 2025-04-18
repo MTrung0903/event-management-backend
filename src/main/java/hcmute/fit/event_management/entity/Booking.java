@@ -28,6 +28,8 @@ public class Booking {
     @Column(name = "booking_status")
     private String bookingStatus;
 
+    @Column(name = "booking_code")
+    private String bookingCode;
     @ManyToOne
     @JoinColumn(name = "user_id")
     private User user;
@@ -35,10 +37,9 @@ public class Booking {
     @OneToMany(mappedBy = "booking",cascade = CascadeType.ALL)
     private List<BookingDetails> bookingDetails;
 
-    @OneToOne(mappedBy = "booking")
-    private Payment payment;
-
     @OneToMany(mappedBy = "booking",cascade = CascadeType.ALL)
     private List<Refund> refunds;
 
+    @OneToOne(mappedBy = "booking",cascade = CascadeType.ALL)
+    private Transaction transaction;
 }

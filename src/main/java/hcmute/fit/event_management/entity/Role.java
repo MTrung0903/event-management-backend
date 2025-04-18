@@ -26,8 +26,7 @@ public class Role {
 
     @OneToOne(mappedBy = "role")
     private User user;
-
-
+    
     public Role(int roleID, String name) {
         this.roleID = roleID;
         this.name = name;

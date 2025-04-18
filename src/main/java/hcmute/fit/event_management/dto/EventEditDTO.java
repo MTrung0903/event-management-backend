@@ -12,5 +12,5 @@ import java.util.List;
 public class EventEditDTO {
     private EventDTO event;
     private List<TicketDTO> ticket;
-    private List<SegmentDTO> segment;
+    private List<SessionDTO> session;
 }

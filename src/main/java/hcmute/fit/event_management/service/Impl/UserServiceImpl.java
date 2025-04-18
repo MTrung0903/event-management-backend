@@ -175,5 +175,8 @@ public class UserServiceImpl implements IUserService {
     public Optional<User> findbyEmail(String email) {
         return userRepository.findByEmail(email);
     }
-
+    @Override
+    public Optional<User> findById(Integer integer) {
+        return userRepository.findById(integer);
+    }
 }
