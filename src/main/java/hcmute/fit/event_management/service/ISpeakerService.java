@@ -23,4 +23,5 @@ public interface ISpeakerService {
     List<Speaker> findAll(Sort sort);
 
     long count();
+    Speaker saveSpeakerEdit(SpeakerDTO speakerDTO);
 }

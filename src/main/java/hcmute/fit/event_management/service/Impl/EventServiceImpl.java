@@ -11,6 +11,8 @@ import hcmute.fit.event_management.repository.EventRepository;
 import hcmute.fit.event_management.repository.SegmentRepository;
 import hcmute.fit.event_management.repository.TicketRepository;
 import hcmute.fit.event_management.service.IEventService;
+import hcmute.fit.event_management.service.ISegmentService;
+import hcmute.fit.event_management.service.ITicketService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;

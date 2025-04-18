@@ -56,5 +56,12 @@ public class SpeakerServiceImpl implements ISpeakerService {
     public long count() {
         return speakerRepository.count();
     }
+    @Override
+    public Speaker saveSpeakerEdit(SpeakerDTO speakerDTO) {
+        Speaker speaker = new Speaker();
+        BeanUtils.copyProperties(speakerDTO, speaker);
+
+        return speakerRepository.save(speaker);
+    }
 }
 
