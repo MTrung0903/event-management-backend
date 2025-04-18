@@ -3,15 +3,13 @@ package hcmute.fit.event_management.service.Impl;
 import com.cloudinary.Cloudinary;
 import hcmute.fit.event_management.dto.*;
 import hcmute.fit.event_management.entity.Event;
-import hcmute.fit.event_management.entity.Session;
+import hcmute.fit.event_management.entity.Segment;
 import hcmute.fit.event_management.entity.Speaker;
 import hcmute.fit.event_management.entity.Ticket;
 import hcmute.fit.event_management.repository.EventRepository;
-import hcmute.fit.event_management.repository.SessionRepository;
+import hcmute.fit.event_management.repository.SegmentRepository;
 import hcmute.fit.event_management.repository.TicketRepository;
 import hcmute.fit.event_management.service.IEventService;
-import hcmute.fit.event_management.service.ISessionService;
-import hcmute.fit.event_management.service.ITicketService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -32,7 +30,7 @@ public class EventServiceImpl implements IEventService {
     @Autowired
     private TicketRepository ticketRepository;
     @Autowired
-    private SessionRepository sessionRepository;
+    private SegmentRepository segmentRepository;
 
 
     @Override
@@ -203,28 +201,26 @@ public class EventServiceImpl implements IEventService {
         }
         eventRepository.save(event);
     }
-    public List<SessionDTO> getAllSessions(int eventId) {
-        List<Session> list = sessionRepository.findByEventId(eventId);
-        List<SessionDTO> dtos = new ArrayList<>();
-        for (Session session : list) {
-            SessionDTO dto = new SessionDTO();
-            Speaker speaker = session.getSpeaker();
+    public List<SegmentDTO> getAllSegments(int eventId) {
+        List<Segment> list = segmentRepository.findByEventId(eventId);
+        List<SegmentDTO> dtos = new ArrayList<>();
+        for (Segment segment : list) {
+            SegmentDTO dto = new SegmentDTO();
+            Speaker speaker = segment.getSpeaker();
             SpeakerDTO speakerDTO = new SpeakerDTO();
             BeanUtils.copyProperties(speaker, speakerDTO);
             String urlImage = cloudinary.url().generate(speaker.getSpeakerImage());
             System.out.println("day la url image cua speaker : " + urlImage);
-
             speakerDTO.setSpeakerImage(urlImage);
-            BeanUtils.copyProperties(session, dto);
+            BeanUtils.copyProperties(segment, dto);
             dto.setEventID(eventId);
-            dto.setStartTime(session.getStartTime());
-            dto.setEndTime(session.getEndTime());
-            dto.setSessionId(session.getSessionId());
+            dto.setStartTime(segment.getStartTime());
+            dto.setEndTime(segment.getEndTime());
+            dto.setSegmentId(segment.getSegmentId());
             dto.setSpeaker(speakerDTO);
             dtos.add(dto);
         }
         return dtos;
-
     }
     @Override
     public EventEditDTO getEventForEdit(int eventId){
@@ -236,11 +232,11 @@ public class EventServiceImpl implements IEventService {
             BeanUtils.copyProperties(ticket, ticketDTO);
             ticketDTOs.add(ticketDTO);
         }
-        List<SessionDTO> sessions = getAllSessions(eventId);
+        List<SegmentDTO> segments = getAllSegments(eventId);
         EventEditDTO eventEdit = new EventEditDTO();
         eventEdit.setEvent(event);
         eventEdit.setTicket(ticketDTOs);
-        eventEdit.setSession(sessions);
+        eventEdit.setSegment(segments);
         return eventEdit;
     }
 }

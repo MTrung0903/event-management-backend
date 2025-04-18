@@ -41,7 +41,7 @@ public class Event {
     private List<String> mediaContent;
 
     @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Session> sessions;
+    private List<Segment> segments;
 
     @OneToMany(mappedBy = "event", cascade = CascadeType.ALL)
     private List<Ticket> tickets;

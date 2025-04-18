@@ -10,8 +10,8 @@ import java.util.Date;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class SessionDTO {
-    private int sessionId;
+public class SegmentDTO {
+    private int segmentId;
     private String segmentTitle;
     private SpeakerDTO speaker;
     private int eventID;

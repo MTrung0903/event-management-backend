@@ -11,16 +11,16 @@ import java.util.Date;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@Table(name = "session")
-public class Session {
+@Table(name = "segment")
+public class Segment {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "session_id")
-    private int sessionId;
-    @Column(name = "session_title")
-    private String sessionTitle;
-    @Column(name = "session_description")
-    private String sessionDesc;
+    @Column(name = "segment_id")
+    private int segmentId;
+    @Column(name = "segment_title")
+    private String segmentTitle;
+    @Column(name = "segment_description")
+    private String segmentDesc;
     @Column(name = "start_time")
     private Date startTime;
     @Column(name = "end_time")

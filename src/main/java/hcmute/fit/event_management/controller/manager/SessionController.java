@@ -1,18 +1,14 @@
 package hcmute.fit.event_management.controller.manager;
 
-import hcmute.fit.event_management.dto.SessionDTO;
-import hcmute.fit.event_management.service.ISessionService;
+import hcmute.fit.event_management.service.ISegmentService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/segment")
 public class SessionController {
     @Autowired
-    private ISessionService segmentService;
+    private ISegmentService segmentService;
 
 //    @GetMapping("/{eventId}/getSegment")
 //    public ResponseEntity<List<SessionDTO>> getSegmentByEventId(@PathVariable("eventId") int eventId) {

@@ -35,7 +35,7 @@ public class Speaker {
     @Column(name = "speaker_status")
     private String speakerStatus;
     @OneToMany(mappedBy = "speaker",cascade = CascadeType.ALL)
-    private List<Session> sessions;
+    private List<Segment> segments;
     @OneToMany(mappedBy = "speaker",cascade = CascadeType.ALL)
     private List<SpeakerEvent> speakerEvents;
 }
