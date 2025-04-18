@@ -12,6 +12,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class UserRole {
     @EmbeddedId
+
     private AccountRoleId id;
 
     @ManyToOne
@@ -20,7 +21,7 @@ public class UserRole {
     private User user;
 
     @ManyToOne
-    @MapsId("roleID")
+    @MapsId("roleId")
     @JoinColumn(name = "role_id", referencedColumnName = "role_id", nullable = false)
     private Role role;
 }

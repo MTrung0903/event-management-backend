@@ -26,10 +26,6 @@ public class User {
     @Column(name = "password")
     private String password;
 
-    @OneToOne
-    @JoinColumn(name = "role_id", referencedColumnName = "role_id")
-    private Role role;
-
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private List<Notification> listNoti;
 

@@ -5,6 +5,7 @@ import hcmute.fit.event_management.service.Impl.UserDetailService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
@@ -16,6 +17,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
 
 import java.util.List;
 
@@ -24,54 +26,63 @@ import java.util.List;
 @EnableWebSecurity
 public class SecurityConfig {
     @Autowired
-    private AuthEntryPointJwt unauthorizedHandler;
+    private UserDetailService accountDetailService;
 
     @Autowired
-    private CustomAccessDeniedHandler accessDeniedHandler;
+    private AuthTokenFilter authTokenFilter;
 
-    @Autowired
-    UserDetailService userDetailService;
-
-    @Autowired
-    public AuthTokenFilter authTokenFilter;
-
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
     @Bean
     public AuthenticationManager authenticationManager(HttpSecurity httpSecurity) throws Exception {
         AuthenticationManagerBuilder authenticationManagerBuilder = httpSecurity.getSharedObject(AuthenticationManagerBuilder.class);
-        authenticationManagerBuilder.userDetailsService(userDetailService).passwordEncoder(passwordEncoder());
+        authenticationManagerBuilder.userDetailsService(accountDetailService).passwordEncoder(passwordEncoder());
         return authenticationManagerBuilder.build();
     }
     @Bean
     public DaoAuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
-        authProvider.setUserDetailsService(userDetailService);
+        authProvider.setUserDetailsService(accountDetailService);
         authProvider.setPasswordEncoder(passwordEncoder());
         return authProvider;
     }
-
-    @Bean
-    public static PasswordEncoder passwordEncoder(){
-        return new BCryptPasswordEncoder();
-    }
-
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
         http
                 .cors(cors -> cors.configurationSource(request -> {
-                    org.springframework.web.cors.CorsConfiguration config = new org.springframework.web.cors.CorsConfiguration();
-                    config.setAllowedOrigins(List.of("http://localhost:3000"));
-                    config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-                    config.setAllowedHeaders(List.of("Authorization", "Content-Type"));
-                    config.setAllowCredentials(true);
-                    return config;
+                    CorsConfiguration configuration = new CorsConfiguration();
+                    configuration.setAllowedOrigins(List.of("http://localhost:3000"));
+                    configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+                    configuration.setAllowedHeaders(List.of("*"));
+                    configuration.setAllowCredentials(true);
+                    return configuration;
                 }))
                 .csrf(csrf -> csrf.disable())
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .anyRequest().permitAll()
+                        .requestMatchers("/api/auth/login", "/api/auth/register", "/api/auth/forgot", "/api/auth/reset-password",  "/change-password", "/ws/**").permitAll()
+                        .requestMatchers("/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/man/**").hasAnyRole("MANAGER", "ADMIN")
+                        .requestMatchers("/events/create").hasAuthority("CREATE_EVENT")
+                        .requestMatchers("/events/edit").hasAuthority("EDIT_EVENT")
+                        .anyRequest().authenticated()
+                )
+                .userDetailsService(accountDetailService)
+                .addFilterBefore(authTokenFilter, UsernamePasswordAuthenticationFilter.class)
+                .exceptionHandling(configurer -> configurer
+                        .accessDeniedHandler((req, res, ex) -> {
+                            res.setStatus(HttpStatus.FORBIDDEN.value());
+                            res.getWriter().write("Access Denied");
+                        })
+                        .authenticationEntryPoint((req, res, ex) -> {
+                            res.setStatus(HttpStatus.UNAUTHORIZED.value());
+                            res.getWriter().write("Unauthorized");
+                        })
                 );
-
-
         return http.build();
+
     }
 }

@@ -1,7 +1,10 @@
 package hcmute.fit.event_management.util;
 
 import hcmute.fit.event_management.dto.UserDetail;
+import hcmute.fit.event_management.entity.Permission;
 import hcmute.fit.event_management.entity.User;
+import hcmute.fit.event_management.repository.UserRepository;
+import hcmute.fit.event_management.repository.UserRoleRepository;
 import hcmute.fit.event_management.service.IUserService;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
@@ -17,6 +20,7 @@ import javax.crypto.SecretKey;
 
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Component
 public class JwtTokenUtil {
@@ -27,7 +31,7 @@ public class JwtTokenUtil {
     @Value("${jwt.expirationLoginMs}")
     private Long expirationLoginMs;
     @Autowired
-    private IUserService accountService;
+    private UserRepository userRepository;
 
     Logger logger = LoggerFactory.getLogger(this.getClass());
 
@@ -36,14 +40,22 @@ public class JwtTokenUtil {
         SecretKey key = Keys.hmacShaKeyFor(Decoders.BASE64.decode(privateKey));
         Date now = new Date();
         Date expiration = new Date(now.getTime() + expirationLoginMs);
-        User acc = accountService.findbyEmail(accountPrincipal.getUsername())
+        User user = userRepository.findByEmail(accountPrincipal.getUsername())
                 .orElse(new User());
+
+        List<String> permissions = user.getListUserRoles().stream()
+                .flatMap(userRole -> userRole.getRole().getPermissions().stream())
+                .map(Permission::getName)
+                .distinct()
+                .collect(Collectors.toList());
+
         return Jwts.builder()
                 .subject(accountPrincipal.getUsername())
                 .issuedAt(now)
                 .expiration(expiration)
                 .claim("roles", roles)
-                .claim("userId", acc.getUserId())
+                .claim("userId", user.getUserId())
+                .claim("permissions", permissions)
                 .signWith(key)
                 .compact();
     }
@@ -88,6 +100,11 @@ public class JwtTokenUtil {
     public List<String> getRolesFromToken(String token) {
         SecretKey key = Keys.hmacShaKeyFor(Decoders.BASE64.decode(privateKey));
         Claims claims = Jwts.parser().verifyWith(key).build().parseSignedClaims(token).getPayload();
-        return claims.get("roles", List.class); // Lấy danh sách roles từ "roles" claim
+        return claims.get("roles", List.class);
+    }
+    public List<String> getPermissionsFromToken(String token) {
+        SecretKey key = Keys.hmacShaKeyFor(Decoders.BASE64.decode(privateKey));
+        Claims claims = Jwts.parser().verifyWith(key).build().parseSignedClaims(token).getPayload();
+        return claims.get("permissions", List.class);
     }
 }

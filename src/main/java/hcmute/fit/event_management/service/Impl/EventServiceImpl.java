@@ -325,7 +325,7 @@ public class EventServiceImpl implements IEventService {
                 .collect(Collectors.toList());
     }
 
-    // Hàm phụ trợ để lấy danh sách segment
+
     private List<SegmentDTO> getAllSegments(int eventId) {
         List<Segment> list = segmentRepository.findByEventId(eventId);
         List<SegmentDTO> dtos = new ArrayList<>();
@@ -346,6 +346,7 @@ public class EventServiceImpl implements IEventService {
         }
         return dtos;
     }
+
     // ham bo dau tieng viet
     private String removeDiacritics(String str) {
         if (str == null) return null;
