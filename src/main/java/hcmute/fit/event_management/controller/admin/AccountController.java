@@ -23,11 +23,6 @@ public class AccountController {
     @Autowired
     UserServiceImpl userServiceImpl;
 
-
-
-
-
-
     @GetMapping()
     public ResponseEntity<?> getAccount() {
         List<UserDTO> listUserDTO = userServiceImpl.getAllAccountDTOs();

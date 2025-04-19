@@ -6,6 +6,7 @@ import hcmute.fit.event_management.entity.Event;
 import hcmute.fit.event_management.service.Impl.EventServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -19,6 +20,7 @@ public class EventController {
     private EventServiceImpl eventService;
 
     @PostMapping("/create")
+    @PreAuthorize("hasRole(ORGANIZER)")
     public ResponseEntity<Integer> createEvent(@RequestBody EventDTO event) throws IOException {
         Event savedEvent = eventService.saveEvent(event);
         return ResponseEntity.ok(savedEvent.getEventID());
@@ -37,17 +39,20 @@ public class EventController {
         return ResponseEntity.ok(event);
     }
     @PutMapping("/edit")
+    @PreAuthorize("hasRole(ORGANIZER)")
     public ResponseEntity<EventEditDTO> editEvent( @RequestBody EventEditDTO eventEditDTO) throws Exception {
        EventEditDTO eventEdit = eventService.saveEditEvent(eventEditDTO);
        return ResponseEntity.ok(eventEdit);
     }
     @DeleteMapping("/delete/{eventId}")
+    @PreAuthorize("hasRole(ORGANIZER)")
     public ResponseEntity<Boolean> deleteEvent(@PathVariable int eventId) {
         eventService.deleteEvent(eventId);
         return ResponseEntity.ok(true);
     }
 
     @GetMapping("/edit/{eventId}")
+    @PreAuthorize("hasRole(ORGANIZER)")
     public ResponseEntity<EventEditDTO> editEvent(@PathVariable int eventId) {
         EventEditDTO eventEdit = eventService.getEventForEdit(eventId);
         return ResponseEntity.ok(eventEdit);
@@ -80,12 +85,12 @@ public class EventController {
             return ResponseEntity.status(500).body(null);
         }
     }
-    @GetMapping("search-by-type/{categoryName}")
+    @GetMapping("search/by-type/{categoryName}")
     public ResponseEntity<List<EventDTO>> searchEventsByEventType(@PathVariable String categoryName){
         List<EventDTO> eventsSearchByType = eventService.findEventsByType(categoryName);
         return ResponseEntity.ok(eventsSearchByType);
     }
-    @GetMapping("search-by-city/{city}")
+    @GetMapping("search/by-city/{city}")
     public ResponseEntity<List<EventDTO>> searchEventsByCity(@PathVariable String city){
         List<EventDTO> events = eventService.findEventsByLocation( city );
         return ResponseEntity.ok(events);

@@ -135,4 +135,10 @@ public class AuthServiceImpl implements AuthService {
         }
     }
 
+    @Override
+    public ResponseEntity<Response> logout() {
+        SecurityContextHolder.clearContext();
+        logger.info("User logged out successfully");
+        return ResponseEntity.ok(new Response(200, "Success", "Logged out successfully"));
+    }
 }

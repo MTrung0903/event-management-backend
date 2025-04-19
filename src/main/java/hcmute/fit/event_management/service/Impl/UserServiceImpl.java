@@ -91,7 +91,7 @@ public class UserServiceImpl implements IUserService {
         user.setPassword(passwordEncoder.encode(userDTO.getPassword()));
         user.setActive(true);
 
-        Optional<Role> role = roleRepository.findByName("ROLE_USER");
+        Optional<Role> role = roleRepository.findByName("ROLE_ORGANIZER");
         if (role.isEmpty()) {
             logger.error("Registration failed: ROLE_USER not found in database");
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)

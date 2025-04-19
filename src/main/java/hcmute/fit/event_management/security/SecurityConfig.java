@@ -39,12 +39,14 @@ public class SecurityConfig {
     public AuthenticationManager authenticationManager(HttpSecurity httpSecurity) throws Exception {
         AuthenticationManagerBuilder authenticationManagerBuilder = httpSecurity.getSharedObject(AuthenticationManagerBuilder.class);
         authenticationManagerBuilder.userDetailsService(accountDetailService).passwordEncoder(passwordEncoder());
+
         return authenticationManagerBuilder.build();
     }
     @Bean
     public DaoAuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
         authProvider.setUserDetailsService(accountDetailService);
+
         authProvider.setPasswordEncoder(passwordEncoder());
         return authProvider;
     }
@@ -63,11 +65,11 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/login", "/api/auth/register", "/api/auth/forgot", "/api/auth/reset-password",  "/change-password", "/ws/**").permitAll()
-                        .requestMatchers("/admin/**").hasRole("ADMIN")
-                        .requestMatchers("/man/**").hasAnyRole("MANAGER", "ADMIN")
-                        .requestMatchers("/events/create").hasAuthority("CREATE_EVENT")
-                        .requestMatchers("/events/edit").hasAuthority("EDIT_EVENT")
+                        .requestMatchers("/api/auth/login", "/api/auth/register", "/api/auth/forgot", "/api/auth/reset-password",
+                                "/api/auth/logout", "/change-password", "/ws/**","/api/storage/**","/api/events/search/**").permitAll()
+//                        .requestMatchers("/api/segment/**","/api/ticket/**").hasAnyRole("ORGANIZER","ADMIN")
+//                        .requestMatchers("/events/create").hasAuthority("CREATE_EVENT")
+//                        .requestMatchers("/events/edit").hasAuthority("EDIT_EVENT")
                         .anyRequest().authenticated()
                 )
                 .userDetailsService(accountDetailService)
