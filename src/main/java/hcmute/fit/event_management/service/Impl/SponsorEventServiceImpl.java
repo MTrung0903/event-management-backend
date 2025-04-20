@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class SponsorEventServiceImpl implements ISponsorEventService {
@@ -27,5 +28,9 @@ public class SponsorEventServiceImpl implements ISponsorEventService {
     @Override
     public <S extends SponsorEvent> S save(S entity) {
         return sponsorEventRepository.save(entity);
+    }
+    @Override
+    public Optional<SponsorEvent> findById(SponsorEventId sponsorEventId) {
+        return sponsorEventRepository.findById(sponsorEventId);
     }
 }

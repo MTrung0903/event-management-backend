@@ -14,4 +14,5 @@ public interface ISegmentService {
     void saveEditSegment(int eventId, SegmentDTO segmentDTO) throws Exception;
 
     void deleteSegmentByEventId(int eventId);
+
 }
