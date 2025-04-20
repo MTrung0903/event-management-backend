@@ -95,6 +95,15 @@ public class RolerServiceImpl implements IRoleService {
         }
         return roleDTOs;
     }
+    @Override
+    public RoleDTO getRoleById(int roleId) {
+        Role roleOpt = roleRepository.findById(roleId).orElse(null);
+        RoleDTO roleDTO = new RoleDTO();
+        roleDTO.setRoleID(roleOpt.getRoleId());
+        roleDTO.setName(roleOpt.getName());
+        roleDTO.setPermissions(convertToDTO(roleOpt.getPermissions()));
+        return roleDTO;
+    }
    public List<PermissionDTO> convertToDTO(List<Permission> permissions) {
         List<PermissionDTO> permissionDTOs = new ArrayList<>();
         for (Permission permission : permissions) {
@@ -104,5 +113,21 @@ public class RolerServiceImpl implements IRoleService {
             permissionDTOs.add(permissionDTO);
         }
         return permissionDTOs;
+   }
+   @Override
+   public RoleDTO addNewPermissionForRole(int roleId, PermissionDTO permissionDTO) {
+        Optional<Role> roleOpt = roleRepository.findById(roleId);
+        if (!roleOpt.isEmpty()) {
+            Optional<Permission> permissionOpt = permissionRepository.findByName(permissionDTO.getName());
+            if (permissionOpt.isPresent()) {
+                Permission permission = permissionOpt.get();
+                List<Permission> newPermissions = roleOpt.get().getPermissions();
+                newPermissions.add(permission);
+                Role role = roleOpt.get();
+                role.setPermissions(newPermissions);
+                roleRepository.save(role);
+            }
+        }
+        return getRoleById(roleId);
    }
 }
