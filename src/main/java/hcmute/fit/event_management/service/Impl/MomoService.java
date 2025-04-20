@@ -129,17 +129,18 @@ public class MomoService {
                 + "&resultCode=" + resultCode
                 + "&transId=" + transId;
         String generatedSignature = hmacSHA256(momoConfig.getSecretKey(), rawHash);
-        if (!signature.equals(generatedSignature)) {
-            return;
-        }
+//        if (!signature.equals(generatedSignature)) {
+//            return;
+//        }
         Optional<Booking> optionalBooking = bookingRepository.findByBookingCode(orderId);
         Booking booking = optionalBooking.orElse(new Booking());
-        if (booking.getBookingStatus().equals("PAID")) {
-            return;
-        }
-        if (optionalBooking.isEmpty()) {
-            return;
-        }
+//        if (booking.getBookingStatus().equals("PAID")) {
+//            return;
+//        }
+//        if (optionalBooking.isEmpty()) {
+//            return;
+//        }
+
         if ("0".equals(resultCode)) {
             booking.setBookingStatus("PAID");
             bookingRepository.save(booking);

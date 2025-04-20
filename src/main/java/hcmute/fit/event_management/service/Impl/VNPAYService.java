@@ -54,9 +54,9 @@ public class VNPAYService {
         vnp_Params.put("vnp_TmnCode", vnPayConfig.getTmnCode());
         vnp_Params.put("vnp_Amount", vnp_Amount);
         vnp_Params.put("vnp_CurrCode", "VND");
-
-        //vnp_Params.put("vnp_BankCode", "");
-
+        if (checkoutDTO.getBankCode() != null && !checkoutDTO.getBankCode().isEmpty()) {
+            vnp_Params.put("vnp_BankCode", checkoutDTO.getBankCode());
+        }
         vnp_Params.put("vnp_TxnRef", vnp_TxnRef);
         vnp_Params.put("vnp_OrderInfo", vnp_OrderInfo);
         vnp_Params.put("vnp_OrderType", vnp_OrderType);
