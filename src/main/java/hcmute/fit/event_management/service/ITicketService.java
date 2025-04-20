@@ -11,7 +11,14 @@ public interface ITicketService {
     Optional<Ticket> findById(Integer integer);
 
 
+    void deleteById(Integer integer);
+
     void addTicket(int eventId, TicketDTO ticketDTO);
 
     List<TicketDTO> getTicketsByEventId(int eventId);
+
+    void saveEditTicket(int eventId, TicketDTO ticketDTO) throws Exception;
+
+
+    void deleteTicketByEventId(int eventId);
 }

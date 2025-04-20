@@ -42,4 +42,8 @@ public class AuthController {
     public ResponseEntity<Response> resetPassword(@RequestBody ResetPasswordDTO resetPasswordDTO) {
         return authService.resetPassword(resetPasswordDTO);
     }
+    @PostMapping("/logout")
+    public ResponseEntity<Response> logout() {
+        return authService.logout();
+    }
 }

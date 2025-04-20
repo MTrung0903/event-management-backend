@@ -4,6 +4,7 @@ import hcmute.fit.event_management.dto.TicketDTO;
 import hcmute.fit.event_management.service.ITicketService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -15,6 +16,7 @@ public class TicketController {
     private ITicketService ticketService;
 
     @PostMapping("/{eventId}")
+    @PreAuthorize("hasRole(ORGANIZER)")
     public ResponseEntity<TicketDTO> createTicket(@PathVariable int eventId, @RequestBody TicketDTO ticketDTO) {
         ticketService.addTicket(eventId, ticketDTO);
         return ResponseEntity.ok(ticketDTO);
@@ -25,5 +27,10 @@ public class TicketController {
         List<TicketDTO> list = ticketService.getTicketsByEventId(eventId);
         return ResponseEntity.ok(list);
     }
-
+    @DeleteMapping("delete/{ticketId}")
+    @PreAuthorize("hasRole(ORGANIZER)")
+    public ResponseEntity<Boolean> deleteTicket(@PathVariable int ticketId) {
+        ticketService.deleteById(ticketId);
+        return ResponseEntity.ok(true);
+    }
 }

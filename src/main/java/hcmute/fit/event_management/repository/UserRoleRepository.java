@@ -6,9 +6,10 @@ import hcmute.fit.event_management.entity.keys.AccountRoleId;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.Optional;
+
 @Repository
 public interface UserRoleRepository extends JpaRepository<UserRole, AccountRoleId> {
-
     void deleteAllByUser(User user);
 
 }

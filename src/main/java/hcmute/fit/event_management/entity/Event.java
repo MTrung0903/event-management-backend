@@ -25,7 +25,8 @@ public class Event {
     private String eventStatus;
     private String eventStart;
     private String eventEnd;
-    private String eventLocation;
+    @Embedded
+    private EventLocation eventLocation;
     private String tags;
     private String eventVisibility;
     private String publishTime;
@@ -43,13 +44,9 @@ public class Event {
     @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Segment> segments;
 
-    @OneToMany(mappedBy = "event", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Ticket> tickets;
 
-    @OneToMany(mappedBy = "event", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "event",cascade = CascadeType.ALL, orphanRemoval = true)
     private List<SponsorEvent> sponsorEvents;
-
-    @OneToMany(mappedBy = "event", cascade = CascadeType.ALL)
-    private List<SpeakerEvent> speakerEvents;
-
 }

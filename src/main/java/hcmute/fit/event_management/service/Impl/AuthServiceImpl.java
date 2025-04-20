@@ -18,6 +18,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -26,6 +27,7 @@ import payload.Response;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Component
 public class AuthServiceImpl implements AuthService {
@@ -45,20 +47,32 @@ public class AuthServiceImpl implements AuthService {
     Logger logger = LoggerFactory.getLogger(this.getClass());
     @Override
     public ResponseEntity<Response> signIn(UserDTO account) {
-        Response response;
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(account.getEmail(), account.getPassword()));
-        if (authentication.isAuthenticated()) {
+        try {
+            Optional<User> userOpt = userRepository.findByEmail(account.getEmail());
+            if (userOpt.isEmpty()) {
+                logger.warn("Login failed: Email {} not found", account.getEmail());
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(new Response(401, "Unauthorized", "Invalid email or password"));
+            }
+
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(account.getEmail(), account.getPassword()));
             SecurityContextHolder.getContext().setAuthentication(authentication);
+
             List<String> roles = authentication.getAuthorities().stream()
                     .map(GrantedAuthority::getAuthority)
-                    .toList();
+                    .filter(auth -> auth.startsWith("ROLE_"))
+                    .map(auth -> auth.substring(5))
+                    .collect(Collectors.toList());
+
             String token = jwtTokenUtil.generateToken(authentication, roles);
-            response = new Response(200, "Success", token);
-            return new ResponseEntity<>(response, HttpStatus.OK);
-        } else {
-            response = new Response(401, "Unauthorized", "Invalid credentials");
-            return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
+
+            logger.info("User {} logged in successfully", account.getEmail());
+            return ResponseEntity.ok(new Response(200, "Success", token));
+        } catch (AuthenticationException e) {
+            logger.error("Login failed for email {}: {}", account.getEmail(), e.getMessage());
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(new Response(401, "Unauthorized", "Invalid email or password"));
         }
     }
     @Transactional
@@ -72,7 +86,7 @@ public class AuthServiceImpl implements AuthService {
                     .body(new Response(404, "Not Found", "Account with this email does not exist"));
         }
 
-        User user = accountOpt.get(); // Tài khoản tồn tại
+        User user = accountOpt.get();
         String newToken = jwtTokenUtil.generateResetToken(email);
 
         // Kiểm tra và cập nhật/đặt mới token
@@ -80,7 +94,7 @@ public class AuthServiceImpl implements AuthService {
                 .findByUserId(user.getUserId())
                 .orElse(new PasswordResetToken());
 
-        resetToken.setUserId(user.getUserId());
+        resetToken.setUser(user);
         resetToken.setToken(newToken);
         passwordResetTokenRepository.save(resetToken);
 
@@ -88,7 +102,6 @@ public class AuthServiceImpl implements AuthService {
         emailService.sendResetEmail(email, newToken);
         logger.info("Password reset request email sent successfully for email: {}", email);
 
-        // Trả về phản hồi
         return ResponseEntity.ok(new Response(200, "Success", "Password reset link has been sent to your email"));
     }
 
@@ -122,4 +135,10 @@ public class AuthServiceImpl implements AuthService {
         }
     }
 
+    @Override
+    public ResponseEntity<Response> logout() {
+        SecurityContextHolder.clearContext();
+        logger.info("User logged out successfully");
+        return ResponseEntity.ok(new Response(200, "Success", "Logged out successfully"));
+    }
 }

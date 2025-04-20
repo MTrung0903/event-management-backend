@@ -23,13 +23,6 @@ public class AccountController {
     @Autowired
     UserServiceImpl userServiceImpl;
 
-    @Autowired
-    UserRoleServiceImpl userRoleServiceImpl;
-
-    @Autowired
-    PasswordEncoder passwordEncoder;
-
-
     @GetMapping()
     public ResponseEntity<?> getAccount() {
         List<UserDTO> listUserDTO = userServiceImpl.getAllAccountDTOs();

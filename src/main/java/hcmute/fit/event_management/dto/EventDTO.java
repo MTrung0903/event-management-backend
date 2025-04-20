@@ -19,7 +19,7 @@ public class EventDTO {
     private String eventStatus;
     private String eventStart;
     private String eventEnd;
-    private String eventLocation;
+    private EventLocationDTO eventLocation;
     private String tags;
     private String eventVisibility;
     private String publishTime;

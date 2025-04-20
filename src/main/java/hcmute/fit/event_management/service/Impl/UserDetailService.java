@@ -30,16 +30,20 @@ public class UserDetailService implements UserDetailsService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
-        // Kiểm tra xem listAccountRoles có dữ liệu không
-        if (user.getListUserRoles() == null || user.getListUserRoles().isEmpty()) {
 
+        if (user.getListUserRoles() == null || user.getListUserRoles().isEmpty()) {
             System.out.println("User has no roles");
         }
 
         List<GrantedAuthority> authorities = user.getListUserRoles().stream()
                 .map(role -> new SimpleGrantedAuthority("ROLE_" + role.getRole().getName()))
                 .collect(Collectors.toList());
-
+        List<GrantedAuthority> permissionAuthorities = user.getListUserRoles().stream()
+                .flatMap(userRole -> userRole.getRole().getPermissions().stream())
+                .map(permission -> new SimpleGrantedAuthority(permission.getName()))
+                .distinct()
+                .collect(Collectors.toList());
+        authorities.addAll(permissionAuthorities);
         System.out.println("Authorities: " + authorities);
         return new UserDetail(user.getEmail(), user.getPassword(), authorities);
     }

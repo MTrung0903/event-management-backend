@@ -6,6 +6,8 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
@@ -17,6 +19,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -25,7 +28,7 @@ public class AuthTokenFilter extends OncePerRequestFilter {
     @Autowired
     JwtTokenUtil jwtTokenUtil;
 
-
+    Logger logger = LoggerFactory.getLogger(this.getClass());
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws IOException, ServletException {
@@ -34,17 +37,23 @@ public class AuthTokenFilter extends OncePerRequestFilter {
             if (token != null && jwtTokenUtil.validateToken(token)) {
                 String email = jwtTokenUtil.getEmailFromToken(token);
                 List<String> roles = jwtTokenUtil.getRolesFromToken(token);
-                List<GrantedAuthority> authorities = roles.stream()
+                List<String> permissions = jwtTokenUtil.getPermissionsFromToken(token);
+
+                List<GrantedAuthority> authorities = new ArrayList<>();
+                roles.stream()
+                        .map(role -> new SimpleGrantedAuthority("ROLE_" + role))
+                        .forEach(authorities::add);
+                permissions.stream()
                         .map(SimpleGrantedAuthority::new)
-                        .collect(Collectors.toList());
+                        .forEach(authorities::add);
+
                 UserDetail userDetail = new UserDetail(email, null, authorities);
-                UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken =
+                UsernamePasswordAuthenticationToken authentication =
                         new UsernamePasswordAuthenticationToken(userDetail, null, userDetail.getAuthorities());
-                SecurityContext securityContext = SecurityContextHolder.getContext();
-                securityContext.setAuthentication(usernamePasswordAuthenticationToken);
+                SecurityContextHolder.getContext().setAuthentication(authentication);
             }
         } catch (Exception e) {
-            System.out.println("Error" + e.getMessage());
+            logger.error("JWT authentication error: {}", e.getMessage());
         }
         filterChain.doFilter(request, response);
     }

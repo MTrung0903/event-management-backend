@@ -3,8 +3,8 @@ package hcmute.fit.event_management.service.Impl;
 import hcmute.fit.event_management.dto.TicketDTO;
 import hcmute.fit.event_management.entity.Event;
 import hcmute.fit.event_management.entity.Ticket;
+import hcmute.fit.event_management.repository.EventRepository;
 import hcmute.fit.event_management.repository.TicketRepository;
-import hcmute.fit.event_management.service.IEventService;
 import hcmute.fit.event_management.service.ITicketService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,7 +19,7 @@ public class TicketServiceImpl implements ITicketService {
     @Autowired
     private TicketRepository ticketRepository;
     @Autowired
-   private IEventService eventService;
+   private EventRepository eventRepository;
 
     public TicketServiceImpl(TicketRepository ticketRepository) {
         this.ticketRepository = ticketRepository;
@@ -31,10 +31,15 @@ public class TicketServiceImpl implements ITicketService {
     }
 
     @Override
+    public void deleteById(Integer integer) {
+        ticketRepository.deleteById(integer);
+    }
+
+    @Override
     public void addTicket(int eventId, TicketDTO ticketDTO) {
         Ticket ticket = new Ticket();
         BeanUtils.copyProperties(ticketDTO, ticket);
-        Optional<Event> optionalEvent = eventService.findById(eventId);
+        Optional<Event> optionalEvent = eventRepository.findById(eventId);
         if (optionalEvent.isEmpty()) {
             throw new RuntimeException("Event not found with id: " + eventId);
         }
@@ -56,6 +61,29 @@ public class TicketServiceImpl implements ITicketService {
             ticketDTOs.add(ticketDTO);
         }
         return ticketDTOs;
+    }
+
+    @Override
+    public void saveEditTicket(int eventId, TicketDTO ticketDTO) throws Exception{
+        Ticket ticket = new Ticket();
+        BeanUtils.copyProperties(ticketDTO, ticket);
+        Optional<Event> optionalEvent = eventRepository.findById(eventId);
+        if (optionalEvent.isEmpty()) {
+            throw new RuntimeException("Event not found with id: " + eventId);
+        }
+        ticket.setEvent(optionalEvent.get());
+        ticketRepository.save(ticket);
+    }
+
+
+    @Override
+    public void deleteTicketByEventId(int eventId){
+        List<Ticket> tickets = ticketRepository.findByEventID(eventId);
+        if (!tickets.isEmpty()) {
+            for (Ticket ticket : tickets) {
+                ticketRepository.delete(ticket);
+            }
+        }
     }
 
 }

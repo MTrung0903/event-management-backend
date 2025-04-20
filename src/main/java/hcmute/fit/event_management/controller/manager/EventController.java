@@ -6,6 +6,7 @@ import hcmute.fit.event_management.entity.Event;
 import hcmute.fit.event_management.service.Impl.EventServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -19,6 +20,7 @@ public class EventController {
     private EventServiceImpl eventService;
 
     @PostMapping("/create")
+    @PreAuthorize("hasRole(ORGANIZER)")
     public ResponseEntity<Integer> createEvent(@RequestBody EventDTO event) throws IOException {
         Event savedEvent = eventService.saveEvent(event);
         return ResponseEntity.ok(savedEvent.getEventID());
@@ -36,68 +38,62 @@ public class EventController {
         }
         return ResponseEntity.ok(event);
     }
-    // Tìm kiếm sự kiện theo tên
-    @GetMapping("/search/name")
-    public ResponseEntity<List<EventDTO>> getEventsByName(
-            @RequestParam("name") String eventName) {
-        List<EventDTO> events = eventService.findEventsByName(eventName);
-        return ResponseEntity.ok(events);
+    @PutMapping("/edit")
+    @PreAuthorize("hasRole(ORGANIZER)")
+    public ResponseEntity<EventEditDTO> editEvent( @RequestBody EventEditDTO eventEditDTO) throws Exception {
+       EventEditDTO eventEdit = eventService.saveEditEvent(eventEditDTO);
+       return ResponseEntity.ok(eventEdit);
+    }
+    @DeleteMapping("/delete/{eventId}")
+    @PreAuthorize("hasRole(ORGANIZER)")
+    public ResponseEntity<Boolean> deleteEvent(@PathVariable int eventId) {
+        eventService.deleteEvent(eventId);
+        return ResponseEntity.ok(true);
     }
 
-    // Tìm kiếm sự kiện theo ngày diễn ra
-    @GetMapping("/search/date")
-    public ResponseEntity<List<EventDTO>> getEventsByDate(
-            @RequestParam("date") String eventStart) {
-        List<EventDTO> events = eventService.findEventsByDate(eventStart);
-        return ResponseEntity.ok(events);
-    }
-
-    // Tìm kiếm sự kiện theo host
-    @GetMapping("/search/host")
-    public ResponseEntity<List<EventDTO>> getEventsByHost(
-            @RequestParam("host") String eventHost) {
-        List<EventDTO> events = eventService.findEventsByHost(eventHost);
-        return ResponseEntity.ok(events);
-    }
-
-    // Tìm kiếm sự kiện theo địa điểm
-    @GetMapping("/search/location")
-    public ResponseEntity<List<EventDTO>> getEventsByLocation(
-            @RequestParam("location") String eventLocation) {
-        List<EventDTO> events = eventService.findEventsByLocation(eventLocation);
-        return ResponseEntity.ok(events);
-    }
-
-    // Tìm kiếm sự kiện theo tags
-    @GetMapping("/search/tags")
-    public ResponseEntity<List<EventDTO>> getEventsByTags(
-            @RequestParam("tag") String tag) {
-        List<EventDTO> events = eventService.findEventsByTags(tag);
-        return ResponseEntity.ok(events);
-    }
-
-    // Tìm kiếm sự kiện theo loại
-    @GetMapping("/search/type")
-    public ResponseEntity<List<EventDTO>> getEventsByType(
-            @RequestParam("type") String eventType) {
-        List<EventDTO> events = eventService.findEventsByType(eventType);
-        return ResponseEntity.ok(events);
-    }
-    @GetMapping("/search/name-and-location")
-    public ResponseEntity<List<EventDTO>> getEventsByNameAndLocation(
-            @RequestParam("name") String name,
-            @RequestParam("location") String location) {
-        if (name == null || name.trim().isEmpty() || location == null || location.trim().isEmpty()) {
-            return ResponseEntity.badRequest().build();
-        }
-        List<EventDTO> events = eventService.findEventsByNameAndLocation(name, location);
-        return events.isEmpty() ?
-                ResponseEntity.noContent().build() :
-                ResponseEntity.ok(events);
-    }
     @GetMapping("/edit/{eventId}")
+    @PreAuthorize("hasRole(ORGANIZER)")
     public ResponseEntity<EventEditDTO> editEvent(@PathVariable int eventId) {
         EventEditDTO eventEdit = eventService.getEventForEdit(eventId);
         return ResponseEntity.ok(eventEdit);
     }
+    @GetMapping("/search")
+    public ResponseEntity<List<EventDTO>> searchEvents(
+            @RequestParam("term") String searchTerm,
+            @RequestParam("type") String searchType) {
+        System.out.println("searchTerm: " + searchTerm);
+        System.out.println("searchType: " + searchType);
+        try {
+            List<EventDTO> results = eventService.searchEvents(searchTerm, searchType);
+            return ResponseEntity.ok(results);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(null);
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(null);
+        }
+    }
+    @GetMapping("/search/by-name-and-city")
+    public ResponseEntity<List<EventDTO>> searchEventsByNameAndCity(
+            @RequestParam("term") String searchTerm,
+            @RequestParam("city") String cityKey) {
+        try {
+            List<EventDTO> results = eventService.searchEventsByNameAndCity(searchTerm, cityKey);
+            return ResponseEntity.ok(results);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(null);
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(null);
+        }
+    }
+    @GetMapping("search/by-type/{categoryName}")
+    public ResponseEntity<List<EventDTO>> searchEventsByEventType(@PathVariable String categoryName){
+        List<EventDTO> eventsSearchByType = eventService.findEventsByType(categoryName);
+        return ResponseEntity.ok(eventsSearchByType);
+    }
+    @GetMapping("search/by-city/{city}")
+    public ResponseEntity<List<EventDTO>> searchEventsByCity(@PathVariable String city){
+        List<EventDTO> events = eventService.findEventsByLocation( city );
+        return ResponseEntity.ok(events);
+    }
+
 }

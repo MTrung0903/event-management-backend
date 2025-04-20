@@ -11,4 +11,6 @@ public interface AuthService {
     ResponseEntity<Response> signIn(UserDTO account);
     ResponseEntity<Response> resetPassword(ResetPasswordDTO resetPasswordDTO);
     ResponseEntity<Response> sendResetPassword(String email);
+
+    ResponseEntity<Response> logout();
 }

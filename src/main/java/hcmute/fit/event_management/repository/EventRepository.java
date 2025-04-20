@@ -9,15 +9,19 @@ import java.util.List;
 
 @Repository
 public interface EventRepository extends JpaRepository<Event, Integer> {
+
     List<Event> findByEventNameContainingIgnoreCase(String eventName);
 
     List<Event> findByEventStart(String eventStart);
 
-    List<Event> findByEventHost(String eventHost);
-
-    List<Event> findByEventLocationContainingIgnoreCase(String eventLocation);
+    List<Event> findByEventHostContainingIgnoreCase(String eventHost);
 
     List<Event> findByTagsContainingIgnoreCase(String tag);
 
-    List<Event> findByEventType(String eventType);
+    List<Event> findByEventTypeContainingIgnoreCase(String eventType);
+
+    List<Event> findByEventLocationCityContainingIgnoreCase(String city);
+
+    List<Event> findByEventLocationVenueNameContainingIgnoreCase(String venueName);
+
 }
