@@ -5,11 +5,18 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
-@AllArgsConstructor
-@NoArgsConstructor
+
 public class MessageDTO {
     private String content;
     private String senderEmail;
     private String recipientEmail;
     private String timestamp;
+
+    public MessageDTO() {}
+    public MessageDTO(String content, String senderEmail, String recipientEmail, String timestamp) {
+        this.content = content;
+        this.senderEmail = senderEmail;
+        this.recipientEmail = recipientEmail;
+        this.timestamp = timestamp;
+    }
 }

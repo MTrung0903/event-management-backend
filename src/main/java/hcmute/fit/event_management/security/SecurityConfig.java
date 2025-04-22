@@ -67,9 +67,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/login", "/api/auth/register", "/api/auth/forgot", "/api/auth/reset-password","/chat/**",
                                 "/api/auth/logout", "/change-password", "/ws/**","/api/storage/**","/api/events/search/**").permitAll()
-//                        .requestMatchers("/api/segment/**","/api/ticket/**").hasAnyRole("ORGANIZER","ADMIN")
-//                        .requestMatchers("/events/create").hasAuthority("CREATE_EVENT")
-//                        .requestMatchers("/events/edit").hasAuthority("EDIT_EVENT")
+
                         .anyRequest().authenticated()
                 )
                 .userDetailsService(accountDetailService)

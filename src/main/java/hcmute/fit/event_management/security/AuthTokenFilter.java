@@ -32,28 +32,31 @@ public class AuthTokenFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws IOException, ServletException {
+        String path = request.getRequestURI();
+        if (path.startsWith("/chat/")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
         try {
             String token = getJwtFromRequest(request);
+            logger.info("JWT received for {}: {}", path, token);
             if (token != null && jwtTokenUtil.validateToken(token)) {
                 String email = jwtTokenUtil.getEmailFromToken(token);
                 List<String> roles = jwtTokenUtil.getRolesFromToken(token);
                 List<String> permissions = jwtTokenUtil.getPermissionsFromToken(token);
-
                 List<GrantedAuthority> authorities = new ArrayList<>();
-                roles.stream()
-                        .map(role -> new SimpleGrantedAuthority("ROLE_" + role))
-                        .forEach(authorities::add);
-                permissions.stream()
-                        .map(SimpleGrantedAuthority::new)
-                        .forEach(authorities::add);
-
+                roles.stream().map(role -> new SimpleGrantedAuthority("ROLE_" + role)).forEach(authorities::add);
+                permissions.stream().map(SimpleGrantedAuthority::new).forEach(authorities::add);
                 UserDetail userDetail = new UserDetail(email, null, authorities);
                 UsernamePasswordAuthenticationToken authentication =
                         new UsernamePasswordAuthenticationToken(userDetail, null, userDetail.getAuthorities());
                 SecurityContextHolder.getContext().setAuthentication(authentication);
+                logger.info("Authenticated user: {} for {}", email, path);
+            } else {
+                logger.warn("Invalid or missing JWT for {}", path);
             }
         } catch (Exception e) {
-            logger.error("JWT authentication error: {}", e.getMessage());
+            logger.error("JWT authentication error for {}: {}", path, e.getMessage());
         }
         filterChain.doFilter(request, response);
     }
