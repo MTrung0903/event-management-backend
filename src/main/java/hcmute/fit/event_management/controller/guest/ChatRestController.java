@@ -1,6 +1,7 @@
 package hcmute.fit.event_management.controller.guest;
 
 import hcmute.fit.event_management.dto.MessageDTO;
+import hcmute.fit.event_management.dto.UserDTO;
 import hcmute.fit.event_management.service.IMessageService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -29,5 +30,11 @@ public class ChatRestController {
         } catch (Exception e) {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    @GetMapping("/{userId}/list-chat")
+    public ResponseEntity<List<UserDTO>> getChatHistory(@PathVariable int userId) {
+        List<UserDTO> chatHistory = messageService.getListUserChat(userId);
+        return new ResponseEntity<>(chatHistory, HttpStatus.OK);
     }
 }

@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.Date;
 import java.util.List;
 
 @Entity
@@ -25,6 +26,23 @@ public class User {
 
     @Column(name = "password")
     private String password;
+//    name: formData.fullName,
+//    email: formData.email,
+//    password: formData.password,
+//    birthday: formData.birthday,
+//    gender: formData.gender,
+//    address: formData.address,
+//    isOrganize: role === 'organizer' ? true : false,
+//    organizer: role === 'organizer' ? {
+//        organizerName: formData.organizerName,
+//                organizerAddress: formData.address,
+//                organizerWebsite: formData.organizerWebsite,
+//                organizerPhone: formData.organizerPhone
+//    } : {}
+    private String name;
+    private Date birthday;
+    private String gender;
+    
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private List<Notification> listNoti;

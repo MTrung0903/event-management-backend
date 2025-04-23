@@ -1,15 +1,18 @@
 package hcmute.fit.event_management.service.Impl;
 
 import hcmute.fit.event_management.dto.MessageDTO;
+import hcmute.fit.event_management.dto.UserDTO;
 import hcmute.fit.event_management.entity.Message;
 import hcmute.fit.event_management.entity.User;
 import hcmute.fit.event_management.repository.MessageRepository;
 import hcmute.fit.event_management.repository.UserRepository;
 import hcmute.fit.event_management.service.IMessageService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
@@ -42,12 +45,12 @@ public class MessageServiceImpl implements IMessageService {
     }
     private LocalDateTime parseTimestamp(String timestamp) {
         try {
-            // Parse chuỗi ISO 8601 với múi giờ (ZonedDateTime)
+
             ZonedDateTime zonedDateTime = ZonedDateTime.parse(timestamp, DateTimeFormatter.ISO_DATE_TIME);
-            // Chuyển thành LocalDateTime (bỏ múi giờ)
-            return zonedDateTime.toLocalDateTime();
+            ZonedDateTime utcTime = zonedDateTime.withZoneSameInstant(ZoneId.of("UTC"));
+            LocalDateTime localDateTime = utcTime.toLocalDateTime();
+            return localDateTime;
         } catch (DateTimeParseException e) {
-            // Log lỗi và ném ngoại lệ hoặc trả về giá trị mặc định
             throw new IllegalArgumentException("Invalid timestamp format: " + timestamp, e);
         }
     }
@@ -64,7 +67,34 @@ public class MessageServiceImpl implements IMessageService {
         dto.setContent(message.getContent());
         dto.setSenderEmail(message.getSender().getEmail());
         dto.setRecipientEmail(message.getRecipient().getEmail());
-        dto.setTimestamp(message.getTimestamp().toString());
+        ZonedDateTime zonedDateTime = message.getTimestamp().atZone(ZoneId.of("UTC"));
+        dto.setTimestamp(zonedDateTime.format(DateTimeFormatter.ISO_INSTANT));
         return dto;
+    }
+    @Override
+    public List<UserDTO> getListUserChat(int userId) {
+        try {
+            if (!userRepository.existsById(userId)) {
+                throw new IllegalArgumentException("User not found: " + userId);
+            }
+
+            List<User> chattedUsers = messageRepository.findUsersChattedWith(userId);
+            List<UserDTO> userDTOs = chattedUsers.stream()
+                    .filter(user -> user.getUserId() != userId)
+                    .map(user -> {
+                        UserDTO userDTO = new UserDTO();
+                        userDTO.setUserId(user.getUserId());
+                        userDTO.setEmail(user.getEmail() != null ? user.getEmail() : "");
+                        return userDTO;
+                    })
+                    .collect(Collectors.toList());
+
+            return userDTOs;
+
+        } catch (DataAccessException e) {
+            throw new RuntimeException("Failed to fetch chatted users due to database error", e);
+        } catch (Exception e) {
+            throw new RuntimeException("Unexpected error occurred", e);
+        }
     }
 }
