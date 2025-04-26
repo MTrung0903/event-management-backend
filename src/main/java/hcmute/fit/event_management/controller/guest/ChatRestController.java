@@ -26,6 +26,8 @@ public class ChatRestController {
             @PathVariable int user2Id) {
         try {
             List<MessageDTO> chatHistory = messageService.getChatHistory(user1Id, user2Id);
+            // Mark messages as read when fetching history
+            messageService.markMessagesAsRead(user1Id, user2Id);
             return new ResponseEntity<>(chatHistory, HttpStatus.OK);
         } catch (Exception e) {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);

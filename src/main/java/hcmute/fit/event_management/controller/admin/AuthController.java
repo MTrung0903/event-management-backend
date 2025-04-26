@@ -1,11 +1,9 @@
 package hcmute.fit.event_management.controller.admin;
 
-import hcmute.fit.event_management.dto.ForgotPasswordDTO;
-import hcmute.fit.event_management.dto.ResetPasswordDTO;
-import hcmute.fit.event_management.dto.UserDTO;
+import hcmute.fit.event_management.dto.*;
+import hcmute.fit.event_management.service.IUserService;
 import hcmute.fit.event_management.service.Impl.AuthServiceImpl;
 import hcmute.fit.event_management.service.Impl.EmailServiceImpl;
-import hcmute.fit.event_management.service.Impl.UserServiceImpl;
 import jakarta.validation.constraints.Email;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -19,7 +17,7 @@ public class AuthController {
     private AuthServiceImpl authService;
 
     @Autowired
-    private UserServiceImpl userService;
+    private IUserService userService;
 
     @Autowired
     private EmailServiceImpl emailService;
@@ -43,6 +41,7 @@ public class AuthController {
     public ResponseEntity<Response> resetPassword(@RequestBody ResetPasswordDTO resetPasswordDTO) {
         return authService.resetPassword(resetPasswordDTO);
     }
+
     @PostMapping("/logout")
     public ResponseEntity<Response> logout() {
         return authService.logout();
@@ -56,5 +55,27 @@ public class AuthController {
         } catch (Exception e) {
             return ResponseEntity.badRequest().body("Error: " + e.getMessage());
         }
+    }
+
+    @PutMapping("/save-change")
+    public ResponseEntity<Response> saveChange(@RequestBody UserDTO userDTO) {
+        return userService.saveChangeInfor(userDTO);
+    }
+    @PostMapping("{email}/add-new-role/{roleName}")
+    public ResponseEntity<Response> addNewRole(@PathVariable String email, @PathVariable String roleName) {
+        return userService.AddMoreRoleForUser(email, roleName);
+    }
+    @DeleteMapping("{email}/remove-role/{roleName}")
+    public ResponseEntity<Response> removeRole(@PathVariable String email, @PathVariable String roleName) {
+        return userService.deleteRoleInUser(email, roleName);
+    }
+    @GetMapping("/user/{email}")
+    public ResponseEntity<UserDTO> getUserInfo(@PathVariable @Email String email) {
+        UserDTO userDTO = userService.getInfor(email);
+        return ResponseEntity.ok(userDTO);
+    }
+    @PostMapping("/user/upgrade-organizer/{email}")
+    public ResponseEntity<Response> upgradeToOrganizer(@PathVariable @Email String email, @RequestBody OrganizerDTO organizerDTO) {
+        return userService.upgradeToOrganizer(email, organizerDTO);
     }
 }

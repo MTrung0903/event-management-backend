@@ -2,6 +2,7 @@ package hcmute.fit.event_management.controller.guest;
 
 import hcmute.fit.event_management.dto.MessageDTO;
 
+import hcmute.fit.event_management.dto.TypingDTO;
 import hcmute.fit.event_management.service.IMessageService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.MessageMapping;
@@ -35,6 +36,14 @@ public class ChatController {
                 messageDTO.getSenderEmail(),
                 "/chat",
                 messageDTO
+        );
+    }
+    @MessageMapping("/typing")
+    public void sendTypingNotification(@Payload TypingDTO typingDTO) {
+        template.convertAndSendToUser(
+                typingDTO.getRecipientEmail(),
+                "/typing",
+                typingDTO
         );
     }
 }

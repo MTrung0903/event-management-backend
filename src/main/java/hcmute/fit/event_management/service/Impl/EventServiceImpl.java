@@ -2,23 +2,28 @@ package hcmute.fit.event_management.service.Impl;
 
 import com.cloudinary.Cloudinary;
 import hcmute.fit.event_management.dto.*;
-import hcmute.fit.event_management.entity.Event;
-import hcmute.fit.event_management.entity.EventLocation;
-import hcmute.fit.event_management.entity.Segment;
-import hcmute.fit.event_management.entity.Speaker;
-import hcmute.fit.event_management.entity.Ticket;
+import hcmute.fit.event_management.entity.*;
 import hcmute.fit.event_management.repository.EventRepository;
 import hcmute.fit.event_management.repository.SegmentRepository;
 import hcmute.fit.event_management.repository.TicketRepository;
+import hcmute.fit.event_management.repository.UserRepository;
 import hcmute.fit.event_management.service.IEventService;
 import hcmute.fit.event_management.service.ISegmentService;
 import hcmute.fit.event_management.service.ITicketService;
+import jakarta.transaction.Transactional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.rest.webmvc.ResourceNotFoundException;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import payload.Response;
 
 import java.io.IOException;
 import java.text.Normalizer;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -42,8 +47,9 @@ public class EventServiceImpl implements IEventService {
 
     @Autowired
     private ITicketService ticketService;
-
-
+    @Autowired
+    private UserRepository userRepository;
+    Logger logger = LoggerFactory.getLogger(this.getClass());
     private static final Map<String, String> cityMap = Map.of(
             "ho-chi-minh", "TP. Hồ Chí Minh",
             "ha-noi", "Hà Nội",
@@ -76,12 +82,6 @@ public class EventServiceImpl implements IEventService {
         }
 
         return eventRepository.save(event);
-    }
-
-    @Override
-    public Event getEvent(Integer eventId) {
-        return eventRepository.findById(eventId)
-                .orElseThrow(() -> new RuntimeException("Event not found"));
     }
 
     @Override
@@ -149,36 +149,8 @@ public class EventServiceImpl implements IEventService {
                 .collect(Collectors.toList());
     }
 
-    @Override
-    public void editEvent(EventDTO eventDTO) throws Exception {
-        Optional<Event> existingEventOpt = eventRepository.findById(eventDTO.getEventId());
-        if (!existingEventOpt.isPresent()) {
-            throw new Exception("Event with ID " + eventDTO.getEventId() + " not found");
-        }
-        Event event = existingEventOpt.get();
-        BeanUtils.copyProperties(eventDTO, event, "eventLocation");
 
-        EventLocation eventLocation = new EventLocation();
-        if (eventDTO.getEventLocation() != null) {
-            BeanUtils.copyProperties(eventDTO.getEventLocation(), eventLocation);
-            event.setEventLocation(eventLocation);
-        }
-
-        if (eventDTO.getEventImages() != null) {
-            event.getEventImages().clear();
-            event.getEventImages().addAll(eventDTO.getEventImages());
-        }
-
-        if (eventDTO.getMediaContent() != null) {
-            event.getMediaContent().clear();
-            event.getMediaContent().addAll(eventDTO.getMediaContent());
-        }
-
-        eventRepository.save(event);
-    }
-
-    @Override
-    public EventEditDTO getEventForEdit(int eventId) {
+    public EventEditDTO getEventAfterEdit(int eventId) {
         EventDTO event = getEventById(eventId);
         List<Ticket> tickets = ticketRepository.findByEventID(eventId);
         List<TicketDTO> ticketDTOs = new ArrayList<>();
@@ -196,27 +168,37 @@ public class EventServiceImpl implements IEventService {
     }
 
     @Override
-    public EventEditDTO saveEditEvent(EventEditDTO eventEditDTO) throws Exception {
+    public EventEditDTO saveEditEvent(EventEditDTO eventEditDTO)  {
         Event event = eventRepository.findById(eventEditDTO.getEvent().getEventId())
-                .orElseThrow(() -> new Exception("Event with ID " + eventEditDTO.getEvent().getEventId() + " not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Event not found with id " + eventEditDTO.getEvent().getEventId()));
         int eventId = eventEditDTO.getEvent().getEventId();
-        BeanUtils.copyProperties(eventEditDTO.getEvent(), event, "eventLocation");
 
-        EventLocation eventLocation = new EventLocation();
+        if (eventEditDTO.getEvent().getEventStart().isAfter(eventEditDTO.getEvent().getEventEnd())) {
+            logger.error("Event start time {} is after end time {}", eventEditDTO.getEvent().getEventStart(), eventEditDTO.getEvent().getEventEnd());
+            throw new IllegalArgumentException("Event start time must be before end time");
+        }
+
+        BeanUtils.copyProperties(eventEditDTO.getEvent(), event, "eventLocation", "eventImages", "mediaContent");
+
         if (eventEditDTO.getEvent().getEventLocation() != null) {
+            EventLocation eventLocation = new EventLocation();
             BeanUtils.copyProperties(eventEditDTO.getEvent().getEventLocation(), eventLocation);
             event.setEventLocation(eventLocation);
         }
 
-        for (TicketDTO ticketDTO : eventEditDTO.getTicket()) {
-            ticketService.saveEditTicket(eventId, ticketDTO);
+        if (eventEditDTO.getEvent().getEventImages() != null) {
+            event.getEventImages().clear();
+            event.getEventImages().addAll(eventEditDTO.getEvent().getEventImages());
         }
-        for (SegmentDTO segmentDTO : eventEditDTO.getSegment()) {
-            segmentService.saveEditSegment(eventId, segmentDTO);
-        }
-        eventRepository.save(event);
 
-        return getEventForEdit(eventId);
+        if (eventEditDTO.getEvent().getMediaContent() != null) {
+            event.getMediaContent().clear();
+            event.getMediaContent().addAll(eventEditDTO.getEvent().getMediaContent());
+        }
+
+        eventRepository.save(event);
+        logger.info("Event {} edited successfully", event.getEventName());
+        return getEventAfterEdit(eventId);
     }
 
     @Override
@@ -239,7 +221,7 @@ public class EventServiceImpl implements IEventService {
     }
 
     @Override
-    public List<EventDTO> findEventsByDate(String eventStart) {
+    public List<EventDTO> findEventsByDate(LocalDateTime eventStart) {
         List<Event> events = eventRepository.findByEventStart(eventStart);
         return events.stream()
                 .map(this::convertToDTO)
@@ -290,42 +272,6 @@ public class EventServiceImpl implements IEventService {
                 .collect(Collectors.toList());
     }
 
-    @Override
-    public List<EventDTO> searchEvents(String searchTerm, String searchType) {
-        if (searchTerm == null || searchTerm.trim().isEmpty() || searchType == null) {
-            return getAllEvent();
-        }
-
-        List<Event> events;
-        switch (searchType.toLowerCase()) {
-            case "eventname":
-                events = eventRepository.findByEventNameContainingIgnoreCase(searchTerm);
-                break;
-            case "city":
-                events = eventRepository.findByEventLocationCityContainingIgnoreCase(searchTerm);
-                break;
-            case "venuename":
-                events = eventRepository.findByEventLocationVenueNameContainingIgnoreCase(searchTerm);
-                break;
-            case "eventtag":
-                events = eventRepository.findByTagsContainingIgnoreCase(searchTerm);
-                break;
-            case "eventtype":
-                events = eventRepository.findByEventTypeContainingIgnoreCase(searchTerm);
-                break;
-            case "eventhost":
-                events = eventRepository.findByEventHostContainingIgnoreCase(searchTerm);
-                break;
-            default:
-                throw new IllegalArgumentException("Invalid search type: " + searchType);
-        }
-
-        return events.stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
-    }
-
-
     private List<SegmentDTO> getAllSegments(int eventId) {
         List<Segment> list = segmentRepository.findByEventId(eventId);
         List<SegmentDTO> dtos = new ArrayList<>();
@@ -372,5 +318,55 @@ public class EventServiceImpl implements IEventService {
         return filteredEvents.stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
+    }
+
+    @Transactional
+    @Override
+    public ResponseEntity<Response> saveEventToDB(EventDTO eventDTO) {
+        // Tìm user theo email
+        String name = eventDTO.getEventHost();
+        Optional<User> userOpt = userRepository.findByFullName(name);
+        if (!userOpt.isPresent()) {
+            logger.error("User with name {} not found", name);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new Response(404, "Not Found", "User not found"));
+        }
+        User user = userOpt.get();
+
+        // Kiểm tra eventStart và eventEnd
+        if (eventDTO.getEventStart().isAfter(eventDTO.getEventEnd())) {
+            logger.error("Event start time {} is after end time {}", eventDTO.getEventStart(), eventDTO.getEventEnd());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new Response(400, "Bad Request", "Event start time must be before end time"));
+        }
+
+        // Tạo Event
+        Event event = new Event();
+        BeanUtils.copyProperties(eventDTO, event, "eventLocation", "eventImages", "mediaContent","eventLocation");
+        event.setEventHost(name);
+        event.setUser(user);
+
+        // Xử lý EventLocation
+        EventLocation eventLocation = new EventLocation();
+        EventLocationDTO locationDTO = eventDTO.getEventLocation();
+        if (locationDTO != null) {
+            BeanUtils.copyProperties(locationDTO, eventLocation);
+            event.setEventLocation(eventLocation);
+        }
+
+        // Xử lý eventImages và mediaContent
+        if (eventDTO.getEventImages() != null) {
+            event.setEventImages(new ArrayList<>(eventDTO.getEventImages()));
+        }
+        if (eventDTO.getMediaContent() != null) {
+            event.setMediaContent(new ArrayList<>(eventDTO.getMediaContent()));
+        }
+
+        // Lưu Event
+        eventRepository.save(event);
+
+        logger.info("Event {} created successfully by user {}", event.getEventName(), name);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(new Response(201, "Success", "Event created successfully"));
     }
 }

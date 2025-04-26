@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import payload.Response;
 
 import java.io.IOException;
 import java.util.List;
@@ -24,6 +25,11 @@ public class EventController {
     public ResponseEntity<Integer> createEvent(@RequestBody EventDTO event) throws IOException {
         Event savedEvent = eventService.saveEvent(event);
         return ResponseEntity.ok(savedEvent.getEventID());
+    }
+    @PostMapping("/create-event")
+    @PreAuthorize("hasRole(ORGANIZER)")
+    public ResponseEntity<Response> saveEvent(@RequestBody EventDTO event)  {
+       return eventService.saveEventToDB(event);
     }
     @GetMapping("/all")
     public ResponseEntity<List<EventDTO>> getAllEvents() {
@@ -54,24 +60,10 @@ public class EventController {
     @GetMapping("/edit/{eventId}")
     @PreAuthorize("hasRole(ORGANIZER)")
     public ResponseEntity<EventEditDTO> editEvent(@PathVariable int eventId) {
-        EventEditDTO eventEdit = eventService.getEventForEdit(eventId);
+        EventEditDTO eventEdit = eventService.getEventAfterEdit(eventId);
         return ResponseEntity.ok(eventEdit);
     }
-    @GetMapping("/search")
-    public ResponseEntity<List<EventDTO>> searchEvents(
-            @RequestParam("term") String searchTerm,
-            @RequestParam("type") String searchType) {
-        System.out.println("searchTerm: " + searchTerm);
-        System.out.println("searchType: " + searchType);
-        try {
-            List<EventDTO> results = eventService.searchEvents(searchTerm, searchType);
-            return ResponseEntity.ok(results);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(null);
-        } catch (Exception e) {
-            return ResponseEntity.status(500).body(null);
-        }
-    }
+
     @GetMapping("/search/by-name-and-city")
     public ResponseEntity<List<EventDTO>> searchEventsByNameAndCity(
             @RequestParam("term") String searchTerm,

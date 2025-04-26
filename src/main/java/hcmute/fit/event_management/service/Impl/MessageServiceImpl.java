@@ -27,7 +27,6 @@ public class MessageServiceImpl implements IMessageService {
     @Autowired
     private UserRepository userRepository;
 
-
     @Override
     public Message createMessage(MessageDTO messageDTO) {
         User sender = userRepository.findByEmail(messageDTO.getSenderEmail())
@@ -40,15 +39,15 @@ public class MessageServiceImpl implements IMessageService {
         message.setRecipient(recipient);
         message.setContent(messageDTO.getContent());
         message.setTimestamp(parseTimestamp(messageDTO.getTimestamp()));
-
+        message.setRead(false);
         return messageRepository.save(message);
     }
+
     private LocalDateTime parseTimestamp(String timestamp) {
         try {
-
             ZonedDateTime zonedDateTime = ZonedDateTime.parse(timestamp, DateTimeFormatter.ISO_DATE_TIME);
-            ZonedDateTime utcTime = zonedDateTime.withZoneSameInstant(ZoneId.of("UTC"));
-            LocalDateTime localDateTime = utcTime.toLocalDateTime();
+            ZonedDateTime localTime = zonedDateTime.withZoneSameInstant(ZoneId.of("Asia/Ho_Chi_Minh"));
+            LocalDateTime localDateTime = localTime.toLocalDateTime();
             return localDateTime;
         } catch (DateTimeParseException e) {
             throw new IllegalArgumentException("Invalid timestamp format: " + timestamp, e);
@@ -67,10 +66,12 @@ public class MessageServiceImpl implements IMessageService {
         dto.setContent(message.getContent());
         dto.setSenderEmail(message.getSender().getEmail());
         dto.setRecipientEmail(message.getRecipient().getEmail());
-        ZonedDateTime zonedDateTime = message.getTimestamp().atZone(ZoneId.of("UTC"));
+        ZonedDateTime zonedDateTime = message.getTimestamp().atZone(ZoneId.of("Asia/Ho_Chi_Minh"));
         dto.setTimestamp(zonedDateTime.format(DateTimeFormatter.ISO_INSTANT));
+        dto.setRead(message.isRead());
         return dto;
     }
+
     @Override
     public List<UserDTO> getListUserChat(int userId) {
         try {
@@ -90,11 +91,21 @@ public class MessageServiceImpl implements IMessageService {
                     .collect(Collectors.toList());
 
             return userDTOs;
-
         } catch (DataAccessException e) {
             throw new RuntimeException("Failed to fetch chatted users due to database error", e);
         } catch (Exception e) {
             throw new RuntimeException("Unexpected error occurred", e);
         }
+    }
+
+    @Override
+    public void markMessagesAsRead(int recipientId, int senderId) {
+        List<Message> messages = messageRepository.findChatHistoryBetweenUsers(recipientId, senderId);
+        messages.stream()
+                .filter(m -> m.getRecipient().getUserId() == recipientId && !m.isRead())
+                .forEach(m -> {
+                    m.setRead(true);
+                    messageRepository.save(m);
+                });
     }
 }

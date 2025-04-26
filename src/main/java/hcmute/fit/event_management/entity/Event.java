@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
@@ -19,17 +20,18 @@ public class Event {
     private int eventID;
 
     private String eventName;
+    @Column(columnDefinition = "TEXT")
     private String eventDesc;
     private String eventType;
     private String eventHost;
     private String eventStatus;
-    private String eventStart;
-    private String eventEnd;
+    private LocalDateTime eventStart;
+    private LocalDateTime eventEnd;
     @Embedded
     private EventLocation eventLocation;
     private String tags;
     private String eventVisibility;
-    private String publishTime;
+    private LocalDateTime publishTime;
     private String refunds;
     private int validityDays;
 
@@ -49,4 +51,7 @@ public class Event {
 
     @OneToMany(mappedBy = "event",cascade = CascadeType.ALL, orphanRemoval = true)
     private List<SponsorEvent> sponsorEvents;
+    @ManyToOne
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 }

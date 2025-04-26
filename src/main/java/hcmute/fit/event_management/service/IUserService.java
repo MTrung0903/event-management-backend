@@ -1,20 +1,31 @@
 package hcmute.fit.event_management.service;
 
+import hcmute.fit.event_management.dto.OrganizerDTO;
 import hcmute.fit.event_management.dto.UserDTO;
 import hcmute.fit.event_management.entity.User;
+import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.ResponseEntity;
+import payload.Response;
 
 import java.util.List;
 import java.util.Optional;
 
 public interface IUserService {
 
-    List<User> findAll();
-    void delete(User entity);
-    <S extends User> S save(S entity);
 
-    UserDTO DTO(User user);
-    List<UserDTO> getAllAccountDTOs();
+    @Transactional
+    ResponseEntity<Response> register(UserDTO userDTO);
 
+    ResponseEntity<Response> saveChangeInfor(UserDTO userChange);
+
+    ResponseEntity<Response> AddMoreRoleForUser(String email, String roleName);
+
+    ResponseEntity<Response> deleteRoleInUser(String email, String roleName);
+
+    UserDTO getInfor(String email);
+
+    @Transactional
+    ResponseEntity<Response> upgradeToOrganizer(String email, OrganizerDTO organizerDTO);
 }

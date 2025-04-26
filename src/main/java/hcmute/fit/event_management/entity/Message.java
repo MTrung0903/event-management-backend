@@ -31,4 +31,6 @@ public class Message {
     @Column(nullable = false)
     private LocalDateTime timestamp;
 
+    @Column(nullable = false)
+    private boolean isRead = false;
 }

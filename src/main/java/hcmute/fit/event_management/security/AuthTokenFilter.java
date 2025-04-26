@@ -12,7 +12,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -20,26 +19,51 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Component
 public class AuthTokenFilter extends OncePerRequestFilter {
-    @Autowired
-    JwtTokenUtil jwtTokenUtil;
+    private static final Logger logger = LoggerFactory.getLogger(AuthTokenFilter.class);
 
-    Logger logger = LoggerFactory.getLogger(this.getClass());
+    @Autowired
+    private JwtTokenUtil jwtTokenUtil;
+
+    private static final List<String> PUBLIC_ENDPOINTS = Arrays.asList(
+            "/api/auth/login",
+            "/api/auth/register",
+            "/api/auth/forgot",
+            "/api/auth/reset-password",
+            "/api/auth/send-verification-code/**",
+            "/chat/**",
+            "/api/auth/logout",
+            "/change-password",
+            "/ws/**",
+            "/api/storage/**",
+            "/api/events/search/**"
+    );
+
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
-            throws IOException, ServletException {
+            throws ServletException, IOException {
         String path = request.getRequestURI();
-        if (path.startsWith("/chat/")) {
+        String authHeader = request.getHeader("Authorization");
+
+
+        //logger.debug("Authorization header for {}: {}", path, authHeader != null ? authHeader : "null");
+
+        // Bỏ qua các endpoint công khai
+        if (isPublicEndpoint(path)) {
+            logger.debug("Skipping JWT validation for public endpoint: {}", path);
             filterChain.doFilter(request, response);
             return;
         }
+
         try {
             String token = getJwtFromRequest(request);
-            logger.info("JWT received for {}: {}", path, token);
+            logger.info("JWT received for {}: {}", path, token != null ? "present" : "null");
+
             if (token != null && jwtTokenUtil.validateToken(token)) {
                 String email = jwtTokenUtil.getEmailFromToken(token);
                 List<String> roles = jwtTokenUtil.getRolesFromToken(token);
@@ -58,15 +82,21 @@ public class AuthTokenFilter extends OncePerRequestFilter {
         } catch (Exception e) {
             logger.error("JWT authentication error for {}: {}", path, e.getMessage());
         }
+
         filterChain.doFilter(request, response);
+    }
+
+    private boolean isPublicEndpoint(String path) {
+        return PUBLIC_ENDPOINTS.stream().anyMatch(endpoint ->
+                endpoint.endsWith("/**") ? path.startsWith(endpoint.substring(0, endpoint.length() - 3)) : path.equals(endpoint)
+        );
     }
 
     private String getJwtFromRequest(HttpServletRequest request) {
         String header = request.getHeader("Authorization");
-        String token = null;
         if (StringUtils.hasText(header) && header.startsWith("Bearer ")) {
-            token = header.substring(7);
+            return header.substring(7);
         }
-        return token;
+        return null;
     }
 }

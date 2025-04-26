@@ -15,4 +15,6 @@ public interface IMessageService {
     MessageDTO convertToDTO(Message message);
 
     List<UserDTO> getListUserChat(int userId);
+
+    void markMessagesAsRead(int recipientId, int senderId);
 }
