@@ -76,4 +76,7 @@ public interface ITransactionService {
     void deleteAllInBatch(Iterable<Transaction> entities);
 
     <S extends Transaction, R> R findBy(Example<S> example, Function<FluentQuery.FetchableFluentQuery<S>, R> queryFunction);
+
+
+    Optional<Transaction> findByOrderCode(String orderCode);
 }

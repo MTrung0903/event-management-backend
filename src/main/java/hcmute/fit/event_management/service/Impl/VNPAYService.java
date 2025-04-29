@@ -12,6 +12,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import java.net.URLDecoder;
+import java.net.URLEncoder;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -38,11 +40,28 @@ public class VNPAYService {
     TicketRepository ticketRepository;
     @Autowired
     TransactionRepository transactionRepository;
+    public static final Map<String, String> errorMessages = new HashMap<>();
+    static {
+        errorMessages.put("07", "Trừ tiền thành công. Giao dịch bị nghi ngờ (liên quan tới lừa đảo, giao dịch bất thường).");
+        errorMessages.put("09", "Giao dịch không thành công do: Thẻ/Tài khoản của khách hàng chưa đăng ký dịch vụ InternetBanking tại ngân hàng.");
+        errorMessages.put("10", "Giao dịch không thành công do: Khách hàng xác thực thông tin thẻ/tài khoản không đúng quá 3 lần.");
+        errorMessages.put("11", "Giao dịch không thành công do: Đã hết hạn chờ thanh toán. Xin quý khách vui lòng thực hiện lại giao dịch.");
+        errorMessages.put("12", "Giao dịch không thành công do: Thẻ/Tài khoản của khách hàng bị khóa.");
+        errorMessages.put("13", "Giao dịch không thành công do Quý khách nhập sai mật khẩu xác thực giao dịch (OTP). Xin quý khách vui lòng thực hiện lại giao dịch.");
+        errorMessages.put("24", "Giao dịch không thành công do: Khách hàng hủy giao dịch.");
+        errorMessages.put("51", "Giao dịch không thành công do: Tài khoản của quý khách không đủ số dư để thực hiện giao dịch.");
+        errorMessages.put("65", "Giao dịch không thành công do: Tài khoản của Quý khách đã vượt quá hạn mức giao dịch trong ngày.");
+        errorMessages.put("75", "Ngân hàng thanh toán đang bảo trì.");
+        errorMessages.put("79", "Giao dịch không thành công do: KH nhập sai mật khẩu thanh toán quá số lần quy định. Xin quý khách vui lòng thực hiện lại giao dịch.");
+        errorMessages.put("99", "Các lỗi khác (lỗi còn lại, không có trong danh sách mã lỗi đã liệt kê).");
+    }
 
     public String createPaymentUrl(HttpServletRequest req, CheckoutDTO checkoutDTO) throws Exception  {
 
         String vnp_TxnRef = String.valueOf(System.currentTimeMillis());
-        String vnp_OrderInfo = "Thanh toan don hang:" + getRandomNumber(8);
+        String vnp_OrderInfo = checkoutDTO.getOrderInfo();
+        String encodedInfo = URLEncoder.encode(vnp_OrderInfo, StandardCharsets.UTF_8);
+        System.out.println("<<<<<<<<<<<<<" + vnp_OrderInfo + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
         String vnp_OrderType = "other";
         String vnp_Amount = String.valueOf(checkoutDTO.getAmount() * 100L); // Nhân 100 để ra đơn vị tiền nhỏ nhất (VND)
         String vnp_Locale = "vn";
@@ -54,11 +73,11 @@ public class VNPAYService {
         vnp_Params.put("vnp_TmnCode", vnPayConfig.getTmnCode());
         vnp_Params.put("vnp_Amount", vnp_Amount);
         vnp_Params.put("vnp_CurrCode", "VND");
-        if (checkoutDTO.getBankCode() != null && !checkoutDTO.getBankCode().isEmpty()) {
-            vnp_Params.put("vnp_BankCode", checkoutDTO.getBankCode());
-        }
+//        if (checkoutDTO.getBankCode() != null && !checkoutDTO.getBankCode().isEmpty()) {
+//            vnp_Params.put("vnp_BankCode", checkoutDTO.getBankCode());
+//        }
         vnp_Params.put("vnp_TxnRef", vnp_TxnRef);
-        vnp_Params.put("vnp_OrderInfo", vnp_OrderInfo);
+        vnp_Params.put("vnp_OrderInfo", encodedInfo);
         vnp_Params.put("vnp_OrderType", vnp_OrderType);
         vnp_Params.put("vnp_ReturnUrl", vnp_ReturnUrl);
         vnp_Params.put("vnp_IpAddr", vnp_IpAddr);
@@ -77,9 +96,12 @@ public class VNPAYService {
         // Lưu vào booking với status pending
         try {
             Booking booking = new Booking();
-            booking.setBookingDate(formatter.parse(vnpCreateDate));
+            booking.setCreateDate(formatter.parse(vnpCreateDate));
+            booking.setExpireDate(formatter.parse(vnp_ExpireDate));
             booking.setBookingCode(vnp_TxnRef);
+            booking.setBookingMethod("VNPAY");
             booking.setBookingStatus("Pending");
+            booking.setTotalPrice(checkoutDTO.getAmount());
             booking.setUser(userRepository.findById(Integer.valueOf(checkoutDTO.getUserId())).orElse(new User()));
             bookingRepository.saveAndFlush(booking);
             for (Integer ticketId : checkoutDTO.getTickets().keySet()) {
@@ -96,7 +118,7 @@ public class VNPAYService {
         }
         return vnPayConfig.getPayUrl() + "?" + queryUrl;
     }
-    public void ipn(HttpServletRequest request) {
+    public void ipn(HttpServletRequest request) throws UnsupportedEncodingException {
         Map<String, String> fields = new HashMap<>();
         for (Enumeration<String> params = request.getParameterNames(); params.hasMoreElements();) {
             String fieldName = URLEncoder.encode((String) params.nextElement(), StandardCharsets.US_ASCII);
@@ -109,12 +131,17 @@ public class VNPAYService {
         fields.remove("vnp_SecureHashType");
         fields.remove("vnp_SecureHash");
         String signValue = hashAllFields(vnPayConfig.getSecretKey(),fields);
-        String txnRef = request.getParameter("vnp_TxnRef"); // booking_code của bạn
+        String txnRef = request.getParameter("vnp_TxnRef");
+        String info = request.getParameter("vnp_OrderInfo");
+        if (info != null) {
+            info = URLDecoder.decode(info, StandardCharsets.UTF_8);
+        }
+        System.out.println("<<<<<<<<<<<<<" + info + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
         Optional<Booking> optionalBooking = bookingRepository.findByBookingCode(txnRef);
         Booking booking = optionalBooking.orElse(new Booking());
+        String responseCode = request.getParameter("vnp_ResponseCode");
+        String message = request.getParameter(responseCode);
         if (signValue.equals(vnp_SecureHash)) {
-            String responseCode = request.getParameter("vnp_ResponseCode");
-
             if (booking.getBookingStatus().equals("PAID")) {
                 return;
             }
@@ -122,22 +149,32 @@ public class VNPAYService {
                 return;
             }
             if ("00".equals(responseCode)) {
+                List<BookingDetails> bookingDetails = bookingDetailsRepository.findByBookingId(booking.getBookingId());
+                List<Ticket> ticketsToUpdate = new ArrayList<>();
+                for (BookingDetails details : bookingDetails) {
+                    Ticket ticket = details.getTicket();
+                    ticket.setQuantity(ticket.getQuantity() - details.getQuantity());
+                    ticketsToUpdate.add(ticket);
+                }
+                ticketRepository.saveAll(ticketsToUpdate);
                 booking.setBookingStatus("PAID");
                 bookingRepository.save(booking);
                 Transaction transaction = new Transaction();
                 transaction.setBooking(booking);
+                transaction.setTransactionInfo(info);
+                transaction.setMessage(message);
                 transaction.setPaymentMethod("VNPAY");
-                transaction.setTransactionDate(request.getParameter("vnp_CreateDate"));
+                transaction.setTransactionDate(request.getParameter("vnp_PayDate"));
                 transaction.setTransactionAmount(Double.parseDouble(request.getParameter("vnp_Amount")));
-                transaction.setTransactionStatus("Paid");
+                transaction.setTransactionStatus("SUCCESSFULLY");
                 transaction.setReferenceCode(request.getParameter("vnp_TxnRef"));
                 transactionRepository.save(transaction);
             } else {
-                booking.setBookingStatus("FAIL");
+                booking.setBookingStatus("FAILED");
                 bookingRepository.save(booking);
             }
         } else {
-            booking.setBookingStatus("FAIL");
+            booking.setBookingStatus("FAILED");
             bookingRepository.save(booking);
         }
     }

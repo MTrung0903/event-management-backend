@@ -15,6 +15,5 @@ public class CheckoutDTO {
     private long amount;
     private String userId;
     private Map<Integer, Integer> tickets = new HashMap<Integer, Integer>();
-    private String bankCode;
-
+    private String orderInfo;
 }

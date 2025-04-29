@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import hcmute.fit.event_management.config.MomoAPI;
 import hcmute.fit.event_management.config.MomoConfig;
 
+import hcmute.fit.event_management.dto.CheckoutDTO;
 import hcmute.fit.event_management.dto.MomoRequestPayment;
 import hcmute.fit.event_management.entity.*;
 import hcmute.fit.event_management.repository.*;
@@ -36,7 +37,7 @@ public class MomoService {
     BookingDetailsRepository bookingDetailsRepository;
 
     private final MomoAPI momoAPI;
-    public ResponseEntity<?> createQRCode(int userId, int ticketId, int qtt, long amount) {
+    public ResponseEntity<?> createQRCode(CheckoutDTO checkoutDTO) {
         String partnerCode = momoConfig.getPartnerCode();
         String accessKey = momoConfig.getAccessKey();
         String redirectUrl = momoConfig.getRedirectUrl();
@@ -44,10 +45,10 @@ public class MomoService {
         String requestType = momoConfig.getRequestType();
         String orderId = UUID.randomUUID().toString();
         String requestId = UUID.randomUUID().toString();
-        String extraData = "Test";
-        String orderInfo = "Thanh toan don hang: " + orderId;
+        String extraData = checkoutDTO.getOrderInfo();
+        String orderInfo = checkoutDTO.getOrderInfo();
         String rawHash = "accessKey=" + accessKey
-                + "&amount=" + amount
+                + "&amount=" + checkoutDTO.getAmount()
                 + "&extraData=" + extraData
                 + "&ipnUrl=" + ipnUrl
                 + "&orderId=" + orderId
@@ -71,7 +72,7 @@ public class MomoService {
                 .orderId(orderId)
                 .orderInfo(orderInfo)
                 .requestId(requestId)
-                .amount(amount)
+                .amount(checkoutDTO.getAmount())
                 .extraData(extraData)
                 .signature(signature)
                 .lang("vi")
@@ -79,20 +80,28 @@ public class MomoService {
         Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("Etc/GMT+7"));
         SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMddHHmmss");
         String momoCreateDate = formatter.format(calendar.getTime());
-
+        calendar.add(Calendar.HOUR, 1);
+        calendar.add(Calendar.MINUTE, 40);
+        String momoExpireDate = formatter.format(calendar.getTime());
         try {
             Booking booking = new Booking();
-            booking.setBookingDate(formatter.parse(momoCreateDate));
+            booking.setTotalPrice(checkoutDTO.getAmount());
+            booking.setCreateDate(formatter.parse(momoCreateDate));
+            booking.setExpireDate(formatter.parse(momoExpireDate));
+
             booking.setBookingCode(orderId);
+            booking.setBookingMethod("Momo");
             booking.setBookingStatus("Pending");
-            booking.setUser(userRepository.findById(userId).orElse(new User()));
+            booking.setUser(userRepository.findById(Integer.valueOf(checkoutDTO.getUserId())).orElse(new User()));
             bookingRepository.saveAndFlush(booking);
-            BookingDetails bkdt = new BookingDetails();
-            bkdt.setBooking(booking);
-            bkdt.setTicket(ticketRepository.findById(ticketId).orElse(new Ticket()));
-            bkdt.setQuantity(qtt);
-            bkdt.setPrice(amount);
-            bookingDetailsRepository.save(bkdt);
+            for (Integer ticketId : checkoutDTO.getTickets().keySet()) {
+                BookingDetails bkdt = new BookingDetails();
+                bkdt.setBooking(booking);
+                bkdt.setTicket(ticketRepository.findById(ticketId).orElse(new Ticket()));
+                bkdt.setQuantity(checkoutDTO.getTickets().get(ticketId));
+                bkdt.setPrice(checkoutDTO.getAmount());
+                bookingDetailsRepository.save(bkdt);
+            }
         }
         catch (Exception e) {
             System.out.println(">>>>>>>>>>>>>>"+e);
@@ -111,51 +120,63 @@ public class MomoService {
         String signature = payload.get("signature");
         String extraData = payload.get("extraData");
         String orderInfo = payload.get("orderInfo");
-        String oderType = payload.get("oderType");
+        String orderType = payload.get("orderType");
         String payType = payload.get("payType");
         String responseTime = payload.get("responseTime");
-        String rawHash
-                = "accessKey=" + accessKey
+        String rawHash = "accessKey=" + accessKey
                 + "&amount=" + amount
                 + "&extraData=" + extraData
                 + "&message=" + message
                 + "&orderId=" + orderId
                 + "&orderInfo=" + orderInfo
-                + "&oderType=" + oderType
+                + "&orderType=" + orderType
                 + "&partnerCode=" + partnerCode
                 + "&payType=" + payType
                 + "&requestId=" + requestId
                 + "&responseTime=" + responseTime
                 + "&resultCode=" + resultCode
                 + "&transId=" + transId;
+
         String generatedSignature = hmacSHA256(momoConfig.getSecretKey(), rawHash);
-//        if (!signature.equals(generatedSignature)) {
-//            return;
-//        }
         Optional<Booking> optionalBooking = bookingRepository.findByBookingCode(orderId);
         Booking booking = optionalBooking.orElse(new Booking());
-//        if (booking.getBookingStatus().equals("PAID")) {
-//            return;
-//        }
-//        if (optionalBooking.isEmpty()) {
-//            return;
-//        }
-
+        if (!signature.equals(generatedSignature)) {
+            booking.setBookingStatus("FAILED");
+            bookingRepository.save(booking);
+            return;
+        }
+        if (booking.getBookingStatus().equals("PAID")) {
+            return;
+        }
+        if (optionalBooking.isEmpty()) {
+            return;
+        }
         if ("0".equals(resultCode)) {
+            List<BookingDetails> bookingDetails = bookingDetailsRepository.findByBookingId(booking.getBookingId());
+            List<Ticket> ticketsToUpdate = new ArrayList<>();
+            for (BookingDetails details : bookingDetails) {
+                Ticket ticket = details.getTicket();
+                ticket.setQuantity(ticket.getQuantity() - details.getQuantity());
+                ticketsToUpdate.add(ticket);
+            }
+            ticketRepository.saveAll(ticketsToUpdate);
             booking.setBookingStatus("PAID");
             bookingRepository.save(booking);
             Transaction transaction = new Transaction();
             transaction.setBooking(booking);
+            transaction.setTransactionInfo(extraData);
+            transaction.setMessage(message);
             transaction.setPaymentMethod("MOMO");
             transaction.setTransactionDate(responseTime);
             transaction.setTransactionAmount(Double.parseDouble(amount));
-            transaction.setTransactionStatus("Paid");
+            transaction.setTransactionStatus("SUCCESSFULLY");
             transaction.setReferenceCode(transId);
             transactionRepository.save(transaction);
-
+            System.out.println("Thanh toan thanh cong");
         } else {
-            booking.setBookingStatus("FAIL");
+            booking.setBookingStatus("FAILED");
             bookingRepository.save(booking);
         }
     }
+
 }

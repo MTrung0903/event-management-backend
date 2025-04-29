@@ -12,7 +12,6 @@ public class MomoConfig {
     private String accessKey;
     private String secretKey;
     private String requestType;
-    private String returnUrl;
     private String ipnUrl;
     private String redirectUrl;
 

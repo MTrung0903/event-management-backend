@@ -25,9 +25,12 @@ public class Transaction {
     private String paymentMethod;
     @Column(name = "transaction_status")
     private String transactionStatus;
-    @Column(name = " reference_code")
+    @Column(name = "reference_code")
     private String referenceCode;
-
+    @Column(name = "transaction_info")
+    private String transactionInfo;
+    @Column(name = "transaction_message")
+    private String message;
     @OneToOne
     @JoinColumn
     private Booking booking;

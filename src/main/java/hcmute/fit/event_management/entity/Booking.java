@@ -18,18 +18,18 @@ public class Booking {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "booking_id")
     private int bookingId;
-
     @Column(name = "total_price")
     private double totalPrice;
-
-    @Column(name = "booking_date")
-    private Date bookingDate;
-
+    @Column(name = "create_date")
+    private Date createDate;
+    @Column(name = "expire_date")
+    private Date expireDate;
     @Column(name = "booking_status")
     private String bookingStatus;
-
     @Column(name = "booking_code")
     private String bookingCode;
+    @Column(name = "booking_method")
+    private String bookingMethod;
     @ManyToOne
     @JoinColumn(name = "user_id")
     private User user;

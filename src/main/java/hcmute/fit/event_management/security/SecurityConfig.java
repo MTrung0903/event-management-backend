@@ -66,7 +66,8 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/login", "/api/auth/register", "/api/auth/forgot", "/api/auth/reset-password",
-                                "/api/auth/logout", "/change-password", "/ws/**","/api/storage/**","/api/events/search/**").permitAll()
+                                "/api/auth/logout", "/change-password", "/ws/**","/api/storage/**","/api/events/search/**",
+                                "/api/payment/vnpay-ipn","/api/payment/vnpay-return", "/api/payment/momo-ipn", "/api/payment/momo-return").permitAll()
 //                        .requestMatchers("/api/segment/**","/api/ticket/**").hasAnyRole("ORGANIZER","ADMIN")
 //                        .requestMatchers("/events/create").hasAuthority("CREATE_EVENT")
 //                        .requestMatchers("/events/edit").hasAuthority("EDIT_EVENT")

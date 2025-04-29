@@ -12,4 +12,6 @@ import java.util.List;
 public interface BookingDetailsRepository extends JpaRepository<BookingDetails, Integer> {
     @Query("select bd from BookingDetails bd where bd.ticket.ticketId = :ticketId")
     List<BookingDetails> findByTicketId(@Param("ticketId") int ticketId);
+    @Query("select bd from BookingDetails bd where bd.booking.bookingId = :bookingId")
+    List<BookingDetails> findByBookingId(@Param("bookingId") int bookingId);
 }

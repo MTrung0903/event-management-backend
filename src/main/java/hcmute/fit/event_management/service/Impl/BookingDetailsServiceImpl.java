@@ -29,7 +29,7 @@ public class BookingDetailsServiceImpl implements IBookingDetailsService {
             orderTicketDTO.setTicketName(bookingDetail.getTicket().getTicketName());
             orderTicketDTO.setQuantity(bookingDetail.getQuantity());
             orderTicketDTO.setAmount(bookingDetail.getPrice() * bookingDetail.getQuantity());
-            orderTicketDTO.setDateOrdered(bookingDetail.getBooking().getBookingDate());
+            orderTicketDTO.setDateOrdered(bookingDetail.getBooking().getCreateDate());
             orderTicketDTOs.add(orderTicketDTO);
         }
         return orderTicketDTOs;
