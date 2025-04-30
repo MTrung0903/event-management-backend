@@ -22,9 +22,9 @@ public class EventController {
 
     @PostMapping("/create")
     @PreAuthorize("hasRole(ORGANIZER)")
-    public ResponseEntity<Integer> createEvent(@RequestBody EventDTO event) throws IOException {
-        Event savedEvent = eventService.saveEvent(event);
-        return ResponseEntity.ok(savedEvent.getEventID());
+    public ResponseEntity<Response> createEvent(@RequestBody EventDTO event) throws IOException {
+
+        return eventService.saveEventToDB(event);
     }
     @PostMapping("/create-event")
     @PreAuthorize("hasRole(ORGANIZER)")
@@ -85,6 +85,21 @@ public class EventController {
     @GetMapping("search/by-city/{city}")
     public ResponseEntity<List<EventDTO>> searchEventsByCity(@PathVariable String city){
         List<EventDTO> events = eventService.findEventsByLocation( city );
+        return ResponseEntity.ok(events);
+    }
+    @GetMapping("/get-all-event-by-org/{email}")
+    public ResponseEntity<List<EventDTO>> getAllEventsByOrg(@PathVariable String email){
+        List<EventDTO> events = eventService.getAllEventByHost(email);
+        return ResponseEntity.ok(events);
+    }
+    @GetMapping("search/by-host/{eventHost}")
+    public ResponseEntity<List<EventDTO>> searchEventsByHost(@PathVariable String eventHost){
+        List<EventDTO> events = eventService.findEventsByHost(eventHost);
+        return ResponseEntity.ok(events);
+    }
+    @GetMapping("search/by-tag/{tag}")
+    public ResponseEntity<List<EventDTO>> searchEventsByTag(@PathVariable String tag){
+        List<EventDTO> events = eventService.findEventsByTags(tag);
         return ResponseEntity.ok(events);
     }
 

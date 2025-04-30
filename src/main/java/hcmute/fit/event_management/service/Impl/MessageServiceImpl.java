@@ -86,6 +86,7 @@ public class MessageServiceImpl implements IMessageService {
                         UserDTO userDTO = new UserDTO();
                         userDTO.setUserId(user.getUserId());
                         userDTO.setEmail(user.getEmail() != null ? user.getEmail() : "");
+                        userDTO.setFullName(user.getFullName() != null ? user.getFullName() : "");
                         return userDTO;
                     })
                     .collect(Collectors.toList());

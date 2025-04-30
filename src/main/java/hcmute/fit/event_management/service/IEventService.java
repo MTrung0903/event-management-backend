@@ -34,4 +34,6 @@ public interface IEventService {
 
     @Transactional
     ResponseEntity<Response> saveEventToDB(EventDTO eventDTO);
+
+    List<EventDTO> getAllEventByHost(String email);
 }

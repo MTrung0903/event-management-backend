@@ -113,7 +113,7 @@ public class EventServiceImpl implements IEventService {
                 .map(publicId -> cloudinary.url().generate(publicId))
                 .collect(Collectors.toList());
         dto.setMediaContent(mediaUrls);
-
+        dto.setUserId(event.getUser().getUserId());
         return dto;
     }
 
@@ -325,9 +325,9 @@ public class EventServiceImpl implements IEventService {
     public ResponseEntity<Response> saveEventToDB(EventDTO eventDTO) {
         // Tìm user theo email
         String name = eventDTO.getEventHost();
-        Optional<User> userOpt = userRepository.findByFullName(name);
+        Optional<User> userOpt = userRepository.findByOrganizerName(name);
         if (!userOpt.isPresent()) {
-            logger.error("User with name {} not found", name);
+            logger.error("User with organizerName {} not found", name);
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(new Response(404, "Not Found", "User not found"));
         }
@@ -368,5 +368,24 @@ public class EventServiceImpl implements IEventService {
         logger.info("Event {} created successfully by user {}", event.getEventName(), name);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(new Response(201, "Success", "Event created successfully"));
+    }
+    @Override
+    public List<EventDTO> getAllEventByHost(String email){
+        Optional<User> host = userRepository.findByEmail(email);
+        if (!host.isPresent()) {
+            logger.error("User with email {} not found", email);
+            return new ArrayList<>();
+        }
+        User organizer = host.get();
+        if(organizer.getOrganizer() == null){
+            logger.error("User is not organizer");
+            return new ArrayList<>();
+        }
+        List<Event> events = eventRepository.findByEventHost(organizer.getOrganizer().getOrganizerName());
+
+        return events.stream().
+                map(this::convertToDTO).
+                collect(Collectors.toList());
+
     }
 }

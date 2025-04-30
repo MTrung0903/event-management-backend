@@ -45,7 +45,9 @@ public class UserServiceImpl implements IUserService {
     private OrganizerRepository organizerRepository;
 
     @Autowired
-            private PermissionRepository permissionRepository;
+    private PermissionRepository permissionRepository;
+
+
 
     Logger logger = LoggerFactory.getLogger(this.getClass());
 
@@ -215,6 +217,9 @@ public class UserServiceImpl implements IUserService {
             if (organizerDTO.getOrganizerPhone() != null) {
                 organizer.setOrganizerPhone(organizerDTO.getOrganizerPhone());
             }
+            if (organizerDTO.getOrganizerDesc() != null) {
+                organizer.setOrganizerDesc(organizerDTO.getOrganizerDesc());
+            }
             organizerRepository.save(organizer);
             user.setOrganizer(organizer);
         }
@@ -368,22 +373,9 @@ public class UserServiceImpl implements IUserService {
 
         User user = userOpt.get();
 
-        // Kiểm tra user có role ROLE_ATTENDEE
+
         Optional<List<UserRole>> userRolesOpt = userRoleRepository.findAllByUser(user);
-        boolean hasAttendeeRole = false;
-        if (userRolesOpt.isPresent()) {
-            for (UserRole ur : userRolesOpt.get()) {
-                if (ur.getRole().getName().equals("ROLE_ATTENDEE")) {
-                    hasAttendeeRole = true;
-                    break;
-                }
-            }
-        }
-        if (!hasAttendeeRole) {
-            logger.error("User with email {} does not have ROLE_ATTENDEE", email);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(new Response(400, "Bad Request", "User must have ROLE_ATTENDEE to upgrade"));
-        }
+
 
         // Kiểm tra xem user  có role ROLE_ORGANIZER không
         boolean hasOrganizerRole = false;
@@ -431,6 +423,7 @@ public class UserServiceImpl implements IUserService {
         organizer.setOrganizerAddress(organizerDTO.getOrganizerAddress());
         organizer.setOrganizerWebsite(organizerDTO.getOrganizerWebsite());
         organizer.setOrganizerPhone(organizerDTO.getOrganizerPhone());
+        organizer.setOrganizerDesc(organizerDTO.getOrganizerDesc());
         organizer.setUser(user);
         organizerRepository.save(organizer);
         user.setOrganizer(organizer);

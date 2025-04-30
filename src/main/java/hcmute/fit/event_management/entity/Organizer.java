@@ -27,6 +27,8 @@ public class Organizer {
     @Column(name = "organizer_phone")
     private String organizerPhone;
 
+    @Column(columnDefinition = "TEXT")
+    private String organizerDesc;
     @OneToOne
     @JoinColumn(name = "user_id", referencedColumnName = "user_id")
     private User user;
