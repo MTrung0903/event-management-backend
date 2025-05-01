@@ -50,10 +50,64 @@ public class RolerServiceImpl implements IRoleService {
                 .body(new Response(201, "Success", "Role created successfully"));
     }
 
+    @Override
+    public ResponseEntity<Response> updateRole(RoleDTO roleDTO) {
+        Optional<Role> existingRole = roleRepository.findById(roleDTO.getRoleID());
+        if (!existingRole.isPresent()) {
+            logger.warn("Role not found {}", roleDTO.getName());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new Response(404, "Not Found", "Role not found"));
+        }
+
+        Role role = existingRole.get();
+
+        role.setName(roleDTO.getName());
+
+        List<Permission> permissions = new ArrayList<>();
+        if (roleDTO.getPermissions() != null) {
+            for (PermissionDTO permissionDTO : roleDTO.getPermissions()) {
+                Optional<Permission> permOpt = permissionRepository.findByName(permissionDTO.getName());
+                if (permOpt.isEmpty()) {
+                    logger.warn("Permission {} not found", permissionDTO.getName());
+                    return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                            .body(new Response(404, "Not Found", "Permission " + permissionDTO.getName() + " not found"));
+                }
+                permissions.add(permOpt.get());
+            }
+        }
+        role.setPermissions(permissions);
+        roleRepository.save(role);
+
+        logger.info("Role {} updated successfully", roleDTO.getName());
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(new Response(200, "Success", "Role updated successfully"));
+    }
+
+    @Override
+    public ResponseEntity<Response> deleteRole(String roleName) {
+        Optional<Role> existingRole = roleRepository.findByName(roleName);
+        if (!existingRole.isPresent()) {
+            logger.warn("Role not found {}", roleName);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new Response(404, "Not Found", "Role not found"));
+        }
+
+        Role role = existingRole.get();
+        if (!role.getListUserRoles().isEmpty()) {
+            logger.warn("Role {} is assigned to users", roleName);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new Response(400, "Bad Request", "Role is assigned to users"));
+        }
+
+        roleRepository.delete(role);
+        logger.info("Role {} deleted successfully", roleName);
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(new Response(200, "Success", "Role deleted successfully"));
+    }
+
     @Transactional
     @Override
     public ResponseEntity<Response> assignPermissionsToRole(int roleId, List<String> permissionNames) {
-        //Kiểm tra xem role đã tồn tại chưa
         Optional<Role> roleOpt = roleRepository.findById(roleId);
         if (roleOpt.isEmpty()) {
             logger.warn("Assign permissions failed: Role ID {} not found", roleId);
@@ -62,7 +116,8 @@ public class RolerServiceImpl implements IRoleService {
         }
         Role role = roleOpt.get();
 
-        List<Permission> permissions = new ArrayList<>();
+        List<Permission> currentPermissions = role.getPermissions();
+        List<Permission> permissionsToAdd = new ArrayList<>();
         for (String name : permissionNames) {
             Optional<Permission> permOpt = permissionRepository.findByName(name);
             if (permOpt.isEmpty()) {
@@ -70,10 +125,19 @@ public class RolerServiceImpl implements IRoleService {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
                         .body(new Response(404, "Not Found", "Permission " + name + " not found"));
             }
-            permissions.add(permOpt.get());
+            Permission permission = permOpt.get();
+            if (!currentPermissions.contains(permission)) {
+                permissionsToAdd.add(permission);
+            }
         }
 
-        role.setPermissions(permissions);
+        if (permissionsToAdd.isEmpty()) {
+            logger.info("All permissions already assigned to role {}", role.getName());
+            return ResponseEntity.ok(new Response(200, "Success", "All permissions already assigned"));
+        }
+
+        currentPermissions.addAll(permissionsToAdd);
+        role.setPermissions(currentPermissions);
         roleRepository.save(role);
 
         logger.info("Assigned permissions {} to role {}", permissionNames, role.getName());
@@ -104,30 +168,17 @@ public class RolerServiceImpl implements IRoleService {
         roleDTO.setPermissions(convertToDTO(roleOpt.getPermissions()));
         return roleDTO;
     }
+
    public List<PermissionDTO> convertToDTO(List<Permission> permissions) {
         List<PermissionDTO> permissionDTOs = new ArrayList<>();
         for (Permission permission : permissions) {
             PermissionDTO permissionDTO = new PermissionDTO();
+            permissionDTO.setPermissionId(permission.getPermissionId());
             permissionDTO.setName(permission.getName());
             permissionDTO.setDescription(permission.getDescription());
             permissionDTOs.add(permissionDTO);
         }
         return permissionDTOs;
    }
-   @Override
-   public RoleDTO addNewPermissionForRole(int roleId, PermissionDTO permissionDTO) {
-        Optional<Role> roleOpt = roleRepository.findById(roleId);
-        if (!roleOpt.isEmpty()) {
-            Optional<Permission> permissionOpt = permissionRepository.findByName(permissionDTO.getName());
-            if (permissionOpt.isPresent()) {
-                Permission permission = permissionOpt.get();
-                List<Permission> newPermissions = roleOpt.get().getPermissions();
-                newPermissions.add(permission);
-                Role role = roleOpt.get();
-                role.setPermissions(newPermissions);
-                roleRepository.save(role);
-            }
-        }
-        return getRoleById(roleId);
-   }
+
 }

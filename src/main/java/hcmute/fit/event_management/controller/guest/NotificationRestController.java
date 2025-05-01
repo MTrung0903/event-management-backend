@@ -21,17 +21,27 @@ import java.util.List;
 @RequestMapping("/notify")
 public class NotificationRestController {
 
-   private NotificationRepository notificationRepository;
+    @Autowired
+    private NotificationRepository notificationRepository;
 
+    @Autowired
     private UserRepository userRepository;
+
     @Autowired
     private INotificationService notificationService;
+
     @Autowired
-    SimpMessagingTemplate template;
+    private SimpMessagingTemplate template;
 
     @PostMapping("/send")
     public ResponseEntity<String> sendNotification(@RequestBody NotificationDTO notificationDTO) {
         try {
+            // Kiểm tra người dùng tồn tại
+            if (!userRepository.existsById(notificationDTO.getUserId())) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("User not found with ID: " + notificationDTO.getUserId());
+            }
+            // Lưu thông báo vào cơ sở dữ liệu
+            notificationService.createNotification(notificationDTO);
             // Gửi thông báo qua WebSocket
             template.convertAndSendToUser(
                     String.valueOf(notificationDTO.getUserId()),
@@ -40,28 +50,56 @@ public class NotificationRestController {
             );
             return ResponseEntity.ok("Notification sent successfully!");
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to send notification.");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to send notification: " + e.getMessage());
         }
     }
+
     @GetMapping("/{userId}")
     public ResponseEntity<?> getNotify(@PathVariable int userId) {
-        User account = userRepository.findById(userId).orElse(null);
-        List<Notification> listNotify =  notificationRepository.findByUserId(userId);
-        List<NotificationDTO> notificationDTOList = new ArrayList<>();
-        for (Notification notification : listNotify) {
-            NotificationDTO notificationDTO = new NotificationDTO();
-            BeanUtils.copyProperties(notification, notificationDTO);
-            notificationDTOList.add(notificationDTO);
+        try {
+            // Kiểm tra người dùng tồn tại
+            User account = userRepository.findById(userId)
+                    .orElseThrow(() -> new RuntimeException("User not found with ID: " + userId));
+            List<Notification> listNotify = notificationRepository.findByUserId(userId);
+            List<NotificationDTO> notificationDTOList = new ArrayList<>();
+            for (Notification notification : listNotify) {
+                NotificationDTO notificationDTO = new NotificationDTO();
+                BeanUtils.copyProperties(notification, notificationDTO);
+                notificationDTO.setId(notification.getNotiId());
+                notificationDTO.setUserId(notification.getUser().getUserId());
+                notificationDTOList.add(notificationDTO);
+            }
+            Response response = new Response(200, "Success", notificationDTOList);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new Response(400, e.getMessage(), null));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new Response(500, "Internal server error", null));
         }
-        Response response = new Response(200, "Success", notificationDTOList);
-        return new ResponseEntity<>(response, HttpStatus.OK);
     }
+
     @PutMapping("/{notificationId}/read")
-    public void markNotificationAsRead(@PathVariable int notificationId) {
-        notificationService.markAsRead(notificationId);
+    public ResponseEntity<String> markNotificationAsRead(@PathVariable int notificationId) {
+        try {
+            notificationService.markAsRead(notificationId);
+            return ResponseEntity.ok("Notification marked as read");
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Failed to mark notification as read: " + e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Internal server error");
+        }
     }
+
     @PutMapping("/readAll/{userId}")
-    public void markAllNotificationAsRead(@PathVariable int userId) {
-        notificationService.markAllAsRead(userId);
+    public ResponseEntity<String> markAllNotificationAsRead(@PathVariable int userId) {
+        try {
+            if (!userRepository.existsById(userId)) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("User not found with ID: " + userId);
+            }
+            notificationService.markAllAsRead(userId);
+            return ResponseEntity.ok("All notifications marked as read");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to mark all notifications as read: " + e.getMessage());
+        }
     }
 }

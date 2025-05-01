@@ -28,4 +28,8 @@ public interface IUserService {
 
     @Transactional
     ResponseEntity<Response> upgradeToOrganizer(String email, OrganizerDTO organizerDTO);
+
+    ResponseEntity<Response> deleteUser(String email);
+
+    List<UserDTO> getAllUsers();
 }

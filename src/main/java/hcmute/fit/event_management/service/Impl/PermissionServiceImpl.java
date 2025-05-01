@@ -50,10 +50,49 @@ public class PermissionServiceImpl implements IPermissionService {
         List<PermissionDTO> permissionDTOs = new ArrayList<>();
         for (Permission permission : permissions) {
             PermissionDTO permissionDTO = new PermissionDTO();
+            permissionDTO.setPermissionId(permission.getPermissionId());
             permissionDTO.setName(permission.getName());
             permissionDTO.setDescription(permission.getDescription());
             permissionDTOs.add(permissionDTO);
         }
         return permissionDTOs;
+    }
+    @Override
+    public ResponseEntity<Response> updatePermission(PermissionDTO permissionDTO) {
+        Optional<Permission> existingPermission = permissionRepository.findById(permissionDTO.getPermissionId());
+        if (!existingPermission.isPresent()) {
+            logger.warn("Permission not found {}", permissionDTO.getName());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new Response(404, "Not Found", "Permission name not found"));
+        }
+
+        Permission permission = existingPermission.get();
+
+        permission.setName(permissionDTO.getName());
+        permission.setDescription(permissionDTO.getDescription());
+        permissionRepository.save(permission);
+
+        logger.info("Permission {} updated successfully", permissionDTO.getName());
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(new Response(200, "Success", "Permission updated successfully"));
+    }
+    @Override
+    public ResponseEntity<Response> deletePermission(String permissionName) {
+        Optional<Permission> existingPermission = permissionRepository.findByName(permissionName);
+        if (!existingPermission.isPresent()) {
+            logger.warn("Permission not found {}", permissionName);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new Response(404, "Not Found", "Permission not found"));
+
+        }
+        Permission permission = existingPermission.get();
+        if (!permission.getRoles().isEmpty()) {
+            logger.warn("Permission {} is assigned to roles", permissionName);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new Response(400, "Bad Request", "Permission is assigned to roles"));
+        }
+
+        permissionRepository.delete(permission);
+        logger.info("Permission {} deleted successfully", permissionName);
+        return ResponseEntity.status(HttpStatus.OK).body(new Response(200, "Success", "Permission deleted successfully"));
     }
 }

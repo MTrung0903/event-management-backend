@@ -17,4 +17,6 @@ public interface IMessageService {
     List<UserDTO> getListUserChat(int userId);
 
     void markMessagesAsRead(int recipientId, int senderId);
+
+    int getUserIdByEmail(String email);
 }

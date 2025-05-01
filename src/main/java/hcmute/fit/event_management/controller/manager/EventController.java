@@ -21,13 +21,13 @@ public class EventController {
     private EventServiceImpl eventService;
 
     @PostMapping("/create")
-    @PreAuthorize("hasRole(ORGANIZER)")
+    @PreAuthorize("hasRole('ORGANIZER')")
     public ResponseEntity<Response> createEvent(@RequestBody EventDTO event) throws IOException {
 
         return eventService.saveEventToDB(event);
     }
     @PostMapping("/create-event")
-    @PreAuthorize("hasRole(ORGANIZER)")
+    @PreAuthorize("hasRole('ORGANIZER')")
     public ResponseEntity<Response> saveEvent(@RequestBody EventDTO event)  {
        return eventService.saveEventToDB(event);
     }
@@ -45,20 +45,20 @@ public class EventController {
         return ResponseEntity.ok(event);
     }
     @PutMapping("/edit")
-    @PreAuthorize("hasRole(ORGANIZER)")
+    @PreAuthorize("hasRole('ORGANIZER')")
     public ResponseEntity<EventEditDTO> editEvent( @RequestBody EventEditDTO eventEditDTO) throws Exception {
        EventEditDTO eventEdit = eventService.saveEditEvent(eventEditDTO);
        return ResponseEntity.ok(eventEdit);
     }
     @DeleteMapping("/delete/{eventId}")
-    @PreAuthorize("hasRole(ORGANIZER)")
+    @PreAuthorize("hasRole('ORGANIZER')")
     public ResponseEntity<Boolean> deleteEvent(@PathVariable int eventId) {
         eventService.deleteEvent(eventId);
         return ResponseEntity.ok(true);
     }
 
     @GetMapping("/edit/{eventId}")
-    @PreAuthorize("hasRole(ORGANIZER)")
+    @PreAuthorize("hasRole('ORGANIZER')")
     public ResponseEntity<EventEditDTO> editEvent(@PathVariable int eventId) {
         EventEditDTO eventEdit = eventService.getEventAfterEdit(eventId);
         return ResponseEntity.ok(eventEdit);

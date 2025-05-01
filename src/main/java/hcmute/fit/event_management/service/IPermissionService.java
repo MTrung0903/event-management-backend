@@ -14,4 +14,8 @@ public interface IPermissionService {
     ResponseEntity<Response> createPermission(PermissionDTO permissionDTO);
 
     List<PermissionDTO> getAllPermissions();
+
+    ResponseEntity<Response> updatePermission(PermissionDTO permissionDTO);
+
+    ResponseEntity<Response> deletePermission(String permissionName);
 }

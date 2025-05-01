@@ -109,4 +109,10 @@ public class MessageServiceImpl implements IMessageService {
                     messageRepository.save(m);
                 });
     }
+    @Override
+    public int getUserIdByEmail(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found with email: " + email));
+        return user.getUserId();
+    }
 }

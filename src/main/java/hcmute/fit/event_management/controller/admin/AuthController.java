@@ -7,8 +7,11 @@ import hcmute.fit.event_management.service.Impl.EmailServiceImpl;
 import jakarta.validation.constraints.Email;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import payload.Response;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -77,5 +80,17 @@ public class AuthController {
     @PostMapping("/user/upgrade-organizer/{email}")
     public ResponseEntity<Response> upgradeToOrganizer(@PathVariable @Email String email, @RequestBody OrganizerDTO organizerDTO) {
         return userService.upgradeToOrganizer(email, organizerDTO);
+    }
+    @DeleteMapping("/users/{email}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Response> deleteUser(@PathVariable @Email String email) {
+        return userService.deleteUser(email);
+    }
+
+    @GetMapping("/users")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Response> getAllUsers() {
+        List<UserDTO> users = userService.getAllUsers();
+        return ResponseEntity.ok(new Response(200, "Success", users));
     }
 }

@@ -38,4 +38,14 @@ public class RoleController {
         return ResponseEntity.ok(response);
     }
 
+    @PutMapping("update")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Response> updateRole(@RequestBody RoleDTO roleDTO) {
+        return roleService.updateRole(roleDTO);
+    }
+    @DeleteMapping("delete/{roleName}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Response> deleteRole(@PathVariable String roleName) {
+        return roleService.deleteRole(roleName);
+    }
 }

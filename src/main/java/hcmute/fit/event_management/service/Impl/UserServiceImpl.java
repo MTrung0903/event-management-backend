@@ -44,14 +44,8 @@ public class UserServiceImpl implements IUserService {
     @Autowired
     private OrganizerRepository organizerRepository;
 
-    @Autowired
-    private PermissionRepository permissionRepository;
-
-
 
     Logger logger = LoggerFactory.getLogger(this.getClass());
-
-
 
     public UserServiceImpl(UserRepository userRepository) {
         this.userRepository = userRepository;
@@ -270,6 +264,7 @@ public class UserServiceImpl implements IUserService {
         logger.info("Role {} added to user {}", roleName, email);
         return ResponseEntity.ok(new Response(200, "Success", "Role added successfully"));
     }
+
     @Override
     public ResponseEntity<Response> deleteRoleInUser(String email, String roleName) {
         Optional<User> userOpt = userRepository.findByEmail(email);
@@ -305,6 +300,7 @@ public class UserServiceImpl implements IUserService {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(new Response(404, "Not Found", "Role not assigned to user"));
     }
+
     @Override
     public UserDTO getInfor(String email) {
         Optional<User> userOpt = userRepository.findByEmail(email);
@@ -353,6 +349,7 @@ public class UserServiceImpl implements IUserService {
         userDTO.setRoles(roleDTOs);
         return userDTO;
     }
+
     @Transactional
     @Override
     public ResponseEntity<Response> upgradeToOrganizer(String email, OrganizerDTO organizerDTO) {
@@ -433,5 +430,93 @@ public class UserServiceImpl implements IUserService {
 
         logger.info("User with email {} upgraded to ROLE_ORGANIZER successfully", email);
         return ResponseEntity.ok(new Response(200, "Success", "User upgraded to ROLE_ORGANIZER successfully"));
+    }
+
+    @Override
+    public ResponseEntity<Response> deleteUser(String email) {
+        if (email == null || email.isEmpty()) {
+            logger.error("Invalid email provided");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new Response(400, "Bad Request", "Email is required"));
+        }
+
+        Optional<User> userOpt = userRepository.findByEmail(email);
+        if (!userOpt.isPresent()) {
+            logger.error("User with email {} not found", email);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new Response(404, "Not Found", "User not found"));
+        }
+
+        User user = userOpt.get();
+
+        // Kiểm tra nếu user là admin mặc định
+        if (user.getEmail().equals("admin@gmail.com")) {
+            logger.warn("Cannot delete default admin account: {}", email);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new Response(400, "Bad Request", "Cannot delete default admin account"));
+        }
+
+        // Xóa các liên kết
+        Optional<List<UserRole>> userRolesOpt = userRoleRepository.findAllByUser(user);
+        if (userRolesOpt.isPresent()) {
+            userRoleRepository.deleteAll(userRolesOpt.get());
+        }
+
+        if (user.getOrganizer() != null) {
+            organizerRepository.delete(user.getOrganizer());
+        }
+
+        // Xóa user
+        userRepository.delete(user);
+
+        logger.info("User with email {} deleted successfully", email);
+        return ResponseEntity.ok(new Response(200, "Success", "User deleted successfully"));
+    }
+    @Override
+    public List<UserDTO> getAllUsers() {
+        List<User> users = userRepository.findAll();
+        List<UserDTO> userDTOs = new ArrayList<>();
+
+        for (User user : users) {
+            UserDTO userDTO = new UserDTO();
+            BeanUtils.copyProperties(user, userDTO);
+
+            // Map Organizer
+            if (user.getOrganizer() != null) {
+                OrganizerDTO organizerDTO = new OrganizerDTO();
+                BeanUtils.copyProperties(user.getOrganizer(), organizerDTO);
+                userDTO.setOrganizer(organizerDTO);
+            }
+
+            // Map Roles and Permissions
+            List<RoleDTO> roleDTOs = new ArrayList<>();
+            Optional<List<UserRole>> userRolesOpt = userRoleRepository.findAllByUser(user);
+
+            if (userRolesOpt.isPresent()) {
+                for (UserRole userRole : userRolesOpt.get()) {
+                    Role role = userRole.getRole();
+                    RoleDTO roleDTO = new RoleDTO();
+                    roleDTO.setRoleID(role.getRoleId());
+                    roleDTO.setName(role.getName());
+
+                    List<PermissionDTO> permissionDTOs = new ArrayList<>();
+                    if (role.getPermissions() != null) {
+                        for (Permission permission : role.getPermissions()) {
+                            PermissionDTO permissionDTO = new PermissionDTO();
+                            permissionDTO.setName(permission.getName());
+                            permissionDTO.setDescription(permission.getDescription());
+                            permissionDTOs.add(permissionDTO);
+                        }
+                    }
+                    roleDTO.setPermissions(permissionDTOs);
+                    roleDTOs.add(roleDTO);
+                }
+            }
+            userDTO.setRoles(roleDTOs);
+            userDTOs.add(userDTO);
+        }
+
+        logger.info("Retrieved {} users", userDTOs.size());
+        return userDTOs;
     }
 }
