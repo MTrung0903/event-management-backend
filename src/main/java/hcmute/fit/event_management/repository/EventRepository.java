@@ -3,6 +3,7 @@ package hcmute.fit.event_management.repository;
 import hcmute.fit.event_management.entity.Event;
 import hcmute.fit.event_management.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
@@ -21,5 +22,7 @@ public interface EventRepository extends JpaRepository<Event, Integer> {
     List<Event> findByEventLocationVenueNameContainingIgnoreCase(String venueName);
     List<Event> findByUser(User user);
     List<Event> findByEventHost(String eventHost);
+    List<Event> findByEventStatusIgnoreCase(String eventStatus);
+
 
 }

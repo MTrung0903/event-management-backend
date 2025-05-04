@@ -91,6 +91,7 @@ public class EventServiceImpl implements IEventService {
 
     @Override
     public EventDTO getEventById(int eventId) {
+        updateEventStatus();
         Event event = findById(eventId).orElseThrow(() -> new RuntimeException("Event not found"));
         EventDTO dto = new EventDTO();
         BeanUtils.copyProperties(event, dto, "eventLocation");
@@ -116,7 +117,22 @@ public class EventServiceImpl implements IEventService {
         dto.setUserId(event.getUser().getUserId());
         return dto;
     }
+    private void updateEventStatus() {
+        //Lấy ngày hiện tại, bỏ qua giờ/phút/giây để so sánh chỉ theo ngày.
+        LocalDateTime today = LocalDateTime.now().withHour(0).withMinute(0).withSecond(0).withNano(0);
+        List<Event> events = eventRepository.findAll();
 
+        for (Event event : events) {
+            if (event.getEventEnd() != null) {
+                LocalDateTime eventEndDate = event.getEventEnd().withHour(0).withMinute(0).withSecond(0).withNano(0);
+                if (eventEndDate.isEqual(today) && !"Complete".equals(event.getEventStatus())) {
+                    event.setEventStatus("Complete");
+                    eventRepository.save(event);
+                    logger.info("Updated event {} to status Complete", event.getEventName());
+                }
+            }
+        }
+    }
     @Override
     public EventDTO convertToDTO(Event event) {
         EventDTO dto = new EventDTO();
@@ -143,6 +159,7 @@ public class EventServiceImpl implements IEventService {
 
     @Override
     public List<EventDTO> getAllEvent() {
+        updateEventStatus();
         List<Event> events = eventRepository.findAll();
         return events.stream()
                 .map(this::convertToDTO)
@@ -151,6 +168,7 @@ public class EventServiceImpl implements IEventService {
 
 
     public EventEditDTO getEventAfterEdit(int eventId) {
+        updateEventStatus();
         EventDTO event = getEventById(eventId);
         List<Ticket> tickets = ticketRepository.findByEventID(eventId);
         List<TicketDTO> ticketDTOs = new ArrayList<>();
@@ -214,58 +232,79 @@ public class EventServiceImpl implements IEventService {
 
     @Override
     public List<EventDTO> findEventsByName(String eventName) {
+        updateEventStatus();
         List<Event> events = eventRepository.findByEventNameContainingIgnoreCase(eventName);
+        return events.stream()
+                .filter(event -> !"Complete".equals(event.getEventStatus()))
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+    @Override
+    public List<EventDTO> findEventsStatus(String eventStatus) {
+        updateEventStatus();
+        List<Event> events = eventRepository.findByEventStatusIgnoreCase(eventStatus);
         return events.stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
-
     @Override
     public List<EventDTO> findEventsByDate(LocalDateTime eventStart) {
+        updateEventStatus();
         List<Event> events = eventRepository.findByEventStart(eventStart);
         return events.stream()
+                .filter(event -> !"Complete".equals(event.getEventStatus()))
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
 
     @Override
     public List<EventDTO> findEventsByHost(String eventHost) {
+        updateEventStatus();
         List<Event> events = eventRepository.findByEventHostContainingIgnoreCase(eventHost);
         return events.stream()
+                .filter(event -> !"Complete".equals(event.getEventStatus()))
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
 
     @Override
     public List<EventDTO> findEventsByLocation(String eventLocation) {
+        updateEventStatus();
         List<Event> events = eventRepository.findByEventLocationCityContainingIgnoreCase(eventLocation);
         return events.stream()
+                .filter(event -> !"Complete".equals(event.getEventStatus()))
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
 
     @Override
     public List<EventDTO> findEventsByTags(String tag) {
+        updateEventStatus();
         List<Event> events = eventRepository.findByTagsContainingIgnoreCase(tag);
         return events.stream()
+                .filter(event -> !"Complete".equals(event.getEventStatus()))
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
 
     @Override
     public List<EventDTO> findEventsByType(String eventType) {
+        updateEventStatus();
         List<Event> events = eventRepository.findByEventTypeContainingIgnoreCase(eventType);
         return events.stream()
+                .filter(event -> !"Complete".equals(event.getEventStatus()))
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
 
     @Override
     public List<EventDTO> findEventsByNameAndLocation(String name, String location) {
+        updateEventStatus();
         List<Event> eventsByLocation = eventRepository.findByEventLocationCityContainingIgnoreCase(location);
         List<Event> filteredEvents = eventsByLocation.stream()
                 .filter(event -> event.getEventName() != null &&
-                        event.getEventName().toLowerCase().contains(name.toLowerCase()))
+                        event.getEventName().toLowerCase().contains(name.toLowerCase()) &&
+                        !"Complete".equals(event.getEventStatus()))
                 .collect(Collectors.toList());
         return filteredEvents.stream()
                 .map(this::convertToDTO)
@@ -273,6 +312,7 @@ public class EventServiceImpl implements IEventService {
     }
 
     private List<SegmentDTO> getAllSegments(int eventId) {
+
         List<Segment> list = segmentRepository.findByEventId(eventId);
         List<SegmentDTO> dtos = new ArrayList<>();
         for (Segment segment : list) {
@@ -302,6 +342,7 @@ public class EventServiceImpl implements IEventService {
     }
     @Override
     public List<EventDTO> searchEventsByNameAndCity(String searchTerm, String cityKey) {
+        updateEventStatus();
         if (searchTerm == null || searchTerm.trim().isEmpty() || cityKey == null || cityKey.trim().isEmpty()) {
             return getAllEvent();
         }
@@ -312,7 +353,8 @@ public class EventServiceImpl implements IEventService {
 
         List<Event> filteredEvents = eventsByCity.stream()
                 .filter(event -> event.getEventName() != null &&
-                        removeDiacritics(event.getEventName()).contains(searchTerm))
+                        removeDiacritics(event.getEventName()).contains(searchTerm) &&
+                        !"Complete".equals(event.getEventStatus()))
                 .collect(Collectors.toList());
 
         return filteredEvents.stream()
@@ -363,14 +405,15 @@ public class EventServiceImpl implements IEventService {
         }
 
         // Lưu Event
-        eventRepository.save(event);
+        Event tmp = eventRepository.save(event);
 
         logger.info("Event {} created successfully by user {}", event.getEventName(), name);
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(new Response(201, "Success", "Event created successfully"));
+                .body(new Response(201, "Success", convertToDTO(tmp)));
     }
     @Override
     public List<EventDTO> getAllEventByHost(String email){
+        updateEventStatus();
         Optional<User> host = userRepository.findByEmail(email);
         if (!host.isPresent()) {
             logger.error("User with email {} not found", email);

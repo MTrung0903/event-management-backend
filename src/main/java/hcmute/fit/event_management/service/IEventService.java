@@ -24,6 +24,9 @@ public interface IEventService {
     EventEditDTO saveEditEvent(EventEditDTO eventEditDTO) throws Exception;
     void deleteEvent(int eventId);
     List<EventDTO> findEventsByName(String eventName);
+
+    List<EventDTO> findEventsStatus(String eventStatus);
+
     List<EventDTO> findEventsByDate(LocalDateTime eventStart);
     List<EventDTO> findEventsByHost(String eventHost);
     List<EventDTO> findEventsByLocation(String eventLocation);

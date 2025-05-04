@@ -37,7 +37,7 @@ public class Event {
 
     @ElementCollection
     private List<String> eventImages;
-
+    @Column(columnDefinition = "TEXT")
     private String textContent;
 
     @ElementCollection

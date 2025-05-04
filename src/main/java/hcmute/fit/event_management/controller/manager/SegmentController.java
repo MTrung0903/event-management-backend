@@ -21,13 +21,13 @@ public class SegmentController {
         return ResponseEntity.ok(list);
     }
     @PostMapping("/{eventId}")
-    @PreAuthorize("hasRole(ORGANIZER)")
+    @PreAuthorize("hasRole('ORGANIZER')")
     public ResponseEntity<SegmentDTO> createSegment(@PathVariable("eventId") int eventId, @RequestBody SegmentDTO segmentDTO) throws Exception {
         segmentService.addSegment(eventId, segmentDTO);
         return ResponseEntity.ok(segmentDTO);
     }
     @DeleteMapping("/delete/{segmentId}")
-    @PreAuthorize("hasRole(ORGANIZER)")
+    @PreAuthorize("hasRole('ORGANIZER')")
     public ResponseEntity<Boolean> deleteSegment(@PathVariable("segmentId") int segmentId) {
         segmentService.deleteById(segmentId);
         return ResponseEntity.ok(true);

@@ -69,7 +69,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/login", "/api/auth/register", "/api/auth/forgot", "/api/auth/reset-password",
                                 "/api/auth/send-verification-code/**", "/chat/**", "/api/auth/logout", "/change-password", "/ws/**",
-                                "/api/storage/**", "/api/events/search/**").permitAll()
+                                "/api/storage/**", "/api/events/search/**","/api/events/all").permitAll()
                         .anyRequest().authenticated()
                 )
                 .userDetailsService(accountDetailService)

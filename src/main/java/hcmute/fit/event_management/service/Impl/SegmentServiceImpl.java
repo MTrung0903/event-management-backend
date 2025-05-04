@@ -34,18 +34,26 @@ public class SegmentServiceImpl implements ISegmentService {
 
     @Override
     public void addSegment(int eventId, SegmentDTO segment) throws Exception {
-        SpeakerDTO speakerDTO = new SpeakerDTO();
-        speakerDTO.setSpeakerName(segment.getSpeaker().getSpeakerName());
-        speakerDTO.setSpeakerDesc(segment.getSpeaker().getSpeakerDesc());
-        speakerDTO.setSpeakerImage(segment.getSpeaker().getSpeakerImage());
-        Speaker speaker = speakerService.addSpeaker(speakerDTO);
+        if (segment.getSpeaker() != null) {
+            SpeakerDTO speakerDTO = new SpeakerDTO();
+            speakerDTO.setSpeakerName(segment.getSpeaker().getSpeakerName());
+            speakerDTO.setSpeakerDesc(segment.getSpeaker().getSpeakerDesc());
+            speakerDTO.setSpeakerImage(segment.getSpeaker().getSpeakerImage());
+            Speaker speaker = speakerService.addSpeaker(speakerDTO);
+            Segment newSegment = new Segment();
+            BeanUtils.copyProperties(segment, newSegment);
+            newSegment.setEvent(eventRepository.findById(eventId).orElseThrow(
+                    () -> new Exception("Not found event by eventId " + eventId)));
+            newSegment.setSpeaker(speaker);
+        } else {
+            Segment newSegment = new Segment();
+            BeanUtils.copyProperties(segment, newSegment);
+            newSegment.setEvent(eventRepository.findById(eventId).orElseThrow(
+                    () -> new Exception("Not found event by eventId " + eventId)));
 
-        Segment newSegment = new Segment();
-        BeanUtils.copyProperties(segment, newSegment);
-        newSegment.setEvent(eventRepository.findById(eventId).orElseThrow(
-                ()-> new Exception("Not found event by eventId "+eventId)));
-        newSegment.setSpeaker(speaker);
-        segmentRepository.save(newSegment);
+            segmentRepository.save(newSegment);
+        }
+
     }
     @Override
     public List<SegmentDTO> getAllSegments(int eventId) {

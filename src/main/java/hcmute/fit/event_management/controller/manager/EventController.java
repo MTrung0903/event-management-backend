@@ -12,6 +12,7 @@ import org.springframework.web.multipart.MultipartFile;
 import payload.Response;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
@@ -100,6 +101,21 @@ public class EventController {
     @GetMapping("search/by-tag/{tag}")
     public ResponseEntity<List<EventDTO>> searchEventsByTag(@PathVariable String tag){
         List<EventDTO> events = eventService.findEventsByTags(tag);
+        return ResponseEntity.ok(events);
+    }
+    @GetMapping("/search/by-name/{eventName}")
+    public ResponseEntity<List<EventDTO>> searchEventsByName(@PathVariable String eventName){
+        List<EventDTO> events = eventService.findEventsByName(eventName);
+        return ResponseEntity.ok(events);
+    }
+    @GetMapping("/search/by-status/{eventStatus}")
+    public ResponseEntity<List<EventDTO>> searchEventsByStatus(@PathVariable String eventStatus){
+        List<EventDTO> events = eventService.findEventsStatus(eventStatus);
+        return ResponseEntity.ok(events);
+    }
+    @GetMapping("/search/by-event-start/{eventStart}")
+    public ResponseEntity<List<EventDTO>> searchEventsByEventStart(@PathVariable LocalDateTime eventStart){
+        List<EventDTO> events = eventService.findEventsByDate(eventStart);
         return ResponseEntity.ok(events);
     }
 

@@ -16,7 +16,7 @@ public class TicketController {
     private ITicketService ticketService;
 
     @PostMapping("/{eventId}")
-    @PreAuthorize("hasRole(ORGANIZER)")
+    @PreAuthorize("hasRole('ORGANIZER')")
     public ResponseEntity<TicketDTO> createTicket(@PathVariable int eventId, @RequestBody TicketDTO ticketDTO) {
         ticketService.addTicket(eventId, ticketDTO);
         return ResponseEntity.ok(ticketDTO);
@@ -28,7 +28,7 @@ public class TicketController {
         return ResponseEntity.ok(list);
     }
     @DeleteMapping("delete/{ticketId}")
-    @PreAuthorize("hasRole(ORGANIZER)")
+    @PreAuthorize("hasRole('ORGANIZER')")
     public ResponseEntity<Boolean> deleteTicket(@PathVariable int ticketId) {
         ticketService.deleteById(ticketId);
         return ResponseEntity.ok(true);
