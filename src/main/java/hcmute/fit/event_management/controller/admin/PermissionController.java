@@ -27,4 +27,14 @@ public class PermissionController {
         List<PermissionDTO> list =  permissionService.getAllPermissions();
         return ResponseEntity.ok(list);
     }
+    @PutMapping("update")
+    @PreAuthorize("hasAnyRole('ADMIN')")
+    public ResponseEntity<Response> updatePermission( @RequestBody PermissionDTO permissionDTO) {
+        return permissionService.updatePermission(permissionDTO);
+    }
+    @DeleteMapping("delete/{name}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Response> deletePermission(@PathVariable String name) {
+        return permissionService.deletePermission(name);
+    }
 }

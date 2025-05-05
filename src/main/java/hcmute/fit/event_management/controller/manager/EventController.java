@@ -9,8 +9,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import payload.Response;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
@@ -20,10 +22,15 @@ public class EventController {
     private EventServiceImpl eventService;
 
     @PostMapping("/create")
-    @PreAuthorize("hasRole(ORGANIZER)")
-    public ResponseEntity<Integer> createEvent(@RequestBody EventDTO event) throws IOException {
-        Event savedEvent = eventService.saveEvent(event);
-        return ResponseEntity.ok(savedEvent.getEventID());
+    @PreAuthorize("hasRole('ORGANIZER')")
+    public ResponseEntity<Response> createEvent(@RequestBody EventDTO event) throws IOException {
+
+        return eventService.saveEventToDB(event);
+    }
+    @PostMapping("/create-event")
+    @PreAuthorize("hasRole('ORGANIZER')")
+    public ResponseEntity<Response> saveEvent(@RequestBody EventDTO event)  {
+       return eventService.saveEventToDB(event);
     }
     @GetMapping("/all")
     public ResponseEntity<List<EventDTO>> getAllEvents() {
@@ -39,39 +46,25 @@ public class EventController {
         return ResponseEntity.ok(event);
     }
     @PutMapping("/edit")
-    @PreAuthorize("hasRole(ORGANIZER)")
+    @PreAuthorize("hasRole('ORGANIZER')")
     public ResponseEntity<EventEditDTO> editEvent( @RequestBody EventEditDTO eventEditDTO) throws Exception {
        EventEditDTO eventEdit = eventService.saveEditEvent(eventEditDTO);
        return ResponseEntity.ok(eventEdit);
     }
     @DeleteMapping("/delete/{eventId}")
-    @PreAuthorize("hasRole(ORGANIZER)")
+    @PreAuthorize("hasRole('ORGANIZER')")
     public ResponseEntity<Boolean> deleteEvent(@PathVariable int eventId) {
         eventService.deleteEvent(eventId);
         return ResponseEntity.ok(true);
     }
 
     @GetMapping("/edit/{eventId}")
-    @PreAuthorize("hasRole(ORGANIZER)")
+    @PreAuthorize("hasRole('ORGANIZER')")
     public ResponseEntity<EventEditDTO> editEvent(@PathVariable int eventId) {
-        EventEditDTO eventEdit = eventService.getEventForEdit(eventId);
+        EventEditDTO eventEdit = eventService.getEventAfterEdit(eventId);
         return ResponseEntity.ok(eventEdit);
     }
-    @GetMapping("/search")
-    public ResponseEntity<List<EventDTO>> searchEvents(
-            @RequestParam("term") String searchTerm,
-            @RequestParam("type") String searchType) {
-        System.out.println("searchTerm: " + searchTerm);
-        System.out.println("searchType: " + searchType);
-        try {
-            List<EventDTO> results = eventService.searchEvents(searchTerm, searchType);
-            return ResponseEntity.ok(results);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(null);
-        } catch (Exception e) {
-            return ResponseEntity.status(500).body(null);
-        }
-    }
+
     @GetMapping("/search/by-name-and-city")
     public ResponseEntity<List<EventDTO>> searchEventsByNameAndCity(
             @RequestParam("term") String searchTerm,
@@ -93,6 +86,36 @@ public class EventController {
     @GetMapping("search/by-city/{city}")
     public ResponseEntity<List<EventDTO>> searchEventsByCity(@PathVariable String city){
         List<EventDTO> events = eventService.findEventsByLocation( city );
+        return ResponseEntity.ok(events);
+    }
+    @GetMapping("/get-all-event-by-org/{email}")
+    public ResponseEntity<List<EventDTO>> getAllEventsByOrg(@PathVariable String email){
+        List<EventDTO> events = eventService.getAllEventByHost(email);
+        return ResponseEntity.ok(events);
+    }
+    @GetMapping("search/by-host/{eventHost}")
+    public ResponseEntity<List<EventDTO>> searchEventsByHost(@PathVariable String eventHost){
+        List<EventDTO> events = eventService.findEventsByHost(eventHost);
+        return ResponseEntity.ok(events);
+    }
+    @GetMapping("search/by-tag/{tag}")
+    public ResponseEntity<List<EventDTO>> searchEventsByTag(@PathVariable String tag){
+        List<EventDTO> events = eventService.findEventsByTags(tag);
+        return ResponseEntity.ok(events);
+    }
+    @GetMapping("/search/by-name/{eventName}")
+    public ResponseEntity<List<EventDTO>> searchEventsByName(@PathVariable String eventName){
+        List<EventDTO> events = eventService.findEventsByName(eventName);
+        return ResponseEntity.ok(events);
+    }
+    @GetMapping("/search/by-status/{eventStatus}")
+    public ResponseEntity<List<EventDTO>> searchEventsByStatus(@PathVariable String eventStatus){
+        List<EventDTO> events = eventService.findEventsStatus(eventStatus);
+        return ResponseEntity.ok(events);
+    }
+    @GetMapping("/search/by-event-start/{eventStart}")
+    public ResponseEntity<List<EventDTO>> searchEventsByEventStart(@PathVariable LocalDateTime eventStart){
+        List<EventDTO> events = eventService.findEventsByDate(eventStart);
         return ResponseEntity.ok(events);
     }
 

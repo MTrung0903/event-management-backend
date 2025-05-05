@@ -1,11 +1,12 @@
 package hcmute.fit.event_management.dto;
 
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Data
@@ -13,8 +14,14 @@ import java.util.List;
 @NoArgsConstructor
 public class UserDTO {
     private int userId;
+    private String fullName;
     private String email;
     private String password;
+    private String gender;
+    private LocalDate birthday;
+    private String address;
     private boolean isActive;
-    private List<String> roles;
+    private List<RoleDTO> roles;
+    private OrganizerDTO organizer;
+
 }

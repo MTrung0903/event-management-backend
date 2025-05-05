@@ -4,6 +4,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
+import java.util.Date;
 import java.util.List;
 
 @Entity
@@ -17,14 +19,26 @@ public class User {
     @Column(name = "user_id")
     private int userId;
 
-    @Column(name ="email")
+    @Column(name = "full_name", nullable = false)
+    private String fullName;
+
+    @Column(name = "email", nullable = false, unique = true)
     private String email;
+
+    @Column(name = "password", nullable = false)
+    private String password;
+
+    @Column(name = "gender")
+    private String gender;
+
+    @Column(name = "birthday")
+    private LocalDate birthday;
+
+    @Column(name = "address")
+    private String address;
 
     @Column(name = "is_active")
     private boolean isActive;
-
-    @Column(name = "password")
-    private String password;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private List<Notification> listNoti;
@@ -39,4 +53,8 @@ public class User {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private List<UserRole> listUserRoles;
 
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
+    private Organizer organizer;
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Event> events;
 }

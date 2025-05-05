@@ -12,6 +12,10 @@ public interface IRoleService {
     @Transactional
     ResponseEntity<Response> createRole(RoleDTO roleDTO);
 
+    ResponseEntity<Response> updateRole(RoleDTO roleDTO);
+
+    ResponseEntity<Response> deleteRole(String roleName);
+
     @Transactional
     ResponseEntity<Response> assignPermissionsToRole(int roleId, List<String> permissionNames);
 
@@ -19,5 +23,5 @@ public interface IRoleService {
 
     RoleDTO getRoleById(int roleId);
 
-    RoleDTO addNewPermissionForRole(int roleId, PermissionDTO permissionDTO);
+
 }

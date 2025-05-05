@@ -6,7 +6,6 @@ import hcmute.fit.event_management.service.EmailService;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -16,6 +15,8 @@ import com.google.zxing.WriterException;
 import com.google.zxing.common.BitMatrix;
 import com.google.zxing.qrcode.QRCodeWriter;
 import com.google.zxing.client.j2se.MatrixToImageWriter;
+
+import java.util.Random;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -70,6 +71,21 @@ public class EmailServiceImpl implements EmailService {
         } catch (MessagingException e) {
             System.err.println("Failed to send email: " + e.getMessage());
         }
+    }
+    @Override
+    public String sendVerificationCode(String email) throws MessagingException {
+
+        String code = String.format("%06d", new Random().nextInt(999999));
+
+
+        MimeMessage message = mailSender.createMimeMessage();
+        MimeMessageHelper helper = new MimeMessageHelper(message, false);
+        helper.setTo(email);
+        helper.setSubject("Mã Xác Minh Đăng Ký");
+        helper.setText(code);
+        mailSender.send(message);
+
+        return code;
     }
     public String generateQrCodeBase64(String text) throws Exception {
         QRCodeWriter qrCodeWriter = new QRCodeWriter();

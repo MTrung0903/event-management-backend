@@ -9,6 +9,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -24,6 +25,7 @@ import java.util.List;
 
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
     @Autowired
     private UserDetailService accountDetailService;
@@ -68,9 +70,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/login", "/api/auth/register", "/api/auth/forgot", "/api/auth/reset-password",
                                 "/api/auth/logout", "/change-password", "/ws/**","/api/storage/**","/api/events/search/**",
                                 "/api/v1/payment/vnpay-ipn","/api/v1/payment/vnpay-return", "/api/v1/payment/momo-ipn", "/api/v1/payment/momo-return").permitAll()
-//                        .requestMatchers("/api/segment/**","/api/ticket/**").hasAnyRole("ORGANIZER","ADMIN")
-//                        .requestMatchers("/events/create").hasAuthority("CREATE_EVENT")
-//                        .requestMatchers("/events/edit").hasAuthority("EDIT_EVENT")
+                                "/api/auth/send-verification-code/**", "/chat/**", "/api/auth/logout", "/change-password", "/ws/**",
+                                "/api/storage/**", "/api/events/search/**","/api/events/all").permitAll()
                         .anyRequest().authenticated()
                 )
                 .userDetailsService(accountDetailService)

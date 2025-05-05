@@ -1,18 +1,17 @@
 package hcmute.fit.event_management.controller.admin;
 
-import hcmute.fit.event_management.dto.ForgotPasswordDTO;
-import hcmute.fit.event_management.dto.ResetPasswordDTO;
-import hcmute.fit.event_management.dto.UserDTO;
+import hcmute.fit.event_management.dto.*;
+import hcmute.fit.event_management.service.IUserService;
 import hcmute.fit.event_management.service.Impl.AuthServiceImpl;
-import hcmute.fit.event_management.service.Impl.UserServiceImpl;
+import hcmute.fit.event_management.service.Impl.EmailServiceImpl;
 import jakarta.validation.constraints.Email;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
 import payload.Response;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -21,7 +20,10 @@ public class AuthController {
     private AuthServiceImpl authService;
 
     @Autowired
-    private UserServiceImpl userService;
+    private IUserService userService;
+
+    @Autowired
+    private EmailServiceImpl emailService;
 
     @PostMapping("/login")
     public ResponseEntity<Response> login(@RequestBody UserDTO userDTO) {
@@ -42,8 +44,53 @@ public class AuthController {
     public ResponseEntity<Response> resetPassword(@RequestBody ResetPasswordDTO resetPasswordDTO) {
         return authService.resetPassword(resetPasswordDTO);
     }
+
     @PostMapping("/logout")
     public ResponseEntity<Response> logout() {
         return authService.logout();
+    }
+
+    @PostMapping("/send-verification-code/{email}")
+    public ResponseEntity<String> sendVerificationCode(@PathVariable String email) {
+        try {
+            String code = emailService.sendVerificationCode(email);
+            return ResponseEntity.ok(code);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Error: " + e.getMessage());
+        }
+    }
+
+    @PutMapping("/save-change")
+    public ResponseEntity<Response> saveChange(@RequestBody UserDTO userDTO) {
+        return userService.saveChangeInfor(userDTO);
+    }
+    @PostMapping("{email}/add-new-role/{roleName}")
+    public ResponseEntity<Response> addNewRole(@PathVariable String email, @PathVariable String roleName) {
+        return userService.AddMoreRoleForUser(email, roleName);
+    }
+    @DeleteMapping("{email}/remove-role/{roleName}")
+    public ResponseEntity<Response> removeRole(@PathVariable String email, @PathVariable String roleName) {
+        return userService.deleteRoleInUser(email, roleName);
+    }
+    @GetMapping("/user/{email}")
+    public ResponseEntity<UserDTO> getUserInfo(@PathVariable @Email String email) {
+        UserDTO userDTO = userService.getInfor(email);
+        return ResponseEntity.ok(userDTO);
+    }
+    @PostMapping("/user/upgrade-organizer/{email}")
+    public ResponseEntity<Response> upgradeToOrganizer(@PathVariable @Email String email, @RequestBody OrganizerDTO organizerDTO) {
+        return userService.upgradeToOrganizer(email, organizerDTO);
+    }
+    @DeleteMapping("/users/{email}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Response> deleteUser(@PathVariable @Email String email) {
+        return userService.deleteUser(email);
+    }
+
+    @GetMapping("/users")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Response> getAllUsers() {
+        List<UserDTO> users = userService.getAllUsers();
+        return ResponseEntity.ok(new Response(200, "Success", users));
     }
 }
