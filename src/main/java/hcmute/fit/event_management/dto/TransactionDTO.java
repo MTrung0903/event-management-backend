@@ -9,15 +9,13 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class TransactionDTO {
-    private String transactionId;
+    private int transactionId;
     private String transactionDate;
-    private String transactionAmount;
+    private double transactionAmount;
     private String paymentMethod;
     private String transactionStatus;
-    private String payerAccount;
-    private String receiverAccount;
-    private String paymentGateway;
     private String referenceCode;
+    private String transactionInfo;
+    private String message;
     private String bookingId;
-
 }

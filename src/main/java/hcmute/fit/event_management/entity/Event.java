@@ -54,4 +54,8 @@ public class Event {
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
+
+    @OneToMany(mappedBy = "event",cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Booking> bookings;
+
 }

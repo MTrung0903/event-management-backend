@@ -64,4 +64,3 @@ public class SpeakerServiceImpl implements ISpeakerService {
         return speakerRepository.save(speaker);
     }
 }
-

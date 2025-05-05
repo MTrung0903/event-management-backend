@@ -42,8 +42,5 @@ public class Ticket {
     private Event event;
 
 
-    @OneToMany(mappedBy = "ticket", cascade = CascadeType.ALL)
-    private List<RefundDetails> refundDetails;
-
 
 }

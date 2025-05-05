@@ -78,4 +78,6 @@ public interface IBookingService {
     void deleteById(Integer integer);
 
     Optional<Booking> findByBookingCode(String code);
+
+    List<Booking> findByUserId(int userId);
 }

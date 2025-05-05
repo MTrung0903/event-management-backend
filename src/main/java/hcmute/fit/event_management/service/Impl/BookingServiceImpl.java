@@ -194,4 +194,9 @@ public class BookingServiceImpl implements IBookingService {
         if(bill.get)
 
     }
+
+    @Override
+    public List<Booking> findByUserId(int userId) {
+        return bookingRepository.findByUserId(userId);
+    }
 }

@@ -12,7 +12,9 @@ import java.util.Map;
 @AllArgsConstructor
 @NoArgsConstructor
 public class CheckoutDTO {
-    private double amount;
-    private String userId;
+    private long amount;
+    private int userId;
+    private int eventId;
     private Map<Integer, Integer> tickets = new HashMap<Integer, Integer>();
+    private String orderInfo;
 }

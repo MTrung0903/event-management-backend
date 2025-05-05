@@ -68,6 +68,8 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/login", "/api/auth/register", "/api/auth/forgot", "/api/auth/reset-password",
+                                "/api/auth/logout", "/change-password", "/ws/**","/api/storage/**","/api/events/search/**",
+                                "/api/v1/payment/vnpay-ipn","/api/v1/payment/vnpay-return", "/api/v1/payment/momo-ipn", "/api/v1/payment/momo-return").permitAll()
                                 "/api/auth/send-verification-code/**", "/chat/**", "/api/auth/logout", "/change-password", "/ws/**",
                                 "/api/storage/**", "/api/events/search/**","/api/events/all").permitAll()
                         .anyRequest().authenticated()

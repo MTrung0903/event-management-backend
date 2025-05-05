@@ -178,4 +178,9 @@ public class TransactionServiceImpl implements ITransactionService {
     public <S extends Transaction, R> R findBy(Example<S> example, Function<FluentQuery.FetchableFluentQuery<S>, R> queryFunction) {
         return transactionRepository.findBy(example, queryFunction);
     }
+
+    @Override
+    public Optional<Transaction> findByOrderCode(String orderCode) {
+        return transactionRepository.findByOrderCode(orderCode);
+    }
 }
