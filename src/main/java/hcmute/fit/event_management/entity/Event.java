@@ -49,4 +49,8 @@ public class Event {
 
     @OneToMany(mappedBy = "event",cascade = CascadeType.ALL, orphanRemoval = true)
     private List<SponsorEvent> sponsorEvents;
+
+    @OneToMany(mappedBy = "event",cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Booking> bookings;
+
 }

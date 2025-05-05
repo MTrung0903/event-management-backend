@@ -12,6 +12,6 @@ import java.util.Optional;
 
 @Repository
 public interface TransactionRepository extends JpaRepository<Transaction, Integer> {
-    @Query("select t from Transaction t where t.booking.bookingCode = :orderCode")
+    @Query("select t from Transaction t where t.referenceCode = :orderCode")
     Optional<Transaction> findByOrderCode(@Param("orderCode") String orderCode);
 }

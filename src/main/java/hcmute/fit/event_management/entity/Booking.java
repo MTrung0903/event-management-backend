@@ -33,12 +33,12 @@ public class Booking {
     @ManyToOne
     @JoinColumn(name = "user_id")
     private User user;
-
+    @ManyToOne
+    @JoinColumn(name = "event_id")
+    private Event event;
     @OneToMany(mappedBy = "booking",cascade = CascadeType.ALL)
     private List<BookingDetails> bookingDetails;
 
-    @OneToMany(mappedBy = "booking",cascade = CascadeType.ALL)
-    private List<Refund> refunds;
 
     @OneToOne(mappedBy = "booking",cascade = CascadeType.ALL)
     private Transaction transaction;

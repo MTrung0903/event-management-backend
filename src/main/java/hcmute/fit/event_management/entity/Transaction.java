@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
 
 
 @Entity
@@ -34,4 +35,10 @@ public class Transaction {
     @OneToOne
     @JoinColumn
     private Booking booking;
+
+    @OneToOne
+    private Transaction transaction;
+
+    @OneToMany(mappedBy = "transaction", cascade = CascadeType.ALL)
+    private List<Refund> refunds;
 }

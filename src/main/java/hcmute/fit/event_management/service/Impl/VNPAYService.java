@@ -1,28 +1,42 @@
 package hcmute.fit.event_management.service.Impl;
 
+import hcmute.fit.event_management.config.VNPAYAPI;
 import hcmute.fit.event_management.config.VNPAYConfig;
 import hcmute.fit.event_management.dto.CheckoutDTO;
-import hcmute.fit.event_management.dto.TicketDTO;
+
+import hcmute.fit.event_management.dto.RefundDTO;
+import hcmute.fit.event_management.dto.VNPAYRefund;
 import hcmute.fit.event_management.entity.*;
 
 import hcmute.fit.event_management.repository.*;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+
+import org.springframework.http.*;
 import org.springframework.stereotype.Service;
+
 
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
+
+
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static hcmute.fit.event_management.util.PaymentUtil.*;
 
 @Service
+@Slf4j
+@AllArgsConstructor
 public class VNPAYService {
 
     @Autowired
@@ -55,6 +69,10 @@ public class VNPAYService {
         errorMessages.put("79", "Giao dịch không thành công do: KH nhập sai mật khẩu thanh toán quá số lần quy định. Xin quý khách vui lòng thực hiện lại giao dịch.");
         errorMessages.put("99", "Các lỗi khác (lỗi còn lại, không có trong danh sách mã lỗi đã liệt kê).");
     }
+    private final VNPAYAPI vnpayapi;
+    @Autowired
+    private RefundRepository refundRepository;
+    private EventRepository eventRepository;
 
     public String createPaymentUrl(HttpServletRequest req, CheckoutDTO checkoutDTO) throws Exception  {
 
@@ -96,13 +114,16 @@ public class VNPAYService {
         // Lưu vào booking với status pending
         try {
             Booking booking = new Booking();
+            Event event = eventRepository.findById(checkoutDTO.getEventId()).orElse(new Event());
+            User user = userRepository.findById(checkoutDTO.getUserId()).orElse(new User());
             booking.setCreateDate(formatter.parse(vnpCreateDate));
             booking.setExpireDate(formatter.parse(vnp_ExpireDate));
             booking.setBookingCode(vnp_TxnRef);
             booking.setBookingMethod("VNPAY");
             booking.setBookingStatus("Pending");
             booking.setTotalPrice(checkoutDTO.getAmount());
-            booking.setUser(userRepository.findById(Integer.valueOf(checkoutDTO.getUserId())).orElse(new User()));
+            booking.setUser(user);
+            booking.setEvent(event);
             bookingRepository.saveAndFlush(booking);
             for (Integer ticketId : checkoutDTO.getTickets().keySet()) {
                 BookingDetails bkdt = new BookingDetails();
@@ -120,63 +141,139 @@ public class VNPAYService {
     }
     public void ipn(HttpServletRequest request) throws UnsupportedEncodingException {
         Map<String, String> fields = new HashMap<>();
-        for (Enumeration<String> params = request.getParameterNames(); params.hasMoreElements();) {
-            String fieldName = URLEncoder.encode((String) params.nextElement(), StandardCharsets.US_ASCII);
-            String fieldValue = URLEncoder.encode(request.getParameter(fieldName), StandardCharsets.US_ASCII);
-            if ((fieldValue != null) && (!fieldValue.isEmpty())) {
-                fields.put(fieldName, fieldValue);
+        Enumeration<String> params = request.getParameterNames();
+        while (params.hasMoreElements()) {
+            String rawField = params.nextElement();
+            String value = request.getParameter(rawField);
+            if (value != null && !value.isEmpty()) {
+                fields.put(URLEncoder.encode(rawField, StandardCharsets.US_ASCII), URLEncoder.encode(value, StandardCharsets.US_ASCII));
             }
         }
+
         String vnp_SecureHash = request.getParameter("vnp_SecureHash");
         fields.remove("vnp_SecureHashType");
         fields.remove("vnp_SecureHash");
-        String signValue = hashAllFields(vnPayConfig.getSecretKey(),fields);
+
+        String computedHash = hashAllFields(vnPayConfig.getSecretKey(), fields);
         String txnRef = request.getParameter("vnp_TxnRef");
-        String info = request.getParameter("vnp_OrderInfo");
-        if (info != null) {
-            info = URLDecoder.decode(info, StandardCharsets.UTF_8);
-        }
-        System.out.println("<<<<<<<<<<<<<" + info + ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
-        Optional<Booking> optionalBooking = bookingRepository.findByBookingCode(txnRef);
-        Booking booking = optionalBooking.orElse(new Booking());
+        String info = URLDecoder.decode(request.getParameter("vnp_OrderInfo"), StandardCharsets.UTF_8);
         String responseCode = request.getParameter("vnp_ResponseCode");
         String message = request.getParameter(responseCode);
-        if (signValue.equals(vnp_SecureHash)) {
-            if (booking.getBookingStatus().equals("PAID")) {
-                return;
-            }
-            if (optionalBooking.isEmpty()) {
-                return;
-            }
-            if ("00".equals(responseCode)) {
-                List<BookingDetails> bookingDetails = bookingDetailsRepository.findByBookingId(booking.getBookingId());
-                List<Ticket> ticketsToUpdate = new ArrayList<>();
-                for (BookingDetails details : bookingDetails) {
-                    Ticket ticket = details.getTicket();
-                    ticket.setQuantity(ticket.getQuantity() - details.getQuantity());
-                    ticketsToUpdate.add(ticket);
-                }
-                ticketRepository.saveAll(ticketsToUpdate);
-                booking.setBookingStatus("PAID");
-                bookingRepository.save(booking);
-                Transaction transaction = new Transaction();
-                transaction.setBooking(booking);
-                transaction.setTransactionInfo(info);
-                transaction.setMessage(message);
-                transaction.setPaymentMethod("VNPAY");
-                transaction.setTransactionDate(request.getParameter("vnp_PayDate"));
-                transaction.setTransactionAmount(Double.parseDouble(request.getParameter("vnp_Amount")));
-                transaction.setTransactionStatus("SUCCESSFULLY");
-                transaction.setReferenceCode(request.getParameter("vnp_TxnRef"));
-                transactionRepository.save(transaction);
-            } else {
-                booking.setBookingStatus("FAILED");
-                bookingRepository.save(booking);
-            }
+
+        Optional<Booking> optionalBooking = bookingRepository.findByBookingCode(txnRef);
+        if (optionalBooking.isEmpty()) return;
+
+        Booking booking = optionalBooking.get();
+
+        if (!computedHash.equals(vnp_SecureHash)) {
+            updateBookingStatus(booking, "FAILED");
+            return;
+        }
+
+        if ("PAID".equals(booking.getBookingStatus())) return;
+
+        if ("00".equals(responseCode)) {
+            List<Ticket> ticketsToUpdate = booking.getBookingDetails().stream()
+                    .map(details -> {
+                        Ticket ticket = details.getTicket();
+                        ticket.setQuantity(ticket.getQuantity() - details.getQuantity());
+                        return ticket;
+                    })
+                    .collect(Collectors.toList());
+
+            ticketRepository.saveAll(ticketsToUpdate);
+            updateBookingStatus(booking, "PAID");
+
+            Transaction transaction = new Transaction();
+            transaction.setBooking(booking);
+            transaction.setTransactionInfo(info);
+            transaction.setMessage(message);
+            transaction.setPaymentMethod("VNPAY");
+            transaction.setTransactionDate(request.getParameter("vnp_PayDate"));
+            transaction.setTransactionAmount(Double.parseDouble(request.getParameter("vnp_Amount")) / 100);
+            transaction.setTransactionStatus("SUCCESSFULLY");
+            transaction.setReferenceCode(txnRef);
+            transactionRepository.save(transaction);
         } else {
-            booking.setBookingStatus("FAILED");
-            bookingRepository.save(booking);
+            updateBookingStatus(booking, "FAILED");
         }
     }
+
+    private void updateBookingStatus(Booking booking, String status) {
+        booking.setBookingStatus(status);
+        bookingRepository.save(booking);
+    }
+
+    public ResponseEntity<?> refund(HttpServletRequest req, Transaction transaction) throws Exception {
+        final long refundAmount = (long) (transaction.getTransactionAmount() * 100);
+        final String vnp_RequestId = UUID.randomUUID().toString();
+        final String vnp_CreateDate = DateTimeFormatter.ofPattern("yyyyMMddHHmmss").format(LocalDateTime.now());
+        final String vnp_IpAddr = getIpAddress(req);
+        final String vnp_OrderInfo = "Refund order " + transaction.getReferenceCode();
+        Map<String, String> params = Map.ofEntries(
+                Map.entry("vnp_RequestId", vnp_RequestId),
+                Map.entry("vnp_Version", "2.1.0"),
+                Map.entry("vnp_Command", "refund"),
+                Map.entry("vnp_TmnCode", vnPayConfig.getTmnCode()),
+                Map.entry("vnp_TransactionType", "02"),
+                Map.entry("vnp_TxnRef", transaction.getReferenceCode()),
+                Map.entry("vnp_Amount", String.valueOf(refundAmount)),
+                Map.entry("vnp_TransactionNo", String.valueOf(transaction.getTransactionId())),
+                Map.entry("vnp_TransactionDate", transaction.getTransactionDate()),
+                Map.entry("vnp_CreateBy", "admin"),
+                Map.entry("vnp_CreateDate", vnp_CreateDate),
+                Map.entry("vnp_IpAddr", vnp_IpAddr),
+                Map.entry("vnp_OrderInfo", vnp_OrderInfo)
+        );
+
+        String hashData = buildRawData(params);
+        String secureHash = hmacSHA512(vnPayConfig.getSecretKey(), hashData);
+        params = new HashMap<>(params); // chuyển sang HashMap để thêm hash
+        params.put("vnp_SecureHash", secureHash);
+
+        VNPAYRefund request = VNPAYRefund.builder()
+                .vnp_RequestId(vnp_RequestId)
+                .vnp_Version("2.1.0")
+                .vnp_Command("refund")
+                .vnp_TmnCode(vnPayConfig.getTmnCode())
+                .vnp_TransactionType("02")
+                .vnp_TxnRef(transaction.getReferenceCode())
+                .vnp_Amount(refundAmount)
+                .vnp_OrderInfo(vnp_OrderInfo)
+                .vnp_TransactionNo(String.valueOf(transaction.getTransactionId()))
+                .vnp_TransactionDate(transaction.getTransactionDate())
+                .vnp_CreateBy("admin")
+                .vnp_CreateDate(vnp_CreateDate)
+                .vnp_IpAddr(vnp_IpAddr)
+                .vnp_SecureHash(secureHash)
+                .build();
+
+        ResponseEntity<?> response = vnpayapi.refundVNPAY(request);
+        Refund refund = new Refund();
+        RefundDTO refundDTO = new RefundDTO();
+
+        if (response.getStatusCode().is2xxSuccessful() && response.getBody() instanceof Map<?, ?> body) {
+            String responseCode = (String) body.get("vnp_ResponseCode");
+            String message = (String) body.get("vnp_Message");
+
+            refund.setResponseCode(responseCode);
+            refund.setMessage(message);
+            refund.setRefundAmount(refundAmount);
+            refund.setRequestDate(transaction.getTransactionDate());
+            refund.setTransaction(transaction);
+
+            if ("00".equals(responseCode)) {
+                transaction.setTransactionStatus("REFUNDED");
+                refund.setStatus("SUCCESSFULLY");
+            } else {
+                refund.setStatus("FAILED");
+            }
+            transactionRepository.save(transaction);
+            refundRepository.save(refund);
+        }
+        BeanUtils.copyProperties(refund, refundDTO);
+        return ResponseEntity.ok(refundDTO);
+    }
+
 }
 

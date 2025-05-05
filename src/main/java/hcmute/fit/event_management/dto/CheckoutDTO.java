@@ -13,7 +13,8 @@ import java.util.Map;
 @NoArgsConstructor
 public class CheckoutDTO {
     private long amount;
-    private String userId;
+    private int userId;
+    private int eventId;
     private Map<Integer, Integer> tickets = new HashMap<Integer, Integer>();
     private String orderInfo;
 }

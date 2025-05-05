@@ -87,6 +87,24 @@ public class PaymentUtil {
                                         , StandardCharsets.US_ASCII))
                 .collect(Collectors.joining("&"));
     }
+    public static String buildRawData(Map<String, String> params) {
+        return String.join("|",
+                params.get("vnp_RequestId"),
+                params.get("vnp_Version"),
+                params.get("vnp_Command"),
+                params.get("vnp_TmnCode"),
+                params.get("vnp_TransactionType"),
+                params.get("vnp_TxnRef"),
+                params.get("vnp_Amount"),
+                params.get("vnp_TransactionNo"),
+                params.get("vnp_TransactionDate"),
+                params.get("vnp_CreateBy"),
+                params.get("vnp_CreateDate"),
+                params.get("vnp_IpAddr"),
+                params.get("vnp_OrderInfo")
+        );
+    }
+
     public static String hashAllFields(String secretKey, Map<String, String> fields) {
         List<String> fieldNames = new ArrayList<>(fields.keySet());
         Collections.sort(fieldNames);

@@ -181,4 +181,9 @@ public class BookingServiceImpl implements IBookingService {
     public Optional<Booking> findByBookingCode(String code) {
         return bookingRepository.findByBookingCode(code);
     }
+
+    @Override
+    public List<Booking> findByUserId(int userId) {
+        return bookingRepository.findByUserId(userId);
+    }
 }

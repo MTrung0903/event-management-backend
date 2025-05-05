@@ -1,6 +1,7 @@
 package hcmute.fit.event_management.service.Impl;
 
 
+import hcmute.fit.event_management.entity.Ticket;
 import hcmute.fit.event_management.service.EmailService;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
@@ -10,13 +11,23 @@ import org.springframework.mail.javamail.JavaMailSender;
 
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
+import com.google.zxing.BarcodeFormat;
+import com.google.zxing.WriterException;
+import com.google.zxing.common.BitMatrix;
+import com.google.zxing.qrcode.QRCodeWriter;
+import com.google.zxing.client.j2se.MatrixToImageWriter;
+
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
+import java.util.Base64;
+import java.util.List;
 
 @Service
 public class EmailServiceImpl implements EmailService {
 
     @Autowired
     private JavaMailSender mailSender;
-
     @Override
     public void sendResetEmail(String to, String resetToken) {
         String subject = "Password Reset Request";
@@ -25,6 +36,27 @@ public class EmailServiceImpl implements EmailService {
                 + "<p><a href=\"" + resetUrl + "\">Reset my password</a></p>";
         sendHtmlEmail(to, subject, content);
     }
+    @Override
+    public void sendThanksPaymentEmail(String to, String eventName, String userName, List<Ticket> tickets) {
+        try {
+            String qrCodeBase64 = generateQrCodeBase64(tickets);
+
+            String subject = "Your Event Ticket – " + eventName;
+            String content = "<p>Dear " + userName + ",</p>"
+                    + "<p>Thank you for purchasing a ticket to <strong>" + eventName + "</strong>.</p>"
+                    + "<p>Your ticket code is: <strong>" + tickets + "</strong></p>"
+                    + "<p>Please scan the QR code below at the event check-in:</p>"
+                    + "<img src='data:image/png;base64," + qrCodeBase64 + "' alt='QR Code'/>"
+                    + "<br><p>We look forward to seeing you there!</p>"
+                    + "<p>Best regards,<br>The Event Team</p>";
+
+            sendHtmlEmail(to, subject, content);
+        } catch (Exception e) {
+            System.err.println("Failed to generate QR code: " + e.getMessage());
+        }
+    }
+
+
     @Override
     public void sendHtmlEmail(String to, String subject, String htmlContent) {
         MimeMessage mimeMessage = mailSender.createMimeMessage();
@@ -39,4 +71,16 @@ public class EmailServiceImpl implements EmailService {
             System.err.println("Failed to send email: " + e.getMessage());
         }
     }
+    public String generateQrCodeBase64(String text) throws Exception {
+        QRCodeWriter qrCodeWriter = new QRCodeWriter();
+        BitMatrix bitMatrix = qrCodeWriter.encode(text, BarcodeFormat.QR_CODE, 200, 200);
+
+        BufferedImage qrImage = MatrixToImageWriter.toBufferedImage(bitMatrix);
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        ImageIO.write(qrImage, "png", baos);
+
+        byte[] imageBytes = baos.toByteArray();
+        return Base64.getEncoder().encodeToString(imageBytes);
+    }
+
 }

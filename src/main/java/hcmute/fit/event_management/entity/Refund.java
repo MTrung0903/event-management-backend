@@ -20,7 +20,7 @@ public class Refund {
     private int refundId;
 
     @Column(name = "request_date")
-    private Date requestDate;
+    private String requestDate;
 
     @Column(name = "refund_amount")
     private double refundAmount;
@@ -28,16 +28,14 @@ public class Refund {
     @Column(name = "status")
     private String status;
 
-    @Column(name = "reason")
-    private String reason;
+    @Column(name = "response_code")
+    private String responseCode;
 
-    @Column(name = "processed_date")
-    private Date processedDate;
+    @Column(name = "message")
+    private String message;
 
     @ManyToOne
-    @JoinColumn(name = "booking_id")
-    private Booking booking;
+    @JoinColumn(name = "transaction_id")
+    private Transaction transaction;
 
-    @OneToMany(mappedBy = "refund",cascade = CascadeType.ALL)
-    private List<RefundDetails> refundDetails;
 }

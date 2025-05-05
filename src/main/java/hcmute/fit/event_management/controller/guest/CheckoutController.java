@@ -1,15 +1,14 @@
 package hcmute.fit.event_management.controller.guest;
-
 import hcmute.fit.event_management.config.VNPAYConfig;
-import hcmute.fit.event_management.dto.BookingDTO;
+
 import hcmute.fit.event_management.dto.CheckoutDTO;
 import hcmute.fit.event_management.dto.TransactionDTO;
-import hcmute.fit.event_management.entity.Booking;
+
 import hcmute.fit.event_management.entity.Transaction;
-import hcmute.fit.event_management.service.IBookingDetailsService;
+
 import hcmute.fit.event_management.service.IBookingService;
 import hcmute.fit.event_management.service.ITransactionService;
-import hcmute.fit.event_management.service.IUserService;
+
 import hcmute.fit.event_management.service.Impl.MomoService;
 import hcmute.fit.event_management.service.Impl.VNPAYService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -24,7 +23,7 @@ import java.io.UnsupportedEncodingException;
 import java.util.*;
 
 @RestController
-@RequestMapping("/api/payment")
+@RequestMapping("/api/v1/payment")
 public class CheckoutController {
     @Autowired
     ITransactionService transactionService;
@@ -84,4 +83,5 @@ public class CheckoutController {
         }
         return new ResponseEntity<>(transactionDTO, HttpStatus.OK);
     }
+
 }

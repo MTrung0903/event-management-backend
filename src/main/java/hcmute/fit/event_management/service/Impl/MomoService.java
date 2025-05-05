@@ -12,11 +12,14 @@ import hcmute.fit.event_management.repository.*;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.stream.Collectors;
+
 import static hcmute.fit.event_management.util.PaymentUtil.hmacSHA256;
 @Service
 @Slf4j
@@ -37,146 +40,154 @@ public class MomoService {
     BookingDetailsRepository bookingDetailsRepository;
 
     private final MomoAPI momoAPI;
-    public ResponseEntity<?> createQRCode(CheckoutDTO checkoutDTO) {
-        String partnerCode = momoConfig.getPartnerCode();
-        String accessKey = momoConfig.getAccessKey();
-        String redirectUrl = momoConfig.getRedirectUrl();
-        String ipnUrl = momoConfig.getIpnUrl();
-        String requestType = momoConfig.getRequestType();
-        String orderId = UUID.randomUUID().toString();
-        String requestId = UUID.randomUUID().toString();
-        String extraData = checkoutDTO.getOrderInfo();
-        String orderInfo = checkoutDTO.getOrderInfo();
-        String rawHash = "accessKey=" + accessKey
-                + "&amount=" + checkoutDTO.getAmount()
-                + "&extraData=" + extraData
-                + "&ipnUrl=" + ipnUrl
-                + "&orderId=" + orderId
-                + "&orderInfo=" + orderInfo
-                + "&partnerCode=" + partnerCode
-                + "&redirectUrl=" + redirectUrl
-                + "&requestId=" + requestId
-                + "&requestType=" + requestType;
-        String signature = "";
-        try {
-            signature = hmacSHA256(momoConfig.getSecretKey(), rawHash);
-        } catch (Exception e) {
-            log.error(">>>>>>>>>>>>>>>>>Loi: " + e);
-            return null;
-        }
-        MomoRequestPayment request = MomoRequestPayment.builder()
-                .partnerCode(partnerCode)
-                .requestType(requestType)
-                .ipnUrl(ipnUrl)
-                .redirectUrl(redirectUrl)
-                .orderId(orderId)
-                .orderInfo(orderInfo)
-                .requestId(requestId)
-                .amount(checkoutDTO.getAmount())
-                .extraData(extraData)
-                .signature(signature)
-                .lang("vi")
-                .build();
-        Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("Etc/GMT+7"));
-        SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMddHHmmss");
-        String momoCreateDate = formatter.format(calendar.getTime());
-        calendar.add(Calendar.HOUR, 1);
-        calendar.add(Calendar.MINUTE, 40);
-        String momoExpireDate = formatter.format(calendar.getTime());
-        try {
-            Booking booking = new Booking();
-            booking.setTotalPrice(checkoutDTO.getAmount());
-            booking.setCreateDate(formatter.parse(momoCreateDate));
-            booking.setExpireDate(formatter.parse(momoExpireDate));
+    @Autowired
+    private EventRepository eventRepository;
 
+    public ResponseEntity<?> createQRCode(CheckoutDTO checkoutDTO) {
+        try {
+            // 1. Khởi tạo các biến cần thiết
+            String partnerCode = momoConfig.getPartnerCode();
+            String accessKey = momoConfig.getAccessKey();
+            String redirectUrl = momoConfig.getRedirectUrl();
+            String ipnUrl = momoConfig.getIpnUrl();
+            String requestType = momoConfig.getRequestType();
+            String secretKey = momoConfig.getSecretKey();
+
+            String orderId = UUID.randomUUID().toString();
+            String requestId = UUID.randomUUID().toString();
+            String orderInfo = checkoutDTO.getOrderInfo();
+            int amount = (int) checkoutDTO.getAmount();
+
+            // 2. Tạo chuỗi rawHash và chữ ký
+            String rawHash = String.format("accessKey=%s&amount=%d&extraData=%s&ipnUrl=%s&orderId=%s&orderInfo=%s&partnerCode=%s&redirectUrl=%s&requestId=%s&requestType=%s",
+                    accessKey, amount, orderInfo, ipnUrl, orderId, orderInfo, partnerCode, redirectUrl, requestId, requestType);
+            String signature = hmacSHA256(secretKey, rawHash);
+
+            // 3. Tạo đối tượng request gửi đến MoMo
+            MomoRequestPayment request = MomoRequestPayment.builder()
+                    .partnerCode(partnerCode)
+                    .requestType(requestType)
+                    .ipnUrl(ipnUrl)
+                    .redirectUrl(redirectUrl)
+                    .orderId(orderId)
+                    .orderInfo(orderInfo)
+                    .requestId(requestId)
+                    .amount(amount)
+                    .extraData(orderInfo)
+                    .signature(signature)
+                    .lang("vi")
+                    .build();
+
+            // 4. Tạo thời gian tạo và hết hạn của booking
+            Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("Etc/GMT+7"));
+            SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMddHHmmss");
+            Date createDate = formatter.parse(formatter.format(calendar.getTime()));
+            calendar.add(Calendar.HOUR, 1);
+            calendar.add(Calendar.MINUTE, 40);
+            Date expireDate = formatter.parse(formatter.format(calendar.getTime()));
+
+            // 5. Tạo Booking và lưu vào DB
+            Booking booking = new Booking();
             booking.setBookingCode(orderId);
             booking.setBookingMethod("Momo");
             booking.setBookingStatus("Pending");
-            booking.setUser(userRepository.findById(Integer.valueOf(checkoutDTO.getUserId())).orElse(new User()));
+            booking.setTotalPrice(amount);
+            booking.setCreateDate(createDate);
+            booking.setExpireDate(expireDate);
+
+            Event event = eventRepository.findById(checkoutDTO.getEventId()).orElseThrow(() -> new RuntimeException("Event not found"));
+            User user = userRepository.findById(checkoutDTO.getUserId()).orElseThrow(() -> new RuntimeException("User not found"));
+            booking.setEvent(event);
+            booking.setUser(user);
+
             bookingRepository.saveAndFlush(booking);
-            for (Integer ticketId : checkoutDTO.getTickets().keySet()) {
-                BookingDetails bkdt = new BookingDetails();
-                bkdt.setBooking(booking);
-                bkdt.setTicket(ticketRepository.findById(ticketId).orElse(new Ticket()));
-                bkdt.setQuantity(checkoutDTO.getTickets().get(ticketId));
-                bkdt.setPrice(checkoutDTO.getAmount());
-                bookingDetailsRepository.save(bkdt);
+
+            // 6. Tạo BookingDetails cho từng vé
+            for (Map.Entry<Integer, Integer> entry : checkoutDTO.getTickets().entrySet()) {
+                Ticket ticket = ticketRepository.findById(entry.getKey()).orElseThrow(() -> new RuntimeException("Ticket not found"));
+                BookingDetails details = new BookingDetails();
+                details.setBooking(booking);
+                details.setTicket(ticket);
+                details.setQuantity(entry.getValue());
+                details.setPrice(amount);
+                bookingDetailsRepository.save(details);
             }
+
+            // 7. Gọi API Momo
+            return momoAPI.createMomoQR(request);
+
+        } catch (Exception e) {
+            log.error("Failed to create MoMo QR code: ", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Lỗi tạo QR code thanh toán.");
         }
-        catch (Exception e) {
-            System.out.println(">>>>>>>>>>>>>>"+e);
-        }
-        return momoAPI.createMomoQR(request);
     }
-    public void ipn(Map<String, String> payload){
+
+    public void ipn(Map<String, String> payload) {
         String partnerCode = momoConfig.getPartnerCode();
         String accessKey = momoConfig.getAccessKey();
-        String orderId = payload.get("orderId");
-        String requestId = payload.get("requestId");
-        String transId = payload.get("transId");
-        String resultCode = payload.get("resultCode"); // "0" là thành công
-        String message = payload.get("message");
-        String amount = payload.get("amount");
-        String signature = payload.get("signature");
-        String extraData = payload.get("extraData");
-        String orderInfo = payload.get("orderInfo");
-        String orderType = payload.get("orderType");
-        String payType = payload.get("payType");
-        String responseTime = payload.get("responseTime");
-        String rawHash = "accessKey=" + accessKey
-                + "&amount=" + amount
-                + "&extraData=" + extraData
-                + "&message=" + message
-                + "&orderId=" + orderId
-                + "&orderInfo=" + orderInfo
-                + "&orderType=" + orderType
-                + "&partnerCode=" + partnerCode
-                + "&payType=" + payType
-                + "&requestId=" + requestId
-                + "&responseTime=" + responseTime
-                + "&resultCode=" + resultCode
-                + "&transId=" + transId;
+        String secretKey = momoConfig.getSecretKey();
 
-        String generatedSignature = hmacSHA256(momoConfig.getSecretKey(), rawHash);
+        String orderId = payload.get("orderId");
         Optional<Booking> optionalBooking = bookingRepository.findByBookingCode(orderId);
-        Booking booking = optionalBooking.orElse(new Booking());
-        if (!signature.equals(generatedSignature)) {
+        if (optionalBooking.isEmpty()) return;
+
+        Booking booking = optionalBooking.get();
+        if ("PAID".equalsIgnoreCase(booking.getBookingStatus())) return;
+
+        String rawHash = String.format(
+                "accessKey=%s&amount=%s&extraData=%s&message=%s&orderId=%s&orderInfo=%s" +
+                        "&orderType=%s&partnerCode=%s&payType=%s&requestId=%s&responseTime=%s&resultCode=%s&transId=%s",
+                accessKey,
+                payload.get("amount"),
+                payload.get("extraData"),
+                payload.get("message"),
+                orderId,
+                payload.get("orderInfo"),
+                payload.get("orderType"),
+                partnerCode,
+                payload.get("payType"),
+                payload.get("requestId"),
+                payload.get("responseTime"),
+                payload.get("resultCode"),
+                payload.get("transId")
+        );
+
+        String generatedSignature = hmacSHA256(secretKey, rawHash);
+        if (!generatedSignature.equals(payload.get("signature"))) {
             booking.setBookingStatus("FAILED");
             bookingRepository.save(booking);
             return;
         }
-        if (booking.getBookingStatus().equals("PAID")) {
-            return;
-        }
-        if (optionalBooking.isEmpty()) {
-            return;
-        }
-        if ("0".equals(resultCode)) {
-            List<BookingDetails> bookingDetails = bookingDetailsRepository.findByBookingId(booking.getBookingId());
-            List<Ticket> ticketsToUpdate = new ArrayList<>();
-            for (BookingDetails details : bookingDetails) {
-                Ticket ticket = details.getTicket();
-                ticket.setQuantity(ticket.getQuantity() - details.getQuantity());
-                ticketsToUpdate.add(ticket);
-            }
-            ticketRepository.saveAll(ticketsToUpdate);
-            booking.setBookingStatus("PAID");
-            bookingRepository.save(booking);
-            Transaction transaction = new Transaction();
-            transaction.setBooking(booking);
-            transaction.setTransactionInfo(extraData);
-            transaction.setMessage(message);
-            transaction.setPaymentMethod("MOMO");
-            transaction.setTransactionDate(responseTime);
-            transaction.setTransactionAmount(Double.parseDouble(amount));
-            transaction.setTransactionStatus("SUCCESSFULLY");
-            transaction.setReferenceCode(transId);
-            transactionRepository.save(transaction);
-            System.out.println("Thanh toan thanh cong");
-        } else {
-            booking.setBookingStatus("FAILED");
-            bookingRepository.save(booking);
-        }
+
+        boolean isPaymentSuccess = "0".equals(payload.get("resultCode"));
+        booking.setBookingStatus(isPaymentSuccess ? "PAID" : "FAILED");
+        bookingRepository.save(booking);
+
+        if (!isPaymentSuccess) return;
+
+        // Cập nhật số lượng vé
+        List<Ticket> updatedTickets = booking.getBookingDetails().stream().map(detail -> {
+            Ticket ticket = detail.getTicket();
+            ticket.setQuantity(ticket.getQuantity() - detail.getQuantity());
+            return ticket;
+        }).collect(Collectors.toList());
+
+        ticketRepository.saveAll(updatedTickets);
+
+        // Lưu giao dịch
+        Transaction transaction = new Transaction();
+        transaction.setBooking(booking);
+        transaction.setTransactionInfo(payload.get("extraData"));
+        transaction.setMessage(payload.get("message"));
+        transaction.setPaymentMethod("MOMO");
+        transaction.setTransactionDate(payload.get("responseTime"));
+        transaction.setTransactionAmount(Double.parseDouble(payload.get("amount")));
+        transaction.setTransactionStatus("SUCCESSFULLY");
+        transaction.setReferenceCode(payload.get("transId"));
+        transactionRepository.save(transaction);
+
+        System.out.println("Thanh toán thành công");
     }
+
 
 }
