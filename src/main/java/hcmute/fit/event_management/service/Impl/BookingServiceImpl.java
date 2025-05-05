@@ -10,6 +10,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.repository.query.FluentQuery;
 import org.springframework.stereotype.Service;
+import payload.Response;
 
 import java.util.List;
 import java.util.Optional;
@@ -180,5 +181,17 @@ public class BookingServiceImpl implements IBookingService {
     @Override
     public Optional<Booking> findByBookingCode(String code) {
         return bookingRepository.findByBookingCode(code);
+    }
+
+
+    public Response checkBuyTickket(int userId){
+        boolean bought = false;
+        Optional<Booking> booking = bookingRepository.findByUserId(userId);
+        if(!booking.isPresent()){
+            return new Response(404,"Not found booking",bought);
+        }
+        Booking bill = booking.get();
+        if(bill.get)
+
     }
 }

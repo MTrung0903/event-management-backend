@@ -16,9 +16,8 @@ public class SegmentDTO {
     private SpeakerDTO speaker;
     private int eventID;
     private String segmentDesc;
-    @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
     private Date startTime;
-
-    @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
     private Date endTime;
 }

@@ -23,6 +23,7 @@ import payload.Response;
 
 import java.io.IOException;
 import java.text.Normalizer;
+import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -41,10 +42,8 @@ public class EventServiceImpl implements IEventService {
     private TicketRepository ticketRepository;
     @Autowired
     private SegmentRepository segmentRepository;
-
     @Autowired
     private ISegmentService segmentService;
-
     @Autowired
     private ITicketService ticketService;
     @Autowired
@@ -63,7 +62,6 @@ public class EventServiceImpl implements IEventService {
             "quang-ninh", "Quảng Ninh"
     );
 
-
     private String getCityDisplayName(String slug) {
         return cityMap.getOrDefault(slug, slug);
     }
@@ -77,7 +75,6 @@ public class EventServiceImpl implements IEventService {
         EventLocationDTO locationDTO = eventDTO.getEventLocation();
         if (locationDTO != null) {
             BeanUtils.copyProperties(locationDTO, eventLocation);
-
             event.setEventLocation(eventLocation);
         }
 
@@ -117,8 +114,8 @@ public class EventServiceImpl implements IEventService {
         dto.setUserId(event.getUser().getUserId());
         return dto;
     }
+
     private void updateEventStatus() {
-        //Lấy ngày hiện tại, bỏ qua giờ/phút/giây để so sánh chỉ theo ngày.
         LocalDateTime today = LocalDateTime.now().withHour(0).withMinute(0).withSecond(0).withNano(0);
         List<Event> events = eventRepository.findAll();
 
@@ -133,6 +130,7 @@ public class EventServiceImpl implements IEventService {
             }
         }
     }
+
     @Override
     public EventDTO convertToDTO(Event event) {
         EventDTO dto = new EventDTO();
@@ -166,7 +164,7 @@ public class EventServiceImpl implements IEventService {
                 .collect(Collectors.toList());
     }
 
-
+    @Override
     public EventEditDTO getEventAfterEdit(int eventId) {
         updateEventStatus();
         EventDTO event = getEventById(eventId);
@@ -186,7 +184,8 @@ public class EventServiceImpl implements IEventService {
     }
 
     @Override
-    public EventEditDTO saveEditEvent(EventEditDTO eventEditDTO)  {
+    @Transactional
+    public EventEditDTO saveEditEvent(EventEditDTO eventEditDTO) throws Exception {
         Event event = eventRepository.findById(eventEditDTO.getEvent().getEventId())
                 .orElseThrow(() -> new ResourceNotFoundException("Event not found with id " + eventEditDTO.getEvent().getEventId()));
         int eventId = eventEditDTO.getEvent().getEventId();
@@ -196,6 +195,7 @@ public class EventServiceImpl implements IEventService {
             throw new IllegalArgumentException("Event start time must be before end time");
         }
 
+        // Update event details
         BeanUtils.copyProperties(eventEditDTO.getEvent(), event, "eventLocation", "eventImages", "mediaContent");
 
         if (eventEditDTO.getEvent().getEventLocation() != null) {
@@ -212,6 +212,30 @@ public class EventServiceImpl implements IEventService {
         if (eventEditDTO.getEvent().getMediaContent() != null) {
             event.getMediaContent().clear();
             event.getMediaContent().addAll(eventEditDTO.getEvent().getMediaContent());
+        }
+
+        // Process tickets
+        List<TicketDTO> ticketDTOs = eventEditDTO.getTicket();
+        if (ticketDTOs != null) {
+            for (TicketDTO ticketDTO : ticketDTOs) {
+                if (ticketDTO.getTicketId() == 0) {
+                    ticketService.addTicket(eventId, ticketDTO);
+                } else {
+                    ticketService.saveEditTicket(eventId, ticketDTO);
+                }
+            }
+        }
+
+        // Process segments
+        List<SegmentDTO> segmentDTOs = eventEditDTO.getSegment();
+        if (segmentDTOs != null) {
+            for (SegmentDTO segmentDTO : segmentDTOs) {
+                if (segmentDTO.getSegmentId() == 0) {
+                    segmentService.addSegment(eventId, segmentDTO);
+                } else {
+                    segmentService.saveEditSegment(eventId, segmentDTO);
+                }
+            }
         }
 
         eventRepository.save(event);
@@ -239,6 +263,7 @@ public class EventServiceImpl implements IEventService {
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
+
     @Override
     public List<EventDTO> findEventsStatus(String eventStatus) {
         updateEventStatus();
@@ -247,6 +272,7 @@ public class EventServiceImpl implements IEventService {
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
+
     @Override
     public List<EventDTO> findEventsByDate(LocalDateTime eventStart) {
         updateEventStatus();
@@ -312,7 +338,6 @@ public class EventServiceImpl implements IEventService {
     }
 
     private List<SegmentDTO> getAllSegments(int eventId) {
-
         List<Segment> list = segmentRepository.findByEventId(eventId);
         List<SegmentDTO> dtos = new ArrayList<>();
         for (Segment segment : list) {
@@ -333,39 +358,30 @@ public class EventServiceImpl implements IEventService {
         return dtos;
     }
 
-    // ham bo dau tieng viet
     private String removeDiacritics(String str) {
         if (str == null) return null;
         String normalized = Normalizer.normalize(str, Normalizer.Form.NFD);
         Pattern pattern = Pattern.compile("\\p{InCombiningDiacriticalMarks}+");
         return pattern.matcher(normalized).replaceAll("").toLowerCase();
     }
+
     @Override
     public List<EventDTO> searchEventsByNameAndCity(String searchTerm, String cityKey) {
         updateEventStatus();
-        if (searchTerm == null || searchTerm.trim().isEmpty() || cityKey == null || cityKey.trim().isEmpty()) {
-            return getAllEvent();
-        }
-        if (cityKey.isEmpty()) {
-            throw new IllegalArgumentException("Invalid city key: " + cityKey);
-        }
-        List<Event> eventsByCity = eventRepository.findByEventLocationCityContainingIgnoreCase(cityKey);
-
-        List<Event> filteredEvents = eventsByCity.stream()
-                .filter(event -> event.getEventName() != null &&
-                        removeDiacritics(event.getEventName()).contains(searchTerm) &&
-                        !"Complete".equals(event.getEventStatus()))
-                .collect(Collectors.toList());
+        List<Event> filteredEvents = eventRepository
+                .findByEventNameContainingIgnoreCaseAndEventLocationCityContainingIgnoreCase(searchTerm, cityKey);
 
         return filteredEvents.stream()
-                .map(this::convertToDTO)
+                .map(event -> {
+                    EventDTO dto = convertToDTO(event);
+                    return dto;
+                })
                 .collect(Collectors.toList());
     }
 
     @Transactional
     @Override
     public ResponseEntity<Response> saveEventToDB(EventDTO eventDTO) {
-        // Tìm user theo email
         String name = eventDTO.getEventHost();
         Optional<User> userOpt = userRepository.findByOrganizerName(name);
         if (!userOpt.isPresent()) {
@@ -375,20 +391,17 @@ public class EventServiceImpl implements IEventService {
         }
         User user = userOpt.get();
 
-        // Kiểm tra eventStart và eventEnd
         if (eventDTO.getEventStart().isAfter(eventDTO.getEventEnd())) {
             logger.error("Event start time {} is after end time {}", eventDTO.getEventStart(), eventDTO.getEventEnd());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(new Response(400, "Bad Request", "Event start time must be before end time"));
         }
 
-        // Tạo Event
         Event event = new Event();
-        BeanUtils.copyProperties(eventDTO, event, "eventLocation", "eventImages", "mediaContent","eventLocation");
+        BeanUtils.copyProperties(eventDTO, event, "eventLocation", "eventImages", "mediaContent");
         event.setEventHost(name);
         event.setUser(user);
 
-        // Xử lý EventLocation
         EventLocation eventLocation = new EventLocation();
         EventLocationDTO locationDTO = eventDTO.getEventLocation();
         if (locationDTO != null) {
@@ -396,7 +409,6 @@ public class EventServiceImpl implements IEventService {
             event.setEventLocation(eventLocation);
         }
 
-        // Xử lý eventImages và mediaContent
         if (eventDTO.getEventImages() != null) {
             event.setEventImages(new ArrayList<>(eventDTO.getEventImages()));
         }
@@ -404,15 +416,14 @@ public class EventServiceImpl implements IEventService {
             event.setMediaContent(new ArrayList<>(eventDTO.getMediaContent()));
         }
 
-        // Lưu Event
         Event tmp = eventRepository.save(event);
-
         logger.info("Event {} created successfully by user {}", event.getEventName(), name);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(new Response(201, "Success", convertToDTO(tmp)));
     }
+
     @Override
-    public List<EventDTO> getAllEventByHost(String email){
+    public List<EventDTO> getAllEventByHost(String email) {
         updateEventStatus();
         Optional<User> host = userRepository.findByEmail(email);
         if (!host.isPresent()) {
@@ -420,15 +431,13 @@ public class EventServiceImpl implements IEventService {
             return new ArrayList<>();
         }
         User organizer = host.get();
-        if(organizer.getOrganizer() == null){
+        if (organizer.getOrganizer() == null) {
             logger.error("User is not organizer");
             return new ArrayList<>();
         }
         List<Event> events = eventRepository.findByEventHost(organizer.getOrganizer().getOrganizerName());
-
-        return events.stream().
-                map(this::convertToDTO).
-                collect(Collectors.toList());
-
+        return events.stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
     }
 }
