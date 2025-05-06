@@ -79,5 +79,7 @@ public interface IBookingService {
 
     Optional<Booking> findByBookingCode(String code);
 
+    boolean hasBoughtFreeTicket(int userId, int eventId);
+
     List<Booking> findByUserId(int userId);
 }

@@ -57,18 +57,8 @@ public class NotificationRestController {
     @GetMapping("/{userId}")
     public ResponseEntity<?> getNotify(@PathVariable int userId) {
         try {
-            // Kiểm tra người dùng tồn tại
-            User account = userRepository.findById(userId)
-                    .orElseThrow(() -> new RuntimeException("User not found with ID: " + userId));
-            List<Notification> listNotify = notificationRepository.findByUserId(userId);
-            List<NotificationDTO> notificationDTOList = new ArrayList<>();
-            for (Notification notification : listNotify) {
-                NotificationDTO notificationDTO = new NotificationDTO();
-                BeanUtils.copyProperties(notification, notificationDTO);
-                notificationDTO.setId(notification.getNotiId());
-                notificationDTO.setUserId(notification.getUser().getUserId());
-                notificationDTOList.add(notificationDTO);
-            }
+
+            List<NotificationDTO> notificationDTOList = notificationService.getAllNotifications(userId);
             Response response = new Response(200, "Success", notificationDTOList);
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (RuntimeException e) {

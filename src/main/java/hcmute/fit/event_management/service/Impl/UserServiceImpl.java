@@ -24,6 +24,7 @@ import payload.Response;
 
 import java.time.LocalDate;
 import java.util.*;
+import java.util.stream.Collectors;
 
 
 @Service
@@ -67,6 +68,9 @@ public class UserServiceImpl implements IUserService {
             User user = new User();
             user.setEmail("admin@gmail.com");
             user.setPassword(passwordEncoder.encode("admin"));
+            user.setGender("");
+            user.setFullName("Admin");
+
             user.setActive(true);
             userRepository.save(user);
 
@@ -303,7 +307,7 @@ public class UserServiceImpl implements IUserService {
 
     @Override
     public UserDTO getInfor(String email) {
-        Optional<User> userOpt = userRepository.findByEmail(email);
+        Optional<User> userOpt = userRepository.findByFullName(email);
         if (!userOpt.isPresent()) {
             logger.error("User with email {} not found", email);
             return new UserDTO();
@@ -518,5 +522,17 @@ public class UserServiceImpl implements IUserService {
 
         logger.info("Retrieved {} users", userDTOs.size());
         return userDTOs;
+    }
+
+    @Override
+    public List<UserDTO> searchUserForChat(String query, int currentUserId) {
+        List<UserDTO> users = getAllUsers()
+                .stream()
+                .filter(user ->
+                        user.getUserId() != currentUserId && user.isActive() &&
+                                (user.getEmail().toLowerCase().contains(query.toLowerCase()) ||
+                                        user.getFullName().toLowerCase().contains(query.toLowerCase())))
+                .collect(Collectors.toList());
+        return users;
     }
 }

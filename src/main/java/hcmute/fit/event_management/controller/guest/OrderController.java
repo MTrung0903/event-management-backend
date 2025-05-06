@@ -13,6 +13,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import payload.Response;
+
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -86,5 +88,14 @@ public class OrderController {
 
         return ResponseEntity.ok(myOrderDTOList);
     }
-
+    @GetMapping("/{userId}/has-bought-free-ticket/{eventId}")
+    public ResponseEntity<Response> checkBoughtFreeTicket(@PathVariable("userId") int userId, @PathVariable("eventId") int eventId) {
+        boolean hasBoughtFreeTicket = bookingService.hasBoughtFreeTicket(userId, eventId);
+        Response response = new Response();
+        response.setData(hasBoughtFreeTicket);
+        if(hasBoughtFreeTicket) response.setMsg("Has bought free ticket");
+        else response.setMsg("Has not bought free ticket");
+        response.setStatusCode(200);
+        return ResponseEntity.ok(response);
+    }
 }

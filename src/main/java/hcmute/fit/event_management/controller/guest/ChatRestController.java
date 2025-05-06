@@ -3,13 +3,11 @@ package hcmute.fit.event_management.controller.guest;
 import hcmute.fit.event_management.dto.MessageDTO;
 import hcmute.fit.event_management.dto.UserDTO;
 import hcmute.fit.event_management.service.IMessageService;
+import hcmute.fit.event_management.service.IUserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -19,6 +17,8 @@ public class ChatRestController {
 
     @Autowired
     private IMessageService messageService;
+    @Autowired
+    private IUserService userService;
 
     @GetMapping("/history/{user1Id}/{user2Id}")
     public ResponseEntity<List<MessageDTO>> getChatHistory(
@@ -38,5 +38,10 @@ public class ChatRestController {
     public ResponseEntity<List<UserDTO>> getChatHistory(@PathVariable int userId) {
         List<UserDTO> chatHistory = messageService.getListUserChat(userId);
         return new ResponseEntity<>(chatHistory, HttpStatus.OK);
+    }
+    @GetMapping("/search")
+    public ResponseEntity<List<UserDTO>> searchUsers( @RequestParam String query, @RequestParam int currentUserId) {
+        List<UserDTO> findUser = userService.searchUserForChat(query, currentUserId);
+        return new ResponseEntity<>(findUser, HttpStatus.OK);
     }
 }

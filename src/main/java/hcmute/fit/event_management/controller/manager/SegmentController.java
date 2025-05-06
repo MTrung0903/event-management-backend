@@ -15,7 +15,7 @@ public class SegmentController {
     @Autowired
     private ISegmentService segmentService;
 
-    @GetMapping("/{eventId}/getSegment")
+    @GetMapping("detail/{eventId}")
     public ResponseEntity<List<SegmentDTO>> getSegmentByEventId(@PathVariable("eventId") int eventId) {
         List<SegmentDTO> list = segmentService.getAllSegments(eventId);
         return ResponseEntity.ok(list);

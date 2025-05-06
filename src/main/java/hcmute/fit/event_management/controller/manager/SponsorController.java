@@ -65,7 +65,7 @@ public class SponsorController {
     }
 
     @PostMapping("/myevent/{eid}/sponsor")
-    public ResponseEntity<?> createSponsorByEventId(@PathVariable("eid") int eid, @ModelAttribute SponsorEventDTO sponsorEventDTO, // Nhận toàn bộ dữ liệu dạng text
+    public ResponseEntity<?> createSponsorByEventId(@PathVariable("eid") int eid, @ModelAttribute SponsorEventDTO sponsorEventDTO,
                                                     @RequestParam(value = "sponsorLogoFile", required = false) MultipartFile sponsorLogoFile,
                                                     @RequestParam(value = "sponsorContractFile", required = false) MultipartFile sponsorContract) throws IOException {
         System.out.println("Nhận sponsorLogoFile: " + (sponsorLogoFile != null ? sponsorLogoFile.getOriginalFilename() : "Không có file"));

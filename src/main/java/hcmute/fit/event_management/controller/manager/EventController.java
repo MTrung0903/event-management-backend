@@ -1,8 +1,13 @@
 package hcmute.fit.event_management.controller.manager;
 
 import hcmute.fit.event_management.dto.EventDTO;
+import hcmute.fit.event_management.dto.EventDetailDTO;
 import hcmute.fit.event_management.dto.EventEditDTO;
 import hcmute.fit.event_management.entity.Event;
+import hcmute.fit.event_management.service.IOrganizerService;
+import hcmute.fit.event_management.service.ISegmentService;
+import hcmute.fit.event_management.service.ISponsorService;
+import hcmute.fit.event_management.service.ITicketService;
 import hcmute.fit.event_management.service.Impl.EventServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -21,6 +26,17 @@ public class EventController {
     @Autowired
     private EventServiceImpl eventService;
 
+    @Autowired
+    private ISegmentService segmentService;
+
+    @Autowired
+    private ITicketService ticketService;
+
+    @Autowired
+    private ISponsorService sponsorService;
+    @Autowired
+    private IOrganizerService organizerService;
+
     @PostMapping("/create")
     @PreAuthorize("hasRole('ORGANIZER')")
     public ResponseEntity<Response> createEvent(@RequestBody EventDTO event) throws IOException {
@@ -37,14 +53,24 @@ public class EventController {
         List<EventDTO> events = eventService.getAllEvent();
         return ResponseEntity.ok(events);
     }
-    @GetMapping("/{eventId}")
-    public ResponseEntity<EventDTO> getEventById(@PathVariable int eventId) {
-        EventDTO event = eventService.getEventById(eventId);
-        if (event == null) {
-            return ResponseEntity.notFound().build();
+    @GetMapping("detail/{eventId}")
+    public ResponseEntity<EventDetailDTO> getEventById(@PathVariable int eventId) {
+        EventDetailDTO detailDTO = new EventDetailDTO();
+        detailDTO.setEvent(eventService.getEventById(eventId));
+        detailDTO.setTickets(ticketService.getTicketsByEventId(eventId));
+        detailDTO.setSegments(segmentService.getAllSegments(eventId));
+        if(sponsorService.getAllSponsorsInEvent(eventId) !=null){
+            detailDTO.setSponsors(sponsorService.getAllSponsorsInEvent(eventId));
         }
-        return ResponseEntity.ok(event);
+        
+        if(detailDTO.getEvent()!=null && detailDTO.getEvent().getEventHost() != null) {
+            String eventHost = detailDTO.getEvent().getEventHost();
+            detailDTO.setOrganizer(organizerService.getOrganizerInforByEventHost(eventHost));
+        }
+
+        return ResponseEntity.ok(detailDTO);
     }
+
     @PutMapping("/edit")
     @PreAuthorize("hasRole('ORGANIZER')")
     public ResponseEntity<EventEditDTO> editEvent( @RequestBody EventEditDTO eventEditDTO) throws Exception {

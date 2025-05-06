@@ -69,9 +69,9 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/login", "/api/auth/register", "/api/auth/forgot", "/api/auth/reset-password",
                                 "/api/auth/logout", "/change-password", "/ws/**","/api/storage/**","/api/events/search/**",
-                                "/api/v1/payment/vnpay-ipn","/api/v1/payment/vnpay-return", "/api/v1/payment/momo-ipn", "/api/v1/payment/momo-return").permitAll()
+                                "/api/v1/payment/vnpay-ipn","/api/v1/payment/vnpay-return", "/api/v1/payment/momo-ipn", "/api/v1/payment/momo-return",
                                 "/api/auth/send-verification-code/**", "/chat/**", "/api/auth/logout", "/change-password", "/ws/**",
-                                "/api/storage/**", "/api/events/search/**","/api/events/all").permitAll()
+                                 "/api/events/all","/api/events/detail/**","/api/ticket/detail/**","/api/segment/detail/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .userDetailsService(accountDetailService)

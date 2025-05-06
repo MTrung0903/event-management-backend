@@ -40,14 +40,14 @@ public class EmailServiceImpl implements EmailService {
     @Override
     public void sendThanksPaymentEmail(String to, String eventName, String userName, List<Ticket> tickets) {
         try {
-            String qrCodeBase64 = generateQrCodeBase64(tickets);
+           // String qrCodeBase64 = generateQrCodeBase64(tickets);
 
             String subject = "Your Event Ticket – " + eventName;
             String content = "<p>Dear " + userName + ",</p>"
                     + "<p>Thank you for purchasing a ticket to <strong>" + eventName + "</strong>.</p>"
                     + "<p>Your ticket code is: <strong>" + tickets + "</strong></p>"
                     + "<p>Please scan the QR code below at the event check-in:</p>"
-                    + "<img src='data:image/png;base64," + qrCodeBase64 + "' alt='QR Code'/>"
+                   // + "<img src='data:image/png;base64," + qrCodeBase64 + "' alt='QR Code'/>"
                     + "<br><p>We look forward to seeing you there!</p>"
                     + "<p>Best regards,<br>The Event Team</p>";
 

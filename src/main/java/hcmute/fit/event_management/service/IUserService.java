@@ -32,4 +32,6 @@ public interface IUserService {
     ResponseEntity<Response> deleteUser(String email);
 
     List<UserDTO> getAllUsers();
+
+    List<UserDTO> searchUserForChat(String query, int currentUserId);
 }

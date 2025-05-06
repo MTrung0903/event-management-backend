@@ -34,7 +34,7 @@ public class RefundController {
             return new ResponseEntity<>("This transaction does not allow refund", HttpStatus.OK);
         }
         LocalDateTime now = LocalDateTime.now();
-        LocalDateTime startTime = LocalDateTime.parse(event.getEventStart());
+        LocalDateTime startTime = event.getEventStart();
         int validityDays = event.getValidityDays();
         LocalDateTime deadline = startTime.minusDays(validityDays);
         if (!now.isBefore(deadline)) {
