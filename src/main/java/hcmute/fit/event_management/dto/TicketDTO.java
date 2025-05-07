@@ -17,5 +17,4 @@ public class TicketDTO {
     private int quantity;
     private Date startTime;
     private Date endTime;
-
 }

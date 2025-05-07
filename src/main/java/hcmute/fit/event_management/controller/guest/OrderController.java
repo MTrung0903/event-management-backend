@@ -1,6 +1,10 @@
 package hcmute.fit.event_management.controller.guest;
 
 import com.cloudinary.Cloudinary;
+import com.google.zxing.BarcodeFormat;
+import com.google.zxing.client.j2se.MatrixToImageWriter;
+import com.google.zxing.common.BitMatrix;
+import com.google.zxing.qrcode.QRCodeWriter;
 import hcmute.fit.event_management.dto.*;
 import hcmute.fit.event_management.entity.*;
 import hcmute.fit.event_management.service.IBookingDetailsService;
@@ -13,8 +17,11 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import java.util.Date;
-import java.util.List;
+
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @RestController
@@ -86,5 +93,55 @@ public class OrderController {
 
         return ResponseEntity.ok(myOrderDTOList);
     }
+    @GetMapping("/{orderCode}/tickets")
+    public ResponseEntity<?> getTickets(@PathVariable("orderCode") String orderCode) throws Exception {
+        ViewTicketDTO viewTicketDTO = new ViewTicketDTO();
+        Booking booking = bookingService.findByBookingCode(orderCode).orElse(new Booking());
+        // Lay event
+        Event event = booking.getEvent();
+        EventDTO eventDTO = new EventDTO();
+        BeanUtils.copyProperties(event,eventDTO);
+        EventLocation eventLocation = event.getEventLocation();
+        EventLocationDTO eventLocationDTO = new EventLocationDTO();
+        BeanUtils.copyProperties(eventLocation, eventLocationDTO);
+        eventDTO.setEventLocation(eventLocationDTO);
+        List<String> imageUrls = event.getEventImages().stream()
+                .map(cloudinary.url()::generate)
+                .collect(Collectors.toList());
+        eventDTO.setEventImages(imageUrls);
+        viewTicketDTO.setEvent(eventDTO);
+        // Lay ticket
+        List<BookingDetails> bookingTickets = booking.getBookingDetails();
+        List<CheckInTicketDTO> tickets = new ArrayList<>();
+        for (BookingDetails bookingTicket : bookingTickets) {
+            // ticket info
+            Ticket ticket = bookingTicket.getTicket();
+            TicketDTO ticketInfo = new TicketDTO();
+            BeanUtils.copyProperties(ticket, ticketInfo);
+            // list ticket checkin
+            List<CheckInTicket> ticketTemps = bookingTicket.getCheckInTickets();
+            for (CheckInTicket ticketTemp : ticketTemps) {
+                CheckInTicketDTO checkInTicketDTO = new CheckInTicketDTO();
+                BeanUtils.copyProperties(ticketTemp, checkInTicketDTO);
+                checkInTicketDTO.setTicketInfo(ticketInfo);
+                checkInTicketDTO.setQrCodeBase64(generateQrCodeBase64(checkInTicketDTO.getTicketCode()));
+                tickets.add(checkInTicketDTO);
+            }
+        }
+        viewTicketDTO.setTickets(tickets);
+        return ResponseEntity.ok(viewTicketDTO);
+    }
+    public String generateQrCodeBase64(String text) throws Exception {
+        QRCodeWriter qrCodeWriter = new QRCodeWriter();
+        BitMatrix bitMatrix = qrCodeWriter.encode(text, BarcodeFormat.QR_CODE, 200, 200);
+
+        BufferedImage qrImage = MatrixToImageWriter.toBufferedImage(bitMatrix);
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        ImageIO.write(qrImage, "png", baos);
+
+        byte[] imageBytes = baos.toByteArray();
+        return Base64.getEncoder().encodeToString(imageBytes);
+    }
+
 
 }

@@ -54,6 +54,8 @@ public class VNPAYService {
     TicketRepository ticketRepository;
     @Autowired
     TransactionRepository transactionRepository;
+    @Autowired
+    EmailServiceImpl emailService;
     public static final Map<String, String> errorMessages = new HashMap<>();
     static {
         errorMessages.put("07", "Trừ tiền thành công. Giao dịch bị nghi ngờ (liên quan tới lừa đảo, giao dịch bất thường).");
@@ -194,6 +196,7 @@ public class VNPAYService {
             transaction.setTransactionStatus("SUCCESSFULLY");
             transaction.setReferenceCode(txnRef);
             transactionRepository.save(transaction);
+            emailService.sendThanksPaymentEmail(booking.getUser().getEmail(), booking.getEvent().getEventName(), booking.getBookingCode(), booking.getUser().getFullName(),ticketsToUpdate);
         } else {
             updateBookingStatus(booking, "FAILED");
         }

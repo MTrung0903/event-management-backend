@@ -1,14 +1,20 @@
 package hcmute.fit.event_management.controller.guest;
+import com.google.zxing.BarcodeFormat;
+import com.google.zxing.client.j2se.MatrixToImageWriter;
+import com.google.zxing.common.BitMatrix;
+import com.google.zxing.qrcode.QRCodeWriter;
 import hcmute.fit.event_management.config.VNPAYConfig;
 
 import hcmute.fit.event_management.dto.CheckoutDTO;
 import hcmute.fit.event_management.dto.TransactionDTO;
 
+import hcmute.fit.event_management.entity.Ticket;
 import hcmute.fit.event_management.entity.Transaction;
 
 import hcmute.fit.event_management.service.IBookingService;
 import hcmute.fit.event_management.service.ITransactionService;
 
+import hcmute.fit.event_management.service.Impl.EmailServiceImpl;
 import hcmute.fit.event_management.service.Impl.MomoService;
 import hcmute.fit.event_management.service.Impl.VNPAYService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -18,6 +24,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.*;
@@ -37,6 +47,8 @@ public class CheckoutController {
     @Autowired
     private MomoService momoService;
 
+    @Autowired
+    private EmailServiceImpl emailService;
 
     @PostMapping("/create-vnpay")
     public ResponseEntity<?> createPaymentWithVNPAY(HttpServletRequest request, @RequestBody CheckoutDTO checkoutDTO) {

@@ -1,0 +1,23 @@
+package hcmute.fit.event_management.entity;
+
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Entity
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+@Table(name = "check_in_ticket")
+public class CheckInTicket {
+    @Id
+    @Column(name = "ticket_code")
+    private String ticketCode;
+    @Column(name = "status")
+    private boolean status;
+
+    @ManyToOne
+    @JoinColumn(name = "booking_details_id")
+    private BookingDetails bookingDetails;
+}

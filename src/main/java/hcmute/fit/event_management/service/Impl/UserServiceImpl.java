@@ -67,6 +67,7 @@ public class UserServiceImpl implements IUserService {
             User user = new User();
             user.setEmail("admin@gmail.com");
             user.setPassword(passwordEncoder.encode("admin"));
+            user.setFullName("admin");
             user.setActive(true);
             userRepository.save(user);
 

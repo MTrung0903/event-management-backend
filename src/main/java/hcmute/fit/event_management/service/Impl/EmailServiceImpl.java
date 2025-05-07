@@ -2,6 +2,7 @@ package hcmute.fit.event_management.service.Impl;
 
 
 import hcmute.fit.event_management.entity.Ticket;
+import hcmute.fit.event_management.entity.Transaction;
 import hcmute.fit.event_management.service.EmailService;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
@@ -29,34 +30,35 @@ public class EmailServiceImpl implements EmailService {
 
     @Autowired
     private JavaMailSender mailSender;
+
     @Override
     public void sendResetEmail(String to, String resetToken) {
         String subject = "Password Reset Request";
-        String resetUrl =  "http://localhost:3000/reset-password?token=" + resetToken;
-        String content =  "<p>Click the link below to reset it:</p>"
+        String resetUrl = "http://localhost:3000/reset-password?token=" + resetToken;
+        String content = "<p>Click the link below to reset it:</p>"
                 + "<p><a href=\"" + resetUrl + "\">Reset my password</a></p>";
         sendHtmlEmail(to, subject, content);
     }
-    @Override
-    public void sendThanksPaymentEmail(String to, String eventName, String userName, List<Ticket> tickets) {
+
+    //    @Override
+    public void sendThanksPaymentEmail(String to, String eventName, String orderCode, String userName, List<Ticket> tickets) {
         try {
-            String qrCodeBase64 = generateQrCodeBase64(tickets);
+            StringBuilder content = new StringBuilder();
+            content.append("<p>Dear ").append(userName).append(",</p>")
+                    .append("<p>Thank you for purchasing tickets to <strong>").append(eventName).append("</strong>.</p>")
+                    .append("<p>You can view and download your QR ticket <a href=\"https://localhost:3000/view-ticket/")
+                    .append(orderCode).append("\">here</a>.</p>");
+            content.append("<br><p>We look forward to seeing you there!</p>")
+                    .append("<p>Best regards,<br>The Event Team</p>");
 
-            String subject = "Your Event Ticket – " + eventName;
-            String content = "<p>Dear " + userName + ",</p>"
-                    + "<p>Thank you for purchasing a ticket to <strong>" + eventName + "</strong>.</p>"
-                    + "<p>Your ticket code is: <strong>" + tickets + "</strong></p>"
-                    + "<p>Please scan the QR code below at the event check-in:</p>"
-                    + "<img src='data:image/png;base64," + qrCodeBase64 + "' alt='QR Code'/>"
-                    + "<br><p>We look forward to seeing you there!</p>"
-                    + "<p>Best regards,<br>The Event Team</p>";
+            String subject = "Your Event Tickets – " + eventName;
+            System.out.println(content.toString());
+            //emailService.sendHtmlEmail("sidedlove03@gmail.com", subject, content.toString());
 
-            sendHtmlEmail(to, subject, content);
         } catch (Exception e) {
-            System.err.println("Failed to generate QR code: " + e.getMessage());
+            System.err.println("Failed to send QR code email: " + e.getMessage());
         }
     }
-
 
     @Override
     public void sendHtmlEmail(String to, String subject, String htmlContent) {
@@ -72,6 +74,7 @@ public class EmailServiceImpl implements EmailService {
             System.err.println("Failed to send email: " + e.getMessage());
         }
     }
+
     @Override
     public String sendVerificationCode(String email) throws MessagingException {
 
@@ -87,16 +90,6 @@ public class EmailServiceImpl implements EmailService {
 
         return code;
     }
-    public String generateQrCodeBase64(String text) throws Exception {
-        QRCodeWriter qrCodeWriter = new QRCodeWriter();
-        BitMatrix bitMatrix = qrCodeWriter.encode(text, BarcodeFormat.QR_CODE, 200, 200);
 
-        BufferedImage qrImage = MatrixToImageWriter.toBufferedImage(bitMatrix);
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        ImageIO.write(qrImage, "png", baos);
-
-        byte[] imageBytes = baos.toByteArray();
-        return Base64.getEncoder().encodeToString(imageBytes);
-    }
 
 }
