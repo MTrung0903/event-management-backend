@@ -8,6 +8,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import payload.Response;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @RestController
@@ -17,35 +18,40 @@ public class RoleController {
     private IRoleService roleService;
 
     @PostMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN','ORGANIZER')")
     public ResponseEntity<Response> createRole(@RequestBody RoleDTO roleDTO) {
         return roleService.createRole(roleDTO);
     }
 
     @PostMapping("/{roleId}/permissions")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN','ORGANIZER')")
     public ResponseEntity<Response> assignPermissions(
             @PathVariable int roleId,
             @RequestBody List<String> permissionNames) {
         return roleService.assignPermissionsToRole(roleId, permissionNames);
     }
-    @GetMapping("")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Response> getRoles() {
-        List<RoleDTO> roles = roleService.getAllRoles();
+    @GetMapping("/{createdName}/created")
+    @PreAuthorize("hasAnyRole('ADMIN','ORGANIZER')")
+    public ResponseEntity<Response> getRoles( @PathVariable String createdName) {
+        List<RoleDTO> roles = roleService.getAllRolesByCreated(createdName);
         Response response = new Response();
         response.setData(roles);
         return ResponseEntity.ok(response);
     }
 
     @PutMapping("update")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN','ORGANIZER')")
     public ResponseEntity<Response> updateRole(@RequestBody RoleDTO roleDTO) {
         return roleService.updateRole(roleDTO);
     }
     @DeleteMapping("delete/{roleName}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN','ORGANIZER')")
     public ResponseEntity<Response> deleteRole(@PathVariable String roleName) {
         return roleService.deleteRole(roleName);
+    }
+    @GetMapping("/roles-assign")
+    @PreAuthorize("hasAnyRole('ADMIN','ORGANIZER')")
+    public ResponseEntity<List<RoleDTO>> getAssignedRoles() {
+        return ResponseEntity.ok(roleService.getRolesCanAssigned());
     }
 }

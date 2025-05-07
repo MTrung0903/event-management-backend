@@ -42,7 +42,7 @@ public class RolerServiceImpl implements IRoleService {
 
         // tạo role mới nếu role chưa tồn tại
         Role role = new Role();
-        role.setName(roleDTO.getName());
+        role.setName(roleDTO.getName().toUpperCase());
         roleRepository.save(role);
 
         logger.info("Role {} created successfully", roleDTO.getName());
@@ -61,7 +61,7 @@ public class RolerServiceImpl implements IRoleService {
 
         Role role = existingRole.get();
 
-        role.setName(roleDTO.getName());
+        role.setName(roleDTO.getName().toUpperCase());
 
         List<Permission> permissions = new ArrayList<>();
         if (roleDTO.getPermissions() != null) {
@@ -151,7 +151,23 @@ public class RolerServiceImpl implements IRoleService {
         for (Role role : roles) {
             RoleDTO roleDTO = new RoleDTO();
             roleDTO.setRoleID(role.getRoleId());
-            roleDTO.setName(role.getName());
+            roleDTO.setName(role.getName().toUpperCase());
+            roleDTO.setCreatedBy(role.getCreatedBy());
+            roleDTO.setPermissions(convertToDTO(role.getPermissions()));
+            roleDTOs.add(roleDTO);
+
+        }
+        return roleDTOs;
+    }
+
+    @Override
+    public List<RoleDTO> getAllRolesByCreated(String created) {
+        List<Role> roles = roleRepository.findByCreatedBy(created);
+        List<RoleDTO> roleDTOs = new ArrayList<>();
+        for (Role role : roles) {
+            RoleDTO roleDTO = new RoleDTO();
+            roleDTO.setRoleID(role.getRoleId());
+            roleDTO.setName(role.getName().toUpperCase());
 
             roleDTO.setPermissions(convertToDTO(role.getPermissions()));
             roleDTOs.add(roleDTO);
@@ -164,7 +180,7 @@ public class RolerServiceImpl implements IRoleService {
         Role roleOpt = roleRepository.findById(roleId).orElse(null);
         RoleDTO roleDTO = new RoleDTO();
         roleDTO.setRoleID(roleOpt.getRoleId());
-        roleDTO.setName(roleOpt.getName());
+        roleDTO.setName(roleOpt.getName().toUpperCase());
         roleDTO.setPermissions(convertToDTO(roleOpt.getPermissions()));
         return roleDTO;
     }
@@ -174,11 +190,24 @@ public class RolerServiceImpl implements IRoleService {
         for (Permission permission : permissions) {
             PermissionDTO permissionDTO = new PermissionDTO();
             permissionDTO.setPermissionId(permission.getPermissionId());
-            permissionDTO.setName(permission.getName());
+            permissionDTO.setName(permission.getName().toUpperCase());
             permissionDTO.setDescription(permission.getDescription());
             permissionDTOs.add(permissionDTO);
         }
         return permissionDTOs;
    }
 
+   @Override
+   public List<RoleDTO> getRolesCanAssigned(){
+       List<RoleDTO> roles =getAllRoles();
+       List<RoleDTO> assignedRoles = new ArrayList<>();
+       for (RoleDTO role : roles) {
+           if (!("ROLE_ADMIN".equals(role.getName()) ||
+                   "ROLE_ORGANIZER".equals(role.getName()) ||
+                   "ROLE_ATTENDEE".equals(role.getName()))) {
+               assignedRoles.add(role);
+           }
+       }
+       return assignedRoles;
+   }
 }

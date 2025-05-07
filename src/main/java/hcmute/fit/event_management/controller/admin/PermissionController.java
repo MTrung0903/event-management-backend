@@ -22,7 +22,7 @@ public class PermissionController {
         return permissionService.createPermission(permissionDTO);
     }
     @GetMapping()
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN','ORGANIZER')")
     public ResponseEntity<List<PermissionDTO>> getAllPermissions() {
         List<PermissionDTO> list =  permissionService.getAllPermissions();
         return ResponseEntity.ok(list);

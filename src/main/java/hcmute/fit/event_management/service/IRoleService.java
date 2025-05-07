@@ -21,7 +21,10 @@ public interface IRoleService {
 
     List<RoleDTO> getAllRoles();
 
+    List<RoleDTO> getAllRolesByCreated(String created);
+
     RoleDTO getRoleById(int roleId);
 
 
+    List<RoleDTO> getRolesCanAssigned();
 }

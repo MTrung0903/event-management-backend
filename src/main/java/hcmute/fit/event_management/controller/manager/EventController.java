@@ -62,7 +62,7 @@ public class EventController {
         if(sponsorService.getAllSponsorsInEvent(eventId) !=null){
             detailDTO.setSponsors(sponsorService.getAllSponsorsInEvent(eventId));
         }
-        
+
         if(detailDTO.getEvent()!=null && detailDTO.getEvent().getEventHost() != null) {
             String eventHost = detailDTO.getEvent().getEventHost();
             detailDTO.setOrganizer(organizerService.getOrganizerInforByEventHost(eventHost));

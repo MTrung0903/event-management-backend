@@ -65,10 +65,12 @@ public class AuthController {
         return userService.saveChangeInfor(userDTO);
     }
     @PostMapping("{email}/add-new-role/{roleName}")
+    @PreAuthorize("hasAnyRole('ADMIN','ORGANIZER')")
     public ResponseEntity<Response> addNewRole(@PathVariable String email, @PathVariable String roleName) {
         return userService.AddMoreRoleForUser(email, roleName);
     }
     @DeleteMapping("{email}/remove-role/{roleName}")
+    @PreAuthorize("hasAnyRole('ADMIN','ORGANIZER')")
     public ResponseEntity<Response> removeRole(@PathVariable String email, @PathVariable String roleName) {
         return userService.deleteRoleInUser(email, roleName);
     }
@@ -78,6 +80,7 @@ public class AuthController {
         return ResponseEntity.ok(userDTO);
     }
     @PostMapping("/user/upgrade-organizer/{email}")
+    @PreAuthorize("hasRole('ATTENDEE')")
     public ResponseEntity<Response> upgradeToOrganizer(@PathVariable @Email String email, @RequestBody OrganizerDTO organizerDTO) {
         return userService.upgradeToOrganizer(email, organizerDTO);
     }
