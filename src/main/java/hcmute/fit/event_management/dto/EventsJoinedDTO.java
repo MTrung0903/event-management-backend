@@ -5,13 +5,11 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.List;
-
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class AssignedEventDTO {
-    private int eventId;
-    private String eventName;
+public class EventsJoinedDTO {
+   private EventDTO event;
     private String roleName;
     private List<String> permissions;
 }

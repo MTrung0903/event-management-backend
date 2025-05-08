@@ -10,6 +10,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import payload.Response;
+
+import java.util.ArrayList;
 import java.util.List;
 
 @RestController
@@ -17,6 +19,9 @@ import java.util.List;
 public class RoleAssignmentController {
     @Autowired
     private IRoleAssignmentService roleAssignmentService;
+
+    @Autowired
+    private IEventService  eventService;
 
     @PostMapping("/assign-role")
     @PreAuthorize("hasRole('ORGANIZER')")
@@ -34,8 +39,17 @@ public class RoleAssignmentController {
 
     @GetMapping("/{userId}/my-assigned-events")
     @PreAuthorize("hasAnyRole('ORGANIZER','ATTENDEE')")
-    public ResponseEntity<List<AssignedEventDTO>> getAssignedEvents(@PathVariable int userId) {
-        return ResponseEntity.ok(roleAssignmentService.getAssignedEvents(userId));
+    public ResponseEntity<List<EventsJoinedDTO>> getAssignedEvents(@PathVariable int userId) {
+        List<AssignedEventDTO> list = roleAssignmentService.getAssignedEvents(userId);
+        List<EventsJoinedDTO> events = new ArrayList<>();
+        for (AssignedEventDTO event : list) {
+            EventsJoinedDTO eventDTO = new EventsJoinedDTO();
+            eventDTO.setEvent(eventService.getEventById(event.getEventId()));
+            eventDTO.setRoleName(event.getRoleName());
+            eventDTO.setPermissions(event.getPermissions());
+            events.add(eventDTO);
+        }
+        return ResponseEntity.ok(events);
     }
     @GetMapping("/{eventId}/my-team-events")
     @PreAuthorize("hasAnyRole('ORGANIZER','ATTENDEE')")

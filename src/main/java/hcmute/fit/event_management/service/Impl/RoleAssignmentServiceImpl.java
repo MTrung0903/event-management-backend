@@ -84,7 +84,7 @@ public class RoleAssignmentServiceImpl implements IRoleAssignmentService {
         List<AssignedRole> assignments = assignedRoleRepository.findByUserUserId(userId);
         return assignments.stream().map(assignment -> {
             RoleDTO roleDTO = rolerService.getRoleById(assignment.getRole().getRoleId());
-            return new AssignedEventDTO(assignment.getEvent().getEventName(), assignment.getRole().getName(),
+            return new AssignedEventDTO(assignment.getEvent().getEventID(),assignment.getEvent().getEventName(), assignment.getRole().getName(),
                     roleDTO.getPermissions().stream().map(permissionDTO -> permissionDTO.getName()).collect(Collectors.toList())
             );
         }).collect(Collectors.toList());
@@ -112,5 +112,14 @@ public class RoleAssignmentServiceImpl implements IRoleAssignmentService {
         }
         team.setUsers(members);
         return team;
+    }
+
+    public void getEventsAssigned(int userId) {
+        List<AssignedRole> list = assignedRoleRepository.findByUserUserId(userId);
+        Set<Integer> eventsId = new HashSet<>();
+        for (AssignedRole assignedRole : list) {
+            eventsId.add(assignedRole.getEvent().getEventID());
+        }
+
     }
 }
