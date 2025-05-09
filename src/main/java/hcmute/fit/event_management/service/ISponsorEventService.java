@@ -16,4 +16,8 @@ public interface ISponsorEventService {
     <S extends SponsorEvent> S save(S entity);
 
     Optional<SponsorEvent> findById(SponsorEventId sponsorEventId);
+
+    Boolean existsByIdEventIdAndIdSponsorId(int eventId, int sponsorId);
+
+    <S extends SponsorEvent> List<S> saveAll(Iterable<S> entities);
 }

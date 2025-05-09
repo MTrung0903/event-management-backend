@@ -33,4 +33,12 @@ public class SponsorEventServiceImpl implements ISponsorEventService {
     public Optional<SponsorEvent> findById(SponsorEventId sponsorEventId) {
         return sponsorEventRepository.findById(sponsorEventId);
     }
+    @Override
+    public Boolean existsByIdEventIdAndIdSponsorId(int eventId, int sponsorId){
+        return sponsorEventRepository.existsByIdEventIdAndIdSponsorId(eventId,sponsorId);
+    }
+    @Override
+    public <S extends SponsorEvent> List<S> saveAll(Iterable<S> entities) {
+        return sponsorEventRepository.saveAll(entities);
+    }
 }

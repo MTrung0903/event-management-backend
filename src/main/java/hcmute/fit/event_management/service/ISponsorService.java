@@ -32,4 +32,6 @@ public interface ISponsorService {
     List<Sponsor> findAll(Sort sort);
 
     Page<Sponsor> findAll(Pageable pageable);
+
+    Optional<Sponsor> findBySponsorEmailOrSponsorPhone(String email, String phone);
 }

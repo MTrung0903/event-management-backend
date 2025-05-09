@@ -36,9 +36,6 @@ public class Transaction {
     @JoinColumn
     private Booking booking;
 
-    @OneToOne
-    private Transaction transaction;
-
     @OneToMany(mappedBy = "transaction", cascade = CascadeType.ALL)
     private List<Refund> refunds;
 }

@@ -7,8 +7,9 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface SponsorRepository extends JpaRepository<Sponsor, Integer> {
-
+    Optional<Sponsor> findBySponsorEmailOrSponsorPhone(String email, String phone);
 }
