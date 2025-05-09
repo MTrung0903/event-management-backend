@@ -24,6 +24,7 @@ import payload.Response;
 
 import java.time.LocalDate;
 import java.util.*;
+import java.util.stream.Collectors;
 
 
 @Service
@@ -67,7 +68,9 @@ public class UserServiceImpl implements IUserService {
             User user = new User();
             user.setEmail("admin@gmail.com");
             user.setPassword(passwordEncoder.encode("admin"));
-            user.setFullName("admin");
+            user.setGender("");
+            user.setFullName("Admin");
+
             user.setActive(true);
             userRepository.save(user);
 
@@ -245,17 +248,7 @@ public class UserServiceImpl implements IUserService {
         User user = userOpt.get();
         Role role = roleOpt.get();
 
-        // Kiểm tra xem user đã có role này chưa
-        Optional<List<UserRole>> userRolesOpt = userRoleRepository.findAllByUser(user);
-        if (userRolesOpt.isPresent()) {
-            for (UserRole ur : userRolesOpt.get()) {
-                if (ur.getRole().getRoleId() == role.getRoleId()) {
-                    logger.warn("Role {} already assigned to user {}", roleName, email);
-                    return ResponseEntity.status(HttpStatus.CONFLICT)
-                            .body(new Response(409, "Conflict", "Role already assigned"));
-                }
-            }
-        }
+
 
         // Thêm role mới
         AccountRoleId accountRoleId = new AccountRoleId(user.getUserId(), role.getRoleId());
@@ -331,7 +324,7 @@ public class UserServiceImpl implements IUserService {
                 RoleDTO roleDTO = new RoleDTO();
                 roleDTO.setRoleID(role.getRoleId());
                 roleDTO.setName(role.getName());
-
+                roleDTO.setCreatedBy(role.getCreatedBy());
                 // Map Permissions
                 List<PermissionDTO> permissionDTOs = new ArrayList<>();
                 if (role.getPermissions() != null) {
@@ -351,6 +344,48 @@ public class UserServiceImpl implements IUserService {
         return userDTO;
     }
 
+    @Override
+    public UserDTO findById(int userId) {
+        Optional<User> userOpt = userRepository.findById(userId);
+        if (!userOpt.isPresent()) {
+
+            return new UserDTO();
+        }
+
+        User user = userOpt.get();
+        UserDTO userDTO = new UserDTO();
+        BeanUtils.copyProperties(user, userDTO);
+
+
+        // Map Roles and Permissions
+        List<RoleDTO> roleDTOs = new ArrayList<>();
+        Optional<List<UserRole>> userRolesOpt = userRoleRepository.findAllByUser(user);
+
+        if (userRolesOpt.isPresent()) {
+            for (UserRole userRole : userRolesOpt.get()) {
+                Role role = userRole.getRole();
+                RoleDTO roleDTO = new RoleDTO();
+                roleDTO.setRoleID(role.getRoleId());
+                roleDTO.setName(role.getName());
+                roleDTO.setCreatedBy(role.getCreatedBy());
+                // Map Permissions
+                List<PermissionDTO> permissionDTOs = new ArrayList<>();
+                if (role.getPermissions() != null) {
+                    for (Permission permission : role.getPermissions()) {
+                        PermissionDTO permissionDTO = new PermissionDTO();
+
+                        permissionDTO.setName(permission.getName());
+                        permissionDTO.setDescription(permission.getDescription());
+                        permissionDTOs.add(permissionDTO);
+                    }
+                }
+                roleDTO.setPermissions(permissionDTOs);
+                roleDTOs.add(roleDTO);
+            }
+        }
+        userDTO.setRoles(roleDTOs);
+        return userDTO;
+    }
     @Transactional
     @Override
     public ResponseEntity<Response> upgradeToOrganizer(String email, OrganizerDTO organizerDTO) {
@@ -519,5 +554,17 @@ public class UserServiceImpl implements IUserService {
 
         logger.info("Retrieved {} users", userDTOs.size());
         return userDTOs;
+    }
+
+    @Override
+    public List<UserDTO> searchUserForChat(String query, int currentUserId) {
+        List<UserDTO> users = getAllUsers()
+                .stream()
+                .filter(user ->
+                        user.getUserId() != currentUserId && user.isActive() &&
+                                (user.getEmail().toLowerCase().contains(query.toLowerCase()) ||
+                                        user.getFullName().toLowerCase().contains(query.toLowerCase())))
+                .collect(Collectors.toList());
+        return users;
     }
 }

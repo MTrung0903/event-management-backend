@@ -182,6 +182,13 @@ public class BookingServiceImpl implements IBookingService {
         return bookingRepository.findByBookingCode(code);
     }
 
+
+    @Override
+    public boolean hasBoughtFreeTicket(int userId, int eventId) {
+        List<Booking> freeTicketBookings = bookingRepository.findFreeTicketBookingsByUserAndEvent(userId, eventId);
+        return !freeTicketBookings.isEmpty();
+    }
+
     @Override
     public List<Booking> findByUserId(int userId) {
         return bookingRepository.findByUserId(userId);

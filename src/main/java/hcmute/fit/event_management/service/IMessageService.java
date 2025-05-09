@@ -19,4 +19,6 @@ public interface IMessageService {
     void markMessagesAsRead(int recipientId, int senderId);
 
     int getUserIdByEmail(String email);
+
+    boolean hasChatHistory(int user1Id, int user2Id);
 }

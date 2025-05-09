@@ -22,7 +22,7 @@ public class TicketController {
         return ResponseEntity.ok(ticketDTO);
     }
 
-    @GetMapping("list/{eventId}")
+    @GetMapping("detail/{eventId}")
     public ResponseEntity<List<TicketDTO>> getTicket(@PathVariable int eventId) {
         List<TicketDTO> list = ticketService.getTicketsByEventId(eventId);
         return ResponseEntity.ok(list);

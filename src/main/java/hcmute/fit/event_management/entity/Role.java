@@ -22,6 +22,9 @@ public class Role {
     @Column(name = "name")
     private String name;
 
+    @Column(name="created_by")
+    private String createdBy;
+
     @OneToMany(mappedBy = "role")
     private List<UserRole> listUserRoles;
 

@@ -16,4 +16,13 @@ public interface BookingRepository extends JpaRepository<Booking, Integer> {
     @Query("select b from Booking b where b.user.userId = :userId")
     List<Booking> findByUserId(@Param("userId") int userId);
 
+    @Query("SELECT b FROM Booking b " +
+            "JOIN b.bookingDetails bd " +
+            "JOIN bd.ticket t " +
+            "WHERE b.user.userId = :userId " +
+            "AND b.event.eventID = :eventId " +
+            "AND t.ticketType = 'Free' or t.ticketType='free'")
+    List<Booking> findFreeTicketBookingsByUserAndEvent(@Param("userId") int userId,
+                                                       @Param("eventId") int eventId);
+
 }

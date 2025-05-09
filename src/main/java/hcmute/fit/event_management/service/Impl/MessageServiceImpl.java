@@ -115,4 +115,10 @@ public class MessageServiceImpl implements IMessageService {
                 .orElseThrow(() -> new RuntimeException("User not found with email: " + email));
         return user.getUserId();
     }
+
+    @Override
+    public boolean hasChatHistory(int user1Id, int user2Id) {
+        List<Message> messages = messageRepository.findChatHistoryBetweenUsers(user1Id, user2Id);
+        return !messages.isEmpty();
+    }
 }

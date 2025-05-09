@@ -26,10 +26,14 @@ public interface IUserService {
 
     UserDTO getInfor(String email);
 
+    UserDTO findById(int userId);
+
     @Transactional
     ResponseEntity<Response> upgradeToOrganizer(String email, OrganizerDTO organizerDTO);
 
     ResponseEntity<Response> deleteUser(String email);
 
     List<UserDTO> getAllUsers();
+
+    List<UserDTO> searchUserForChat(String query, int currentUserId);
 }

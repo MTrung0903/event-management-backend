@@ -1,6 +1,5 @@
 package hcmute.fit.event_management.service.Impl;
 
-
 import com.cloudinary.Cloudinary;
 import hcmute.fit.event_management.dto.SegmentDTO;
 import hcmute.fit.event_management.dto.SpeakerDTO;
@@ -16,6 +15,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class SegmentServiceImpl implements ISegmentService {
@@ -33,28 +33,21 @@ public class SegmentServiceImpl implements ISegmentService {
     }
 
     @Override
-    public void addSegment(int eventId, SegmentDTO segment) throws Exception {
-        if (segment.getSpeaker() != null) {
-            SpeakerDTO speakerDTO = new SpeakerDTO();
-            speakerDTO.setSpeakerName(segment.getSpeaker().getSpeakerName());
-            speakerDTO.setSpeakerDesc(segment.getSpeaker().getSpeakerDesc());
-            speakerDTO.setSpeakerImage(segment.getSpeaker().getSpeakerImage());
-            Speaker speaker = speakerService.addSpeaker(speakerDTO);
-            Segment newSegment = new Segment();
-            BeanUtils.copyProperties(segment, newSegment);
-            newSegment.setEvent(eventRepository.findById(eventId).orElseThrow(
-                    () -> new Exception("Not found event by eventId " + eventId)));
-            newSegment.setSpeaker(speaker);
-        } else {
-            Segment newSegment = new Segment();
-            BeanUtils.copyProperties(segment, newSegment);
-            newSegment.setEvent(eventRepository.findById(eventId).orElseThrow(
-                    () -> new Exception("Not found event by eventId " + eventId)));
+    public void addSegment(int eventId, SegmentDTO segmentDTO) throws Exception {
+        Segment newSegment = new Segment();
+        BeanUtils.copyProperties(segmentDTO, newSegment);
+        newSegment.setEvent(eventRepository.findById(eventId).orElseThrow(
+                () -> new Exception("Not found event by eventId " + eventId)));
 
-            segmentRepository.save(newSegment);
+        if (segmentDTO.getSpeaker() != null) {
+            SpeakerDTO speakerDTO = segmentDTO.getSpeaker();
+            Speaker speaker = speakerService.addSpeaker(speakerDTO);
+            newSegment.setSpeaker(speaker);
         }
 
+        segmentRepository.save(newSegment);
     }
+
     @Override
     public List<SegmentDTO> getAllSegments(int eventId) {
         List<Segment> list = segmentRepository.findByEventId(eventId);
@@ -64,12 +57,8 @@ public class SegmentServiceImpl implements ISegmentService {
             Speaker speaker = segment.getSpeaker();
             SpeakerDTO speakerDTO = new SpeakerDTO();
             BeanUtils.copyProperties(speaker, speakerDTO);
-            // Tạo URL từ public_id cho speakerImage
             String urlImage = cloudinary.url().generate(speaker.getSpeakerImage());
-            System.out.println("day la url image cua speaker : " + urlImage);
-
             speakerDTO.setSpeakerImage(urlImage);
-
             BeanUtils.copyProperties(segment, dto);
             dto.setEventID(eventId);
             dto.setStartTime(segment.getStartTime());
@@ -79,38 +68,56 @@ public class SegmentServiceImpl implements ISegmentService {
             dtos.add(dto);
         }
         return dtos;
-
     }
 
     @Override
-    public void deleteById(Integer integer) {
-        segmentRepository.deleteById(integer);
+    public void deleteById(Integer segmentId) {
+        segmentRepository.deleteById(segmentId);
     }
 
     @Override
     public void saveEditSegment(int eventId, SegmentDTO segmentDTO) throws Exception {
-        SpeakerDTO speakerDTO = new SpeakerDTO();
-        speakerDTO.setSpeakerName(segmentDTO.getSpeaker().getSpeakerName());
-        speakerDTO.setSpeakerDesc(segmentDTO.getSpeaker().getSpeakerDesc());
-        speakerDTO.setSpeakerImage(segmentDTO.getSpeaker().getSpeakerImage());
+        Optional<Segment> existingSegmentOpt = segmentRepository.findById(segmentDTO.getSegmentId());
+        Segment segment;
 
-        Speaker speaker = speakerService.saveSpeakerEdit(speakerDTO);
+        if (existingSegmentOpt.isPresent()) {
+            // Update existing segment
+            segment = existingSegmentOpt.get();
+            BeanUtils.copyProperties(segmentDTO, segment, "speaker", "event");
+        } else {
+            // Create new segment
+            segment = new Segment();
+            BeanUtils.copyProperties(segmentDTO, segment);
+            segment.setEvent(eventRepository.findById(eventId).orElseThrow(
+                    () -> new Exception("Not found event by eventId " + eventId)));
+        }
 
-        Segment newSegment = new Segment();
-        BeanUtils.copyProperties(segmentDTO, newSegment);
-        newSegment.setEvent(eventRepository.findById(eventId).orElseThrow(()-> new Exception("Not found event by eventId "+eventId)));
-        newSegment.setSpeaker(speaker);
-        segmentRepository.save(newSegment);
+        if (segmentDTO.getSpeaker() != null) {
+            SpeakerDTO speakerDTO = segmentDTO.getSpeaker();
+            Speaker speaker;
+            if (speakerDTO.getSpeakerId() != 0) {
+                speaker = speakerService.saveSpeakerEdit(speakerDTO);
+            } else {
+                speaker = speakerService.addSpeaker(speakerDTO);
+            }
+            segment.setSpeaker(speaker);
+        } else {
+            segment.setSpeaker(null);
+        }
+
+        segmentRepository.save(segment);
     }
+
     @Override
-    public void deleteSegmentByEventId(int eventId){
+    public void deleteSegmentByEventId(int eventId) {
         List<Segment> list = segmentRepository.findByEventId(eventId);
-        if(!list.isEmpty()){
-            for(Segment segment : list){
-                speakerService.deleteById(segment.getSpeaker().getSpeakerId());
+        if (!list.isEmpty()) {
+            for (Segment segment : list) {
+                if (segment.getSpeaker() != null) {
+                    speakerService.deleteById(segment.getSpeaker().getSpeakerId());
+                }
                 segmentRepository.delete(segment);
             }
         }
-
     }
 }

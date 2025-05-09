@@ -42,7 +42,10 @@ public class AuthTokenFilter extends OncePerRequestFilter {
             "/ws/**",
             "/api/storage/**",
             "/api/events/search/**",
-            "/api/events/all"
+            "/api/events/all",
+            "/api/events/detail/**",
+            "/api/ticket/detail/**",
+            "/api/segment/detail/**"
     );
 
     @Override

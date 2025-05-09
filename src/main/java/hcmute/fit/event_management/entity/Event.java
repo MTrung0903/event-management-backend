@@ -51,11 +51,11 @@ public class Event {
 
     @OneToMany(mappedBy = "event",cascade = CascadeType.ALL, orphanRemoval = true)
     private List<SponsorEvent> sponsorEvents;
+    @ManyToOne
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 
     @OneToMany(mappedBy = "event",cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Booking> bookings;
 
-    @ManyToOne
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
 }

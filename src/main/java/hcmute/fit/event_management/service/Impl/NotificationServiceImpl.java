@@ -11,7 +11,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 @Service
 public class NotificationServiceImpl implements INotificationService {
@@ -45,6 +47,20 @@ public class NotificationServiceImpl implements INotificationService {
     @Transactional
     public void markAllAsRead(int userId) {
         notificationRepository.markAllAsRead(userId);
+    }
+    @Override
+    public List<NotificationDTO> getAllNotifications(int userId) {
+
+        List<Notification> listNotify = notificationRepository.findByUserIdOrderByCreatedAtDesc(userId);
+        List<NotificationDTO> notificationDTOList = new ArrayList<>();
+        for (Notification notification : listNotify) {
+            NotificationDTO notificationDTO = new NotificationDTO();
+            BeanUtils.copyProperties(notification, notificationDTO);
+            notificationDTO.setId(notification.getNotiId());
+            notificationDTO.setUserId(notification.getUser().getUserId());
+            notificationDTOList.add(notificationDTO);
+        }
+        return notificationDTOList;
     }
 
 }

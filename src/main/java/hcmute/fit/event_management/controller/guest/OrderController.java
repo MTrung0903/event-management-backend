@@ -17,6 +17,10 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import payload.Response;
+
+import java.util.Date;
+import java.util.List;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -92,6 +96,16 @@ public class OrderController {
         }).collect(Collectors.toList());
 
         return ResponseEntity.ok(myOrderDTOList);
+    }
+    @GetMapping("/{userId}/has-bought-free-ticket/{eventId}")
+    public ResponseEntity<Response> checkBoughtFreeTicket(@PathVariable("userId") int userId, @PathVariable("eventId") int eventId) {
+        boolean hasBoughtFreeTicket = bookingService.hasBoughtFreeTicket(userId, eventId);
+        Response response = new Response();
+        response.setData(hasBoughtFreeTicket);
+        if(hasBoughtFreeTicket) response.setMsg("Has bought free ticket");
+        else response.setMsg("Has not bought free ticket");
+        response.setStatusCode(200);
+        return ResponseEntity.ok(response);
     }
     @GetMapping("/{orderCode}/tickets")
     public ResponseEntity<?> getTickets(@PathVariable("orderCode") String orderCode) throws Exception {
