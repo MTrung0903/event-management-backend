@@ -42,7 +42,8 @@ public class MomoService {
     private final MomoAPI momoAPI;
     @Autowired
     private EventRepository eventRepository;
-
+    @Autowired
+    private CheckInTicketRepository checkInTicketRepository;
     public ResponseEntity<?> createQRCode(CheckoutDTO checkoutDTO) {
         try {
             // 1. Khởi tạo các biến cần thiết
@@ -185,7 +186,18 @@ public class MomoService {
         transaction.setTransactionStatus("SUCCESSFULLY");
         transaction.setReferenceCode(payload.get("transId"));
         transactionRepository.save(transaction);
-
+        List<BookingDetails> bkdts = booking.getBookingDetails();
+        List<CheckInTicket> tickets = new ArrayList<>();
+        for (BookingDetails bkdt : bkdts) {
+            for (int i = 0; i < bkdt.getQuantity(); i++) {
+                CheckInTicket ticket = new CheckInTicket();
+                ticket.setStatus(false);
+                ticket.setTicketCode(UUID.randomUUID().toString().replace("-", "").substring(0, 10).toUpperCase());
+                ticket.setBookingDetails(bkdt);
+                tickets.add(ticket);
+            }
+        }
+        checkInTicketRepository.saveAll(tickets);
         System.out.println("Thanh toán thành công");
     }
 

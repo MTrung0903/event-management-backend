@@ -2,7 +2,6 @@ package hcmute.fit.event_management.service.Impl;
 
 
 import hcmute.fit.event_management.entity.Ticket;
-import hcmute.fit.event_management.entity.Transaction;
 import hcmute.fit.event_management.service.EmailService;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
@@ -11,18 +10,9 @@ import org.springframework.mail.javamail.JavaMailSender;
 
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
-import com.google.zxing.BarcodeFormat;
-import com.google.zxing.WriterException;
-import com.google.zxing.common.BitMatrix;
-import com.google.zxing.qrcode.QRCodeWriter;
-import com.google.zxing.client.j2se.MatrixToImageWriter;
 
 import java.util.Random;
 
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
-import java.io.ByteArrayOutputStream;
-import java.util.Base64;
 import java.util.List;
 
 @Service
@@ -40,21 +30,18 @@ public class EmailServiceImpl implements EmailService {
         sendHtmlEmail(to, subject, content);
     }
 
-    //    @Override
+    @Override
     public void sendThanksPaymentEmail(String to, String eventName, String orderCode, String userName, List<Ticket> tickets) {
         try {
             StringBuilder content = new StringBuilder();
             content.append("<p>Dear ").append(userName).append(",</p>")
                     .append("<p>Thank you for purchasing tickets to <strong>").append(eventName).append("</strong>.</p>")
-                    .append("<p>You can view and download your QR ticket <a href=\"https://localhost:3000/view-ticket/")
+                    .append("<p>You can view and download your QR ticket <a href=\"https://localhost:3000/view-tickets/")
                     .append(orderCode).append("\">here</a>.</p>");
             content.append("<br><p>We look forward to seeing you there!</p>")
                     .append("<p>Best regards,<br>The Event Team</p>");
-
             String subject = "Your Event Tickets – " + eventName;
-            System.out.println(content.toString());
-            //emailService.sendHtmlEmail("sidedlove03@gmail.com", subject, content.toString());
-
+            sendHtmlEmail("sidedlove03@gmail.com", subject, content.toString());
         } catch (Exception e) {
             System.err.println("Failed to send QR code email: " + e.getMessage());
         }

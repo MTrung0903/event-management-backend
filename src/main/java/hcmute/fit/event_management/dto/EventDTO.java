@@ -37,4 +37,6 @@ public class EventDTO {
     private String textContent;
     private List<String> mediaContent;
     private Integer userId;
+    private int sold;
+    private Double total;
 }

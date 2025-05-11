@@ -75,7 +75,10 @@ public class VNPAYService {
     private final VNPAYAPI vnpayapi;
     @Autowired
     private RefundRepository refundRepository;
+    @Autowired
     private EventRepository eventRepository;
+    @Autowired
+    private CheckInTicketRepository checkInTicketRepository;
 
     public String createPaymentUrl(HttpServletRequest req, CheckoutDTO checkoutDTO) throws Exception  {
 
@@ -187,7 +190,6 @@ public class VNPAYService {
 
             ticketRepository.saveAll(ticketsToUpdate);
             updateBookingStatus(booking, "PAID");
-
             Transaction transaction = new Transaction();
             transaction.setBooking(booking);
             transaction.setTransactionInfo(info);
@@ -198,6 +200,18 @@ public class VNPAYService {
             transaction.setTransactionStatus("SUCCESSFULLY");
             transaction.setReferenceCode(txnRef);
             transactionRepository.save(transaction);
+            List<BookingDetails> bkdts = booking.getBookingDetails();
+            List<CheckInTicket> tickets = new ArrayList<>();
+            for (BookingDetails bkdt : bkdts) {
+                for (int i = 0; i < bkdt.getQuantity(); i++) {
+                    CheckInTicket ticket = new CheckInTicket();
+                    ticket.setStatus(false);
+                    ticket.setTicketCode(UUID.randomUUID().toString().replace("-", "").substring(0, 10).toUpperCase());
+                    ticket.setBookingDetails(bkdt);
+                    tickets.add(ticket);
+                }
+            }
+            checkInTicketRepository.saveAll(tickets);
             emailService.sendThanksPaymentEmail(booking.getUser().getEmail(), booking.getEvent().getEventName(), booking.getBookingCode(), booking.getUser().getFullName(),ticketsToUpdate);
         } else {
             updateBookingStatus(booking, "FAILED");

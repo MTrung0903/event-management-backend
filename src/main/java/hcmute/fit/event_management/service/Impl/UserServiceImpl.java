@@ -457,6 +457,7 @@ public class UserServiceImpl implements IUserService {
         organizer.setOrganizerWebsite(organizerDTO.getOrganizerWebsite());
         organizer.setOrganizerPhone(organizerDTO.getOrganizerPhone());
         organizer.setOrganizerDesc(organizerDTO.getOrganizerDesc());
+        organizer.setRegistrationDate(LocalDate.now());
         organizer.setUser(user);
         organizerRepository.save(organizer);
         user.setOrganizer(organizer);

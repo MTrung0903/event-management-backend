@@ -25,4 +25,8 @@ public interface BookingRepository extends JpaRepository<Booking, Integer> {
     List<Booking> findFreeTicketBookingsByUserAndEvent(@Param("userId") int userId,
                                                        @Param("eventId") int eventId);
 
+    @Query("SELECT COUNT(b) FROM Booking b WHERE MONTH(b.createDate) = :month AND YEAR(b.createDate) = :year")
+    long countBookingsByMonth(@Param("month") int month, @Param("year") int year);
+    @Query("SELECT COUNT(b) FROM Booking b WHERE b.bookingStatus = 'PAID'")
+    long countBookings();
 }
