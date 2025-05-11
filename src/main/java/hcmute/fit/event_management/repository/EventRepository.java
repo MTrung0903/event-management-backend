@@ -9,6 +9,7 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 
 @Repository
@@ -31,6 +32,8 @@ public interface EventRepository extends JpaRepository<Event, Integer> {
 
     @Query("select e from Event e where e.eventID = :eventId and e.user.userId = :userId")
     List<Event> findByEventIdAndUserId(@Param("eventId") Integer eventId, @Param("userId") Integer userId);
+
+    Optional<Event> findByEventID(Integer eventId);
 
 
 }
