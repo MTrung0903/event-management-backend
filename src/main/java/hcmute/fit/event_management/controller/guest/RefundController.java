@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import payload.Response;
 
 import java.time.LocalDateTime;
 
@@ -24,23 +25,28 @@ public class RefundController {
 
     @GetMapping("/valid/{refCode}")
     public ResponseEntity<?> valid(@PathVariable("refCode") String refCode) {
+        Response response;
         Transaction transaction = transactionService.findByOrderCode(refCode).orElse(new Transaction());
         if (transaction.getTransactionStatus().equals("REFUNDED")) {
-            return new ResponseEntity<>("This transaction has been refunded", HttpStatus.OK);
+            response = new Response(0,"This transaction has been refunded", null);
+            return new ResponseEntity<>(response, HttpStatus.OK);
         }
 
         Event event = transaction.getBooking().getEvent();
         if (event.getRefunds().equals("no")) {
-            return new ResponseEntity<>("This transaction does not allow refund", HttpStatus.OK);
+            response = new Response(0,"This event does not allow refund", null);
+            return new ResponseEntity<>(response, HttpStatus.OK);
         }
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime startTime = event.getEventStart();
         int validityDays = event.getValidityDays();
         LocalDateTime deadline = startTime.minusDays(validityDays);
         if (!now.isBefore(deadline)) {
-            return new ResponseEntity<>("Over permitted time limit for refund", HttpStatus.OK);
+            response = new Response(0,"Over permitted time limit for refund", null);
+            return new ResponseEntity<>(response, HttpStatus.OK);
         }
-        return new ResponseEntity<>("true", HttpStatus.OK);
+        response = new Response(1,"Valid", null);
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
     @PostMapping("/{refCode}")
     public ResponseEntity<?> refund(HttpServletRequest request, @PathVariable("refCode") String refCode) throws Exception {

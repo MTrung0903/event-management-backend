@@ -30,6 +30,8 @@ public class Ticket {
 
     @Column(name = "quantity")
     private int quantity;
+    @Column(name = "ticketCode")
+    private String ticketCode;
     @JsonFormat(pattern = "yyyy-MM-dd ", timezone = "UTC")
     @Column(name = "start_time")
     private Date startTime;

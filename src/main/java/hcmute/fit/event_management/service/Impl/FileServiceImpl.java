@@ -11,6 +11,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.Map;
+
 @Service
 public class FileServiceImpl implements IFileService {
 
@@ -26,7 +28,6 @@ public class FileServiceImpl implements IFileService {
             if (path == null) {
                 init();
             }
-
             Path file = path.resolve(fileName);
             Resource resource = new UrlResource(file.toUri());
 
@@ -40,23 +41,41 @@ public class FileServiceImpl implements IFileService {
             return null;
         }
     }
-
-
-
     @Override
-    public boolean saveFiles(MultipartFile file) {
-        try{
-            //System.out.println("kiemtra path " + path);
+    public String saveFiles(MultipartFile file) {
+        try {
             init();
-            Files.copy(file.getInputStream(),path.resolve(file.getOriginalFilename()),
-                    StandardCopyOption.REPLACE_EXISTING);
+            String originalFileName = file.getOriginalFilename();
+            if (originalFileName == null) return null;
 
-            return true;
-        }catch (Exception e){
-            System.out.println("Error save file " + e.getMessage());
-            return  false;
+            Path targetPath = path.resolve(originalFileName);
+            String fileName = originalFileName;
+            String name = fileName;
+            String extension = "";
+
+            int dotIndex = fileName.lastIndexOf(".");
+            if (dotIndex != -1) {
+                name = fileName.substring(0, dotIndex);
+                extension = fileName.substring(dotIndex);
+            }
+
+            int index = 1;
+            while (Files.exists(targetPath)) {
+                fileName = name + "(" + index + ")" + extension;
+                targetPath = path.resolve(fileName);
+                index++;
+            }
+
+            Files.copy(file.getInputStream(), targetPath);
+            return fileName;
+
+        } catch (Exception e) {
+            System.out.println("Error save file: " + e.getMessage());
+            return null;
         }
     }
+
+
     private void init() {
         try {
             path = Paths.get(uploadPath);

@@ -67,6 +67,10 @@ public class SponsorServiceImpl implements ISponsorService {
     public Page<Sponsor> findAll(Pageable pageable) {
         return sponsorRepository.findAll(pageable);
     }
+    @Override
+    public Optional<Sponsor> findBySponsorEmailOrSponsorPhone(String email, String phone){
+        return sponsorRepository.findBySponsorEmailOrSponsorPhone(email, phone);
+    }
 
     @Override
     public List<SponsorEventDTO> getAllSponsorsInEvent(int eventId) {

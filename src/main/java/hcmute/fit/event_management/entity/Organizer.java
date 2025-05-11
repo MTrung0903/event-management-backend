@@ -4,6 +4,9 @@ import jakarta.persistence.*;
 import jakarta.persistence.Table;
 import lombok.*;
 
+import java.time.LocalDate;
+
+
 @Entity
 @Data
 @AllArgsConstructor
@@ -29,6 +32,8 @@ public class Organizer {
 
     @Column(columnDefinition = "TEXT")
     private String organizerDesc;
+    @Column(name = "registration_date")
+    private LocalDate registrationDate;
     @OneToOne
     @JoinColumn(name = "user_id", referencedColumnName = "user_id")
     private User user;

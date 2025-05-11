@@ -35,4 +35,6 @@ public interface ISponsorService {
     Page<Sponsor> findAll(Pageable pageable);
 
     List<SponsorEventDTO> getAllSponsorsInEvent(int eventId);
+
+    Optional<Sponsor> findBySponsorEmailOrSponsorPhone(String email, String phone);
 }

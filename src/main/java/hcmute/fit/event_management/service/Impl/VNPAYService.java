@@ -17,6 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
+import payload.Response;
 
 
 import java.net.URLDecoder;
@@ -54,6 +55,8 @@ public class VNPAYService {
     TicketRepository ticketRepository;
     @Autowired
     TransactionRepository transactionRepository;
+    @Autowired
+    EmailServiceImpl emailService;
     public static final Map<String, String> errorMessages = new HashMap<>();
     static {
         errorMessages.put("07", "Trừ tiền thành công. Giao dịch bị nghi ngờ (liên quan tới lừa đảo, giao dịch bất thường).");
@@ -72,9 +75,13 @@ public class VNPAYService {
     private final VNPAYAPI vnpayapi;
     @Autowired
     private RefundRepository refundRepository;
+    @Autowired
     private EventRepository eventRepository;
+    @Autowired
+    private CheckInTicketRepository checkInTicketRepository;
 
     public String createPaymentUrl(HttpServletRequest req, CheckoutDTO checkoutDTO) throws Exception  {
+
 
         String vnp_TxnRef = String.valueOf(System.currentTimeMillis());
         String vnp_OrderInfo = checkoutDTO.getOrderInfo();
@@ -183,7 +190,6 @@ public class VNPAYService {
 
             ticketRepository.saveAll(ticketsToUpdate);
             updateBookingStatus(booking, "PAID");
-
             Transaction transaction = new Transaction();
             transaction.setBooking(booking);
             transaction.setTransactionInfo(info);
@@ -194,6 +200,19 @@ public class VNPAYService {
             transaction.setTransactionStatus("SUCCESSFULLY");
             transaction.setReferenceCode(txnRef);
             transactionRepository.save(transaction);
+            List<BookingDetails> bkdts = booking.getBookingDetails();
+            List<CheckInTicket> tickets = new ArrayList<>();
+            for (BookingDetails bkdt : bkdts) {
+                for (int i = 0; i < bkdt.getQuantity(); i++) {
+                    CheckInTicket ticket = new CheckInTicket();
+                    ticket.setStatus(false);
+                    ticket.setTicketCode(UUID.randomUUID().toString().replace("-", "").substring(0, 10).toUpperCase());
+                    ticket.setBookingDetails(bkdt);
+                    tickets.add(ticket);
+                }
+            }
+            checkInTicketRepository.saveAll(tickets);
+            emailService.sendThanksPaymentEmail(booking.getUser().getEmail(), booking.getEvent().getEventName(), booking.getBookingCode(), booking.getUser().getFullName(),ticketsToUpdate);
         } else {
             updateBookingStatus(booking, "FAILED");
         }
@@ -205,6 +224,7 @@ public class VNPAYService {
     }
 
     public ResponseEntity<?> refund(HttpServletRequest req, Transaction transaction) throws Exception {
+        Response responseEntity = new Response();
         final long refundAmount = (long) (transaction.getTransactionAmount() * 100);
         final String vnp_RequestId = UUID.randomUUID().toString();
         final String vnp_CreateDate = DateTimeFormatter.ofPattern("yyyyMMddHHmmss").format(LocalDateTime.now());
@@ -265,14 +285,19 @@ public class VNPAYService {
             if ("00".equals(responseCode)) {
                 transaction.setTransactionStatus("REFUNDED");
                 refund.setStatus("SUCCESSFULLY");
+                responseEntity.setStatusCode(1);
+                responseEntity.setMsg("SUCCESSFULLY");
             } else {
                 refund.setStatus("FAILED");
+                responseEntity.setStatusCode(0);
+                responseEntity.setMsg("FAILED");
             }
             transactionRepository.save(transaction);
             refundRepository.save(refund);
         }
         BeanUtils.copyProperties(refund, refundDTO);
-        return ResponseEntity.ok(refundDTO);
+        responseEntity.setData(refundDTO);
+        return ResponseEntity.ok(responseEntity);
     }
 
 }

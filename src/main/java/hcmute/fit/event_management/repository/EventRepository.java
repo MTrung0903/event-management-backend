@@ -32,6 +32,8 @@ public interface EventRepository extends JpaRepository<Event, Integer> {
 
     @Query("select e from Event e where e.eventID = :eventId and e.user.userId = :userId")
     List<Event> findByEventIdAndUserId(@Param("eventId") Integer eventId, @Param("userId") Integer userId);
+    @Query("SELECT COUNT(e) FROM Event e WHERE MONTH(e.eventStart) = :month AND YEAR(e.eventStart) = :year")
+    long countEventsByMonth(@Param("month") int month, @Param("year") int year);
 
     Optional<Event> findByEventID(Integer eventId);
 

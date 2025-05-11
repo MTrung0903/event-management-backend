@@ -14,4 +14,10 @@ public interface BookingDetailsRepository extends JpaRepository<BookingDetails, 
     List<BookingDetails> findByTicketId(@Param("ticketId") int ticketId);
     @Query("select bd from BookingDetails bd where bd.booking.bookingId = :bookingId")
     List<BookingDetails> findByBookingId(@Param("bookingId") int bookingId);
+    @Query("SELECT SUM(bd.quantity) FROM BookingDetails bd")
+    Long countTotalTicketsSold();
+    @Query("SELECT SUM(bd.quantity) FROM BookingDetails bd WHERE MONTH(bd.booking.createDate) = :month AND YEAR(bd.booking.createDate) = :year")
+    Long countTicketsSoldByMonth(@Param("month") int month, @Param("year") int year);
+
+
 }
