@@ -1,16 +1,14 @@
 package hcmute.fit.event_management.controller.manager;
 
-import hcmute.fit.event_management.dto.EventDTO;
-import hcmute.fit.event_management.dto.EventDetailDTO;
-import hcmute.fit.event_management.dto.EventEditDTO;
+import hcmute.fit.event_management.dto.*;
 import hcmute.fit.event_management.entity.Event;
-import hcmute.fit.event_management.service.IOrganizerService;
-import hcmute.fit.event_management.service.ISegmentService;
-import hcmute.fit.event_management.service.ISponsorService;
-import hcmute.fit.event_management.service.ITicketService;
+import hcmute.fit.event_management.repository.OrganizerRepository;
+import hcmute.fit.event_management.service.*;
 import hcmute.fit.event_management.service.Impl.EventServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -18,6 +16,7 @@ import payload.Response;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.List;
 
 @RestController
@@ -37,16 +36,33 @@ public class EventController {
     @Autowired
     private IOrganizerService organizerService;
 
+    @Autowired
+    private SimpMessagingTemplate template;
+
+
+    @Autowired
+    private INotificationService notificationService;
+
     @PostMapping("/create")
     @PreAuthorize("hasRole('ORGANIZER')")
     public ResponseEntity<Response> createEvent(@RequestBody EventDTO event) throws IOException {
+        NotificationDTO notificationDTO = new NotificationDTO();
+        notificationDTO.setTitle("Tin nhắn mới");
+        notificationDTO.setMessage(event.getEventName() + " được tạo thành công");
+        notificationDTO.setUserId(event.getUserId());
+        notificationDTO.setRead(false);
+        notificationDTO.setCreatedAt(new Date());
+        notificationService.createNotification(notificationDTO);
 
         return eventService.saveEventToDB(event);
     }
     @PostMapping("/create-event")
     @PreAuthorize("hasRole('ORGANIZER')")
     public ResponseEntity<Response> saveEvent(@RequestBody EventDTO event)  {
-       return eventService.saveEventToDB(event);
+
+
+
+        return eventService.saveEventToDB(event);
     }
     @GetMapping("/all")
     public ResponseEntity<List<EventDTO>> getAllEvents() {
@@ -144,5 +160,30 @@ public class EventController {
         List<EventDTO> events = eventService.findEventsByDate(eventStart);
         return ResponseEntity.ok(events);
     }
+    @GetMapping("/search/multiple-filters")
+    public List<EventDTO> searchEventsByMultipleFilters(
+            @RequestParam(required = false) String eventCategory,
+            @RequestParam(required = false) String eventLocation,
+            @RequestParam(required = false) String eventStart,
+            @RequestParam(required = false) String ticketType) {
+        return eventService.searchEventsByMultipleFilters(eventCategory, eventLocation, eventStart, ticketType);
+    }
+    @GetMapping("/search/events-by-tickets-sold")
+    public List<EventDTO> bestEventsByTicketsSold() {
+        return eventService.topEventsByTicketsSold();
+    }
+    @GetMapping("/search/events-by-favorites")
+    public List<EventDTO> findTop10FavoriteEvents() {
+        return eventService.top10FavoriteEvents();
+    }
 
+    @GetMapping("/search/organizer-infor/{organizer}")
+    public ProfileOrganizerDTO eventOfOrganizer(@PathVariable String organizer) {
+        List<EventDTO> events = eventService.findEventsByHost(organizer);
+        OrganizerDTO organizerDTO = organizerService.getOrganizerInforByEventHost(organizer);
+
+        ProfileOrganizerDTO profile = new ProfileOrganizerDTO(organizerDTO,events);
+        return profile;
+
+    }
 }

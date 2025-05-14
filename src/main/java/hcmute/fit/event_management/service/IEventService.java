@@ -32,6 +32,15 @@ public interface IEventService {
     List<EventDTO> findEventsByLocation(String eventLocation);
     List<EventDTO> findEventsByTags(String tag);
     List<EventDTO> findEventsByType(String eventType);
+
+    List<EventDTO> findEventsByCurrentWeek();
+
+    List<EventDTO> findEventsByCurrentMonth();
+
+    List<EventDTO> findEventsByTicketType(String type);
+
+    List<EventDTO> searchEventsByMultipleFilters(String eventCategory, String eventLocation, String eventStart, String ticketType);
+
     List<EventDTO> findEventsByNameAndLocation(String name, String location);
     List<EventDTO> searchEventsByNameAndCity(String searchTerm, String cityKey);
 
@@ -39,4 +48,8 @@ public interface IEventService {
     ResponseEntity<Response> saveEventToDB(EventDTO eventDTO);
 
     List<EventDTO> getAllEventByHost(String email);
+
+    List<EventDTO> topEventsByTicketsSold();
+
+    List<EventDTO> top10FavoriteEvents();
 }
