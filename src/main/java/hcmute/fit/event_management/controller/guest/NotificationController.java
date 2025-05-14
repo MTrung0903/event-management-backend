@@ -31,12 +31,14 @@ public class NotificationController {
             }
             // Lưu thông báo
             Notification savedNotification = notificationService.createNotification(notificationDTO);
+
             // Gửi thông báo tới người dùng cụ thể
             template.convertAndSendToUser(
                     String.valueOf(notificationDTO.getUserId()),
                     "/specific",
                     notificationDTO
             );
+
             System.out.println("Sent notification to user " + notificationDTO.getUserId() + ": " + notificationDTO.getMessage());
         } catch (Exception e) {
             System.out.println("Failed to send notification: " + e.getMessage());

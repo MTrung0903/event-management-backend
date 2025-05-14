@@ -1,10 +1,10 @@
 package hcmute.fit.event_management.service.Impl;
 
+import com.cloudinary.Cloudinary;
 import hcmute.fit.event_management.dto.OrganizerDTO;
 import hcmute.fit.event_management.dto.PermissionDTO;
 import hcmute.fit.event_management.dto.RoleDTO;
 import hcmute.fit.event_management.dto.UserDTO;
-
 import hcmute.fit.event_management.entity.*;
 import hcmute.fit.event_management.entity.keys.AccountRoleId;
 import hcmute.fit.event_management.repository.*;
@@ -15,7 +15,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -25,7 +24,6 @@ import payload.Response;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
-
 
 @Service
 public class UserServiceImpl implements IUserService {
@@ -45,6 +43,8 @@ public class UserServiceImpl implements IUserService {
     @Autowired
     private OrganizerRepository organizerRepository;
 
+    @Autowired
+    private Cloudinary cloudinary;
 
     Logger logger = LoggerFactory.getLogger(this.getClass());
 
@@ -52,11 +52,52 @@ public class UserServiceImpl implements IUserService {
         this.userRepository = userRepository;
     }
 
+    private UserDTO convertToDTO(User user, Optional<List<UserRole>> userRolesOpt) {
+        UserDTO userDTO = new UserDTO();
+        BeanUtils.copyProperties(user, userDTO);
+
+        // Map Organizer
+        if (user.getOrganizer() != null) {
+            OrganizerDTO organizerDTO = new OrganizerDTO();
+            BeanUtils.copyProperties(user.getOrganizer(), organizerDTO);
+            String urlImage = cloudinary.url().generate(user.getOrganizer().getOrganizerLogo());
+            organizerDTO.setOrganizerLogo(urlImage);
+            userDTO.setOrganizer(organizerDTO);
+        }
+
+        // Map Roles and Permissions
+        List<RoleDTO> roleDTOs = new ArrayList<>();
+        if (userRolesOpt.isPresent()) {
+            for (UserRole userRole : userRolesOpt.get()) {
+                Role role = userRole.getRole();
+                RoleDTO roleDTO = new RoleDTO();
+                roleDTO.setRoleID(role.getRoleId());
+                roleDTO.setName(role.getName());
+                roleDTO.setCreatedBy(role.getCreatedBy());
+
+                // Map Permissions
+                List<PermissionDTO> permissionDTOs = new ArrayList<>();
+                if (role.getPermissions() != null) {
+                    for (Permission permission : role.getPermissions()) {
+                        PermissionDTO permissionDTO = new PermissionDTO();
+                        permissionDTO.setName(permission.getName());
+                        permissionDTO.setDescription(permission.getDescription());
+                        permissionDTOs.add(permissionDTO);
+                    }
+                }
+                roleDTO.setPermissions(permissionDTOs);
+                roleDTOs.add(roleDTO);
+            }
+        }
+        userDTO.setRoles(roleDTOs);
+        return userDTO;
+    }
+
     @PostConstruct
     @Transactional
     public void initDefaultAdmin() {
         Optional<Role> adminRole = roleRepository.findByName("ROLE_ADMIN");
-        if (adminRole.isEmpty()){
+        if (adminRole.isEmpty()) {
             Role role = new Role();
             role.setName("ROLE_ADMIN");
             roleRepository.save(role);
@@ -64,13 +105,12 @@ public class UserServiceImpl implements IUserService {
             logger.info("Created ROLE_ADMIN");
         }
         Optional<User> adminUser = userRepository.findByEmail("admin@gmail.com");
-        if(adminUser.isEmpty()){
+        if (adminUser.isEmpty()) {
             User user = new User();
             user.setEmail("admin@gmail.com");
             user.setPassword(passwordEncoder.encode("admin"));
             user.setGender("");
             user.setFullName("Admin");
-
             user.setActive(true);
             userRepository.save(user);
 
@@ -86,7 +126,6 @@ public class UserServiceImpl implements IUserService {
     @Transactional
     @Override
     public ResponseEntity<Response> register(UserDTO userDTO) {
-
         // Kiểm tra email đã tồn tại
         if (userRepository.findByEmail(userDTO.getEmail()).isPresent()) {
             logger.warn("Registration failed: Email {} already exists", userDTO.getEmail());
@@ -114,8 +153,6 @@ public class UserServiceImpl implements IUserService {
         // Lưu user
         User savedUser = userRepository.save(user);
 
-
-
         // Gán vai trò
         AccountRoleId accountRoleId = new AccountRoleId(savedUser.getUserId(), role.get().getRoleId());
         UserRole userRole = new UserRole();
@@ -142,19 +179,15 @@ public class UserServiceImpl implements IUserService {
 
     @Override
     public ResponseEntity<Response> saveChangeInfor(UserDTO userChange) {
-
         if (userChange.getEmail() == null || userChange.getEmail().isEmpty()) {
             logger.error("Invalid email provided");
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(new Response(400, "Bad Request", "Email is required"));
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new Response(400, "Bad Request", "Email is required"));
         }
-
 
         Optional<User> userOpt = userRepository.findByEmail(userChange.getEmail());
         if (!userOpt.isPresent()) {
             logger.error("User {} not found", userChange.getEmail());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(new Response(404, "Not Found", "User not found"));
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new Response(404, "Not Found", "User not found"));
         }
 
         User user = userOpt.get();
@@ -164,60 +197,33 @@ public class UserServiceImpl implements IUserService {
             Optional<User> existingUserWithNewEmail = userRepository.findByEmail(userChange.getEmail());
             if (existingUserWithNewEmail.isPresent()) {
                 logger.error("Email {} already exists", userChange.getEmail());
-                return ResponseEntity.status(HttpStatus.CONFLICT)
-                        .body(new Response(409, "Conflict", "Email already exists"));
+                return ResponseEntity.status(HttpStatus.CONFLICT).body(new Response(409, "Conflict", "Email already exists"));
             }
             user.setEmail(userChange.getEmail());
         }
+        user.setFullName(userChange.getFullName());
+        user.setPassword(passwordEncoder.encode(userChange.getPassword()));
+        user.setGender(userChange.getGender());
+        if (userChange.getBirthday().isAfter(LocalDate.now())) {
+            logger.error("Invalid birthday: {}", userChange.getBirthday());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new Response(400, "Bad Request", "Birthday cannot be in the future"));
+        }
+        user.setBirthday(userChange.getBirthday());
 
 
-        if (userChange.getFullName() != null && !userChange.getFullName().isEmpty()) {
-            user.setFullName(userChange.getFullName());
-        }
-        if (userChange.getPassword() != null && !userChange.getPassword().isEmpty()) {
-            user.setPassword(passwordEncoder.encode(userChange.getPassword()));
-        }
-        if (userChange.getGender() != null) {
-            user.setGender(userChange.getGender());
-        }
-        if (userChange.getBirthday() != null) {
-
-            if (userChange.getBirthday().isAfter(LocalDate.now())) {
-                logger.error("Invalid birthday: {}", userChange.getBirthday());
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                        .body(new Response(400, "Bad Request", "Birthday cannot be in the future"));
-            }
-            user.setBirthday(userChange.getBirthday());
-        }
-        if (userChange.getAddress() != null) {
-            user.setAddress(userChange.getAddress());
-        }
+        user.setAddress(userChange.getAddress());
 
 
         if (userChange.getOrganizer() != null) {
             OrganizerDTO organizerDTO = userChange.getOrganizer();
             if (organizerDTO.getOrganizerName() == null || organizerDTO.getOrganizerName().isEmpty()) {
                 logger.error("Invalid organizer name provided");
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                        .body(new Response(400, "Bad Request", "Organizer name is required"));
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new Response(400, "Bad Request", "Organizer name is required"));
             }
 
             Organizer organizer = user.getOrganizer();
-
-            // Cập nhật thông tin Organizer
-            organizer.setOrganizerName(organizerDTO.getOrganizerName());
-            if (organizerDTO.getOrganizerAddress() != null) {
-                organizer.setOrganizerAddress(organizerDTO.getOrganizerAddress());
-            }
-            if (organizerDTO.getOrganizerWebsite() != null) {
-                organizer.setOrganizerWebsite(organizerDTO.getOrganizerWebsite());
-            }
-            if (organizerDTO.getOrganizerPhone() != null) {
-                organizer.setOrganizerPhone(organizerDTO.getOrganizerPhone());
-            }
-            if (organizerDTO.getOrganizerDesc() != null) {
-                organizer.setOrganizerDesc(organizerDTO.getOrganizerDesc());
-            }
+            BeanUtils.copyProperties(organizerDTO, organizer);
             organizerRepository.save(organizer);
             user.setOrganizer(organizer);
         }
@@ -233,7 +239,7 @@ public class UserServiceImpl implements IUserService {
     public ResponseEntity<Response> AddMoreRoleForUser(String email, String roleName) {
         Optional<User> userOpt = userRepository.findByEmail(email);
         if (!userOpt.isPresent()) {
-            logger.error("User  {} not found", email);
+            logger.error("User {} not found", email);
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(new Response(404, "Not Found", "User not found"));
         }
@@ -248,8 +254,6 @@ public class UserServiceImpl implements IUserService {
         User user = userOpt.get();
         Role role = roleOpt.get();
 
-
-
         // Thêm role mới
         AccountRoleId accountRoleId = new AccountRoleId(user.getUserId(), role.getRoleId());
         UserRole userRole = new UserRole(accountRoleId, user, role);
@@ -263,7 +267,7 @@ public class UserServiceImpl implements IUserService {
     public ResponseEntity<Response> deleteRoleInUser(String email, String roleName) {
         Optional<User> userOpt = userRepository.findByEmail(email);
         if (!userOpt.isPresent()) {
-            logger.error("User  {} not found by", email);
+            logger.error("User {} not found", email);
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(new Response(404, "Not Found", "User not found"));
         }
@@ -304,88 +308,22 @@ public class UserServiceImpl implements IUserService {
         }
 
         User user = userOpt.get();
-        UserDTO userDTO = new UserDTO();
-        BeanUtils.copyProperties(user, userDTO);
-
-        // Map Organizer
-        if (user.getOrganizer() != null) {
-            OrganizerDTO organizerDTO = new OrganizerDTO();
-            BeanUtils.copyProperties(user.getOrganizer(), organizerDTO);
-            userDTO.setOrganizer(organizerDTO);
-        }
-
-        // Map Roles and Permissions
-        List<RoleDTO> roleDTOs = new ArrayList<>();
         Optional<List<UserRole>> userRolesOpt = userRoleRepository.findAllByUser(user);
-
-        if (userRolesOpt.isPresent()) {
-            for (UserRole userRole : userRolesOpt.get()) {
-                Role role = userRole.getRole();
-                RoleDTO roleDTO = new RoleDTO();
-                roleDTO.setRoleID(role.getRoleId());
-                roleDTO.setName(role.getName());
-                roleDTO.setCreatedBy(role.getCreatedBy());
-                // Map Permissions
-                List<PermissionDTO> permissionDTOs = new ArrayList<>();
-                if (role.getPermissions() != null) {
-                    for (Permission permission : role.getPermissions()) {
-                        PermissionDTO permissionDTO = new PermissionDTO();
-
-                        permissionDTO.setName(permission.getName());
-                        permissionDTO.setDescription(permission.getDescription());
-                        permissionDTOs.add(permissionDTO);
-                    }
-                }
-                roleDTO.setPermissions(permissionDTOs);
-                roleDTOs.add(roleDTO);
-            }
-        }
-        userDTO.setRoles(roleDTOs);
-        return userDTO;
+        return convertToDTO(user, userRolesOpt);
     }
 
     @Override
     public UserDTO findById(int userId) {
         Optional<User> userOpt = userRepository.findById(userId);
         if (!userOpt.isPresent()) {
-
             return new UserDTO();
         }
 
         User user = userOpt.get();
-        UserDTO userDTO = new UserDTO();
-        BeanUtils.copyProperties(user, userDTO);
-
-
-        // Map Roles and Permissions
-        List<RoleDTO> roleDTOs = new ArrayList<>();
         Optional<List<UserRole>> userRolesOpt = userRoleRepository.findAllByUser(user);
-
-        if (userRolesOpt.isPresent()) {
-            for (UserRole userRole : userRolesOpt.get()) {
-                Role role = userRole.getRole();
-                RoleDTO roleDTO = new RoleDTO();
-                roleDTO.setRoleID(role.getRoleId());
-                roleDTO.setName(role.getName());
-                roleDTO.setCreatedBy(role.getCreatedBy());
-                // Map Permissions
-                List<PermissionDTO> permissionDTOs = new ArrayList<>();
-                if (role.getPermissions() != null) {
-                    for (Permission permission : role.getPermissions()) {
-                        PermissionDTO permissionDTO = new PermissionDTO();
-
-                        permissionDTO.setName(permission.getName());
-                        permissionDTO.setDescription(permission.getDescription());
-                        permissionDTOs.add(permissionDTO);
-                    }
-                }
-                roleDTO.setPermissions(permissionDTOs);
-                roleDTOs.add(roleDTO);
-            }
-        }
-        userDTO.setRoles(roleDTOs);
-        return userDTO;
+        return convertToDTO(user, userRolesOpt);
     }
+
     @Transactional
     @Override
     public ResponseEntity<Response> upgradeToOrganizer(String email, OrganizerDTO organizerDTO) {
@@ -405,12 +343,10 @@ public class UserServiceImpl implements IUserService {
         }
 
         User user = userOpt.get();
-
-
+        deleteRoleInUser(user.getEmail(),"ROLE_ATTENDEE");
         Optional<List<UserRole>> userRolesOpt = userRoleRepository.findAllByUser(user);
 
-
-        // Kiểm tra xem user  có role ROLE_ORGANIZER không
+        // Kiểm tra xem user có role ROLE_ORGANIZER không
         boolean hasOrganizerRole = false;
         if (userRolesOpt.isPresent()) {
             for (UserRole ur : userRolesOpt.get()) {
@@ -453,6 +389,7 @@ public class UserServiceImpl implements IUserService {
         }
         Organizer organizer = new Organizer();
         organizer.setOrganizerName(organizerDTO.getOrganizerName());
+        organizer.setOrganizerLogo(organizerDTO.getOrganizerLogo());
         organizer.setOrganizerAddress(organizerDTO.getOrganizerAddress());
         organizer.setOrganizerWebsite(organizerDTO.getOrganizerWebsite());
         organizer.setOrganizerPhone(organizerDTO.getOrganizerPhone());
@@ -509,47 +446,15 @@ public class UserServiceImpl implements IUserService {
         logger.info("User with email {} deleted successfully", email);
         return ResponseEntity.ok(new Response(200, "Success", "User deleted successfully"));
     }
+
     @Override
     public List<UserDTO> getAllUsers() {
         List<User> users = userRepository.findAll();
         List<UserDTO> userDTOs = new ArrayList<>();
 
         for (User user : users) {
-            UserDTO userDTO = new UserDTO();
-            BeanUtils.copyProperties(user, userDTO);
-
-            // Map Organizer
-            if (user.getOrganizer() != null) {
-                OrganizerDTO organizerDTO = new OrganizerDTO();
-                BeanUtils.copyProperties(user.getOrganizer(), organizerDTO);
-                userDTO.setOrganizer(organizerDTO);
-            }
-
-            // Map Roles and Permissions
-            List<RoleDTO> roleDTOs = new ArrayList<>();
             Optional<List<UserRole>> userRolesOpt = userRoleRepository.findAllByUser(user);
-
-            if (userRolesOpt.isPresent()) {
-                for (UserRole userRole : userRolesOpt.get()) {
-                    Role role = userRole.getRole();
-                    RoleDTO roleDTO = new RoleDTO();
-                    roleDTO.setRoleID(role.getRoleId());
-                    roleDTO.setName(role.getName());
-
-                    List<PermissionDTO> permissionDTOs = new ArrayList<>();
-                    if (role.getPermissions() != null) {
-                        for (Permission permission : role.getPermissions()) {
-                            PermissionDTO permissionDTO = new PermissionDTO();
-                            permissionDTO.setName(permission.getName());
-                            permissionDTO.setDescription(permission.getDescription());
-                            permissionDTOs.add(permissionDTO);
-                        }
-                    }
-                    roleDTO.setPermissions(permissionDTOs);
-                    roleDTOs.add(roleDTO);
-                }
-            }
-            userDTO.setRoles(roleDTOs);
+            UserDTO userDTO = convertToDTO(user, userRolesOpt);
             userDTOs.add(userDTO);
         }
 

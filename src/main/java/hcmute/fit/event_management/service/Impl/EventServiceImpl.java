@@ -15,15 +15,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.rest.webmvc.ResourceNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import payload.Response;
 
+
 import java.io.IOException;
 import java.text.Normalizer;
-import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -90,28 +92,7 @@ public class EventServiceImpl implements IEventService {
     public EventDTO getEventById(int eventId) {
         updateEventStatus();
         Event event = findById(eventId).orElseThrow(() -> new RuntimeException("Event not found"));
-        EventDTO dto = new EventDTO();
-        BeanUtils.copyProperties(event, dto, "eventLocation");
-
-        EventLocationDTO locationDTO = new EventLocationDTO();
-        if (event.getEventLocation() != null) {
-            BeanUtils.copyProperties(event.getEventLocation(), locationDTO);
-            locationDTO.setCity(getCityDisplayName(locationDTO.getCity()));
-            dto.setEventLocation(locationDTO);
-        }
-
-        dto.setEventId(event.getEventID());
-
-        List<String> imageUrls = event.getEventImages().stream()
-                .map(publicId -> cloudinary.url().generate(publicId))
-                .collect(Collectors.toList());
-        dto.setEventImages(imageUrls);
-
-        List<String> mediaUrls = event.getMediaContent().stream()
-                .map(publicId -> cloudinary.url().generate(publicId))
-                .collect(Collectors.toList());
-        dto.setMediaContent(mediaUrls);
-        dto.setUserId(event.getUser().getUserId());
+        EventDTO dto = convertToDTO(event);
         return dto;
     }
 
@@ -287,7 +268,7 @@ public class EventServiceImpl implements IEventService {
         updateEventStatus();
         List<Event> events = eventRepository.findByEventHostContainingIgnoreCase(eventHost);
         return events.stream()
-                .filter(event -> !"Complete".equals(event.getEventStatus()))
+
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
@@ -321,7 +302,83 @@ public class EventServiceImpl implements IEventService {
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
+    @Override
+    public List<EventDTO> findEventsByCurrentWeek() {
+        updateEventStatus();
+        List<Event> events = eventRepository.findEventsByCurrentWeek();
+        return events.stream()
+                .filter(event -> !"Complete".equals(event.getEventStatus()))
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+    @Override
+    public List<EventDTO> findEventsByCurrentMonth() {
+        updateEventStatus();
+        List<Event> events = eventRepository.findEventsByCurrentMonth();
+        return events.stream()
+                .filter(event -> !"Complete".equals(event.getEventStatus()))
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+    @Override
+    public List<EventDTO> findEventsByTicketType(String type) {
+        updateEventStatus();
+        List<Event> events = eventRepository.findEventsByTicketType(type);
+        return events.stream()
+                .filter(event -> !"Complete".equals(event.getEventStatus()))
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+    @Override
+    public List<EventDTO> searchEventsByMultipleFilters(String eventCategory, String eventLocation, String eventStart, String ticketType) {
+        updateEventStatus();
+        List<Event> resultEvents = eventRepository.findAll();
 
+        // Filter by event category
+        if (eventCategory != null && !eventCategory.equals("all-types")) {
+            List<Event> categoryEvents = eventRepository.findByEventTypeContainingIgnoreCase(eventCategory);
+            resultEvents = resultEvents.stream()
+                    .filter(categoryEvents::contains)
+                    .collect(Collectors.toList());
+        }
+
+        // Filter by event location
+        if (eventLocation != null && !eventLocation.equals("all-locations")) {
+            List<Event> locationEvents = eventRepository.findByEventLocationCityContainingIgnoreCase(eventLocation);
+            resultEvents = resultEvents.stream()
+                    .filter(locationEvents::contains)
+                    .collect(Collectors.toList());
+        }
+
+        // Filter by event start time
+        if (eventStart != null && !eventStart.equals("all-times")) {
+            List<Event> timeEvents;
+            if (eventStart.equals("this-week")) {
+                timeEvents = eventRepository.findEventsByCurrentWeek();
+            } else if (eventStart.equals("this-month")) {
+                timeEvents = eventRepository.findEventsByCurrentMonth();
+            } else {
+                timeEvents = eventRepository.findAll(); // Default case, no time filter
+            }
+            resultEvents = resultEvents.stream()
+                    .filter(timeEvents::contains)
+                    .collect(Collectors.toList());
+        }
+
+        // Filter by ticket type
+        if (ticketType != null && !ticketType.equals("all-types")) {
+            List<Event> ticketEvents = eventRepository.findEventsByTicketType(ticketType);
+            resultEvents = resultEvents.stream()
+                    .filter(ticketEvents::contains)
+                    .collect(Collectors.toList());
+        }
+
+        // Remove completed events and convert to DTO
+        return resultEvents.stream()
+                .filter(event -> !"Complete".equals(event.getEventStatus()))
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
     @Override
     public List<EventDTO> findEventsByNameAndLocation(String name, String location) {
         updateEventStatus();
@@ -439,4 +496,28 @@ public class EventServiceImpl implements IEventService {
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
+
+    @Override
+    public List<EventDTO> topEventsByTicketsSold(){
+        Pageable pageable =  PageRequest.of(0, 10);
+        List<Event> topEvents = eventRepository.findTopEventsByTicketsSold("PAID", "SUCCESSFULLY", pageable);
+        List<EventDTO> topEventDTO = new ArrayList<>();
+        for (Event event : topEvents) {
+            EventDTO eventDTO = convertToDTO(event);
+            topEventDTO.add(eventDTO);
+        }
+        return topEventDTO;
+    }
+    @Override
+    public List<EventDTO> top10FavoriteEvents(){
+        Pageable pageable =  PageRequest.of(0, 10);
+        List<Event> topEvents = eventRepository.findTop10FavoriteEvents(pageable);
+        List<EventDTO> topEventDTO = new ArrayList<>();
+        for (Event event : topEvents) {
+            EventDTO eventDTO = convertToDTO(event);
+            topEventDTO.add(eventDTO);
+        }
+        return topEventDTO;
+    }
+
 }

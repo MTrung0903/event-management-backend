@@ -8,6 +8,7 @@ import lombok.*;
 @NoArgsConstructor
 public  class OrganizerDTO {
     private String organizerName;
+    private String organizerLogo;
     private String organizerAddress;
     private String organizerWebsite;
     private String organizerPhone;
