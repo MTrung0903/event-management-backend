@@ -9,6 +9,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -33,6 +34,10 @@ public class OrganizerServiceImpl implements IOrganizerService {
             throw new RuntimeException("Organizer not found");
         }
         return organizerDTO;
+    }
+    @Override
+    public Organizer findByUserUserId(int userId) {
+        return organizerRepository.findByUserUserId(userId);
     }
 
     public void updateOrganizer(OrganizerDTO organizerDTO) {

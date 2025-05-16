@@ -504,6 +504,10 @@ public class EventServiceImpl implements IEventService {
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
+    @Override
+    public List<Event> findByUserUserId(int userId) {
+        return eventRepository.findByUserUserId(userId);
+    }
 
     @Override
     public List<EventDTO> topEventsByTicketsSold(){

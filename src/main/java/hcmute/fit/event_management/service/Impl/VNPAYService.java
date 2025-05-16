@@ -1,5 +1,6 @@
 package hcmute.fit.event_management.service.Impl;
 
+import com.google.zxing.WriterException;
 import hcmute.fit.event_management.config.VNPAYAPI;
 import hcmute.fit.event_management.config.VNPAYConfig;
 import hcmute.fit.event_management.dto.CheckoutDTO;
@@ -9,6 +10,7 @@ import hcmute.fit.event_management.dto.VNPAYRefund;
 import hcmute.fit.event_management.entity.*;
 
 import hcmute.fit.event_management.repository.*;
+import jakarta.mail.MessagingException;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,6 +22,7 @@ import org.springframework.stereotype.Service;
 import payload.Response;
 
 
+import java.io.IOException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.io.UnsupportedEncodingException;
@@ -135,9 +138,10 @@ public class VNPAYService {
             for (Integer ticketId : checkoutDTO.getTickets().keySet()) {
                 BookingDetails bkdt = new BookingDetails();
                 bkdt.setBooking(booking);
-                bkdt.setTicket(ticketRepository.findById(ticketId).orElse(new Ticket()));
+                Ticket ticket = ticketRepository.findById(ticketId).orElse(new Ticket());
+                bkdt.setTicket(ticket);
                 bkdt.setQuantity(checkoutDTO.getTickets().get(ticketId));
-                bkdt.setPrice(checkoutDTO.getAmount());
+                bkdt.setPrice(ticket.getPrice() * checkoutDTO.getTickets().get(ticketId));
                 bookingDetailsRepository.save(bkdt);
             }
         }
@@ -146,7 +150,7 @@ public class VNPAYService {
         }
         return vnPayConfig.getPayUrl() + "?" + queryUrl;
     }
-    public void ipn(HttpServletRequest request) throws UnsupportedEncodingException {
+    public void ipn(HttpServletRequest request) throws Exception {
         Map<String, String> fields = new HashMap<>();
         Enumeration<String> params = request.getParameterNames();
         while (params.hasMoreElements()) {

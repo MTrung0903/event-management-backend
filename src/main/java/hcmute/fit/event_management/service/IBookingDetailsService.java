@@ -86,4 +86,6 @@ public interface IBookingDetailsService {
     List<BookingDetails> findAllById(Iterable<Integer> integers);
 
     <S extends BookingDetails> S save(S entity);
+
+    long countTicketsSoldByOrganizer(int userId);
 }

@@ -18,17 +18,28 @@ public class DashboardStatsDTO {
     private long totalBookingsThisMonth;
     private String totalBookingsChange;
 
-    private double totalRevenue;
-    private double totalRevenueThisMonth;
+    private Double totalRevenue;
+    private Double totalRevenueThisMonth;
     private String totalRevenueChange;
 
     private long totalOrganizers;
     private long totalOrganizersThisMonth;
     private String totalOrganizersChange;
 
-    private long totalTicketsSold;
-    private long totalTicketsSoldThisMonth;
+    private Long totalTicketsSold;
+    private Long totalTicketsSoldThisMonth;
     private String totalTicketsSoldChange;
-    private List<EventDTO> events;
+
+    private List<EventDTO> events; // Thay đổi từ List<EventSalesDTO> sang List<Event>
+    private List<TransactionDTO> transactions;
+
+    private Double totalRevenueYTD;
+    private Double averageTicketPrice;
+    private Double refundRate;
+    private long newOrganizersThisMonth;
+    private Double bookingConversionRate;
+    private String topEventCategory;
+    private long userEngagementScore;
+    private long totalActiveEvents; // Thêm trường mới
 }
 

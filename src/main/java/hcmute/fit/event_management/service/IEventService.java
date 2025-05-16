@@ -59,4 +59,5 @@ public interface IEventService {
     List<EventDTO> getEventsByUSer(int userId);
 
     Response deleteEventAndRefunds(HttpServletRequest request, int eventId) throws Exception;
+    List<Event> findByUserUserId(int userId);
 }

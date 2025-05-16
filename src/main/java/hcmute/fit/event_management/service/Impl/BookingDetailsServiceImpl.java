@@ -191,4 +191,8 @@ public class BookingDetailsServiceImpl implements IBookingDetailsService {
     public <S extends BookingDetails> S save(S entity) {
         return bookingDetailsRepository.save(entity);
     }
+    @Override
+    public long countTicketsSoldByOrganizer(int userId) {
+        return bookingDetailsRepository.countTicketsSoldByOrganizer(userId);
+    }
 }

@@ -11,8 +11,8 @@ import java.util.Optional;
 @Repository
 public interface UserRepository extends JpaRepository<User, Integer> {
     Optional<User> findByEmail(String email);
-
     Optional<User> findByFullName(String fullName);
     @Query("select u from User u join Organizer o on u.userId = o.user.userId where o.organizerName = :organizerName")
     Optional<User> findByOrganizerName(@Param("organizerName") String organizerName);
+
 }

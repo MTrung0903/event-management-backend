@@ -1,5 +1,7 @@
 package hcmute.fit.event_management.repository;
 
+import hcmute.fit.event_management.dto.EventDTO;
+import hcmute.fit.event_management.dto.EventSalesDTO;
 import hcmute.fit.event_management.entity.BookingDetails;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -18,6 +20,19 @@ public interface BookingDetailsRepository extends JpaRepository<BookingDetails, 
     Long countTotalTicketsSold();
     @Query("SELECT SUM(bd.quantity) FROM BookingDetails bd WHERE MONTH(bd.booking.createDate) = :month AND YEAR(bd.booking.createDate) = :year")
     Long countTicketsSoldByMonth(@Param("month") int month, @Param("year") int year);
-
-
+    @Query(value = """
+    SELECT e.event_id AS eventId, e.event_name AS eventName, e.venue_name AS venueName,
+           e.event_type AS eventType, SUM(bd.quantity) AS totalQuantity,
+           SUM(bd.price) AS totalRevenue, e.event_status AS eventStatus,
+           (SELECT ei.event_images FROM event_event_images ei WHERE ei.event_event_id = e.event_id LIMIT 1) AS eventImage
+    FROM booking_details bd
+    JOIN ticket t ON t.ticket_id = bd.ticket_id
+    JOIN event e ON e.event_id = t.event_id
+    JOIN booking b ON b.booking_id = bd.booking_id
+    WHERE b.booking_status = 'PAID'
+    GROUP BY e.event_id, e.event_name, e.venue_name, e.event_type, e.event_status
+    """, nativeQuery = true)
+    List<Object[]> getEventSalesSummaryWithImage();
+    @Query("SELECT SUM(bd.quantity) FROM BookingDetails bd WHERE bd.booking.event.user.userId = :userId")
+    long countTicketsSoldByOrganizer(int userId);
 }

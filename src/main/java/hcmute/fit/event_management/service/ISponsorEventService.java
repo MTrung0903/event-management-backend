@@ -20,4 +20,6 @@ public interface ISponsorEventService {
     Boolean existsByIdEventIdAndIdSponsorId(int eventId, int sponsorId);
 
     <S extends SponsorEvent> List<S> saveAll(Iterable<S> entities);
+
+    long countSponsorsByOrganizer(int userId);
 }

@@ -110,7 +110,7 @@ public class MomoService {
                 details.setBooking(booking);
                 details.setTicket(ticket);
                 details.setQuantity(entry.getValue());
-                details.setPrice(amount);
+                details.setPrice(entry.getValue() * ticket.getPrice());
                 bookingDetailsRepository.save(details);
             }
 

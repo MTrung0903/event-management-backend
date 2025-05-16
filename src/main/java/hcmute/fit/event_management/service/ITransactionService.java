@@ -14,6 +14,10 @@ import java.util.function.Function;
 public interface ITransactionService {
     void flush();
 
+    List<Transaction> findByOrganizer(int userId);
+
+    double sumRevenueByOrganizer(int userId);
+
     List<Transaction> findAllById(Iterable<Integer> integers);
 
     void deleteAllByIdInBatch(Iterable<Integer> integers);

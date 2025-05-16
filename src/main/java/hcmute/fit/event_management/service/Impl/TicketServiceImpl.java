@@ -96,4 +96,8 @@ public class TicketServiceImpl implements ITicketService {
             }
         }
     }
+    @Override
+    public List<Ticket> findByEventUserUserId(int userId) {
+        return ticketRepository.findByEventUserUserId(userId);
+    }
 }
