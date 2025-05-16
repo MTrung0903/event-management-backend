@@ -38,6 +38,8 @@ public class MessageServiceImpl implements IMessageService {
         message.setSender(sender);
         message.setRecipient(recipient);
         message.setContent(messageDTO.getContent());
+        message.setMediaUrl(messageDTO.getMediaUrl()); // Store filename only
+        message.setContentType(messageDTO.getContentType());
         message.setTimestamp(parseTimestamp(messageDTO.getTimestamp()));
         message.setRead(false);
         return messageRepository.save(message);
@@ -66,6 +68,8 @@ public class MessageServiceImpl implements IMessageService {
         dto.setContent(message.getContent());
         dto.setSenderEmail(message.getSender().getEmail());
         dto.setRecipientEmail(message.getRecipient().getEmail());
+        dto.setMediaUrl(message.getMediaUrl()); // Filename only
+        dto.setContentType(message.getContentType());
         ZonedDateTime zonedDateTime = message.getTimestamp().atZone(ZoneId.of("Asia/Ho_Chi_Minh"));
         dto.setTimestamp(zonedDateTime.format(DateTimeFormatter.ISO_INSTANT));
         dto.setRead(message.isRead());
@@ -109,6 +113,7 @@ public class MessageServiceImpl implements IMessageService {
                     messageRepository.save(m);
                 });
     }
+
     @Override
     public int getUserIdByEmail(String email) {
         User user = userRepository.findByEmail(email)

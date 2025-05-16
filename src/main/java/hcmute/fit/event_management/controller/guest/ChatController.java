@@ -13,6 +13,7 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 
 import org.springframework.stereotype.Controller;
 
+import java.util.Arrays;
 import java.util.Date;
 
 @Controller
@@ -28,6 +29,11 @@ public class ChatController {
 
     @MessageMapping("/chat")
     public void sendMessage(@Payload MessageDTO messageDTO) {
+
+        // Validate content type
+        if (!Arrays.asList("TEXT", "EMOJI", "IMAGE", "VIDEO").contains(messageDTO.getContentType())) {
+            throw new IllegalArgumentException("Invalid content type");
+        }
         // Lưu tin nhắn vào cơ sở dữ liệu
         messageService.createMessage(messageDTO);
 
@@ -44,10 +50,10 @@ public class ChatController {
                 "/chat",
                 messageDTO
         );
-        // Tạo và gửi thông báo cho người nhận
+        // Create and send notification
         NotificationDTO notificationDTO = new NotificationDTO();
-        notificationDTO.setTitle("Tin nhắn mới");
-        notificationDTO.setMessage("Bạn có tin nhắn mới từ " + messageDTO.getSenderEmail());
+        notificationDTO.setTitle("New Message");
+        notificationDTO.setMessage("You have a new message from " + messageDTO.getSenderEmail());
         notificationDTO.setUserId(messageService.getUserIdByEmail(messageDTO.getRecipientEmail()));
         notificationDTO.setRead(false);
         notificationDTO.setCreatedAt(new Date());
