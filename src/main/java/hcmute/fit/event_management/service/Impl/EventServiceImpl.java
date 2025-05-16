@@ -3,13 +3,11 @@ package hcmute.fit.event_management.service.Impl;
 import com.cloudinary.Cloudinary;
 import hcmute.fit.event_management.dto.*;
 import hcmute.fit.event_management.entity.*;
-import hcmute.fit.event_management.repository.EventRepository;
-import hcmute.fit.event_management.repository.SegmentRepository;
-import hcmute.fit.event_management.repository.TicketRepository;
-import hcmute.fit.event_management.repository.UserRepository;
+import hcmute.fit.event_management.repository.*;
 import hcmute.fit.event_management.service.IEventService;
 import hcmute.fit.event_management.service.ISegmentService;
 import hcmute.fit.event_management.service.ITicketService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,18 +48,24 @@ public class EventServiceImpl implements IEventService {
     private ITicketService ticketService;
     @Autowired
     private UserRepository userRepository;
+    @Autowired
+    private TransactionRepository transactionRepository;
+   @Autowired
+           private VNPAYService vnpayService;
+
     Logger logger = LoggerFactory.getLogger(this.getClass());
-    private static final Map<String, String> cityMap = Map.of(
-            "ho-chi-minh", "TP. Hồ Chí Minh",
-            "ha-noi", "Hà Nội",
-            "da-nang", "Đà Nẵng",
-            "hai-phong", "Hải Phòng",
-            "can-tho", "Cần Thơ",
-            "nha-trang", "Nha Trang",
-            "da-lat", "Đà Lạt",
-            "binh-duong", "Bình Dương",
-            "dong-nai", "Đồng Nai",
-            "quang-ninh", "Quảng Ninh"
+    private static final Map<String, String> cityMap = Map.ofEntries(
+            Map.entry("ho-chi-minh", "TP. Hồ Chí Minh"),
+            Map.entry("ha-noi", "Hà Nội"),
+            Map.entry("da-nang", "Đà Nẵng"),
+            Map.entry("hai-phong", "Hải Phòng"),
+            Map.entry("can-tho", "Cần Thơ"),
+            Map.entry("nha-trang", "Nha Trang"),
+            Map.entry("da-lat", "Đà Lạt"),
+            Map.entry("binh-duong", "Bình Dương"),
+            Map.entry("dong-nai", "Đồng Nai"),
+            Map.entry("quang-ninh", "Quảng Ninh"),
+            Map.entry("bac-lieu", "Bạc Liêu")
     );
 
     private String getCityDisplayName(String slug) {
@@ -424,9 +428,13 @@ public class EventServiceImpl implements IEventService {
     @Override
     public List<EventDTO> searchEventsByNameAndCity(String searchTerm, String cityKey) {
         updateEventStatus();
-        List<Event> filteredEvents = eventRepository
-                .findByEventNameContainingIgnoreCaseAndEventLocationCityContainingIgnoreCase(searchTerm, cityKey);
-
+        List<Event> filteredEvents = new ArrayList<>();
+        if("all-locations".equals(cityKey)) {
+            filteredEvents = eventRepository.findByEventNameContainingIgnoreCase(searchTerm);
+        }else {
+           filteredEvents = eventRepository
+                    .findByEventNameContainingIgnoreCaseAndEventLocationCityContainingIgnoreCase(searchTerm, cityKey);
+        }
         return filteredEvents.stream()
                 .map(event -> {
                     EventDTO dto = convertToDTO(event);
@@ -519,5 +527,51 @@ public class EventServiceImpl implements IEventService {
         }
         return topEventDTO;
     }
+    @Override
+    public List<String> top10Cities(){
+        Pageable pageable =  PageRequest.of(0, 10);
+        List<String> top10Cities = eventRepository.findTop10CitiesByEventCount(pageable);
+        List<String> topCity = new ArrayList<>();
+        for(String city : top10Cities){
+            String cityName = cityMap.get(city);
+            topCity.add(cityName);
+        }
+        return topCity;
+    }
 
+    @Override
+    public List<EventDTO> getEventsByUSer(int userId){
+        User organizer = userRepository.findById(userId).get();
+        List<Event> eventDB = eventRepository.findByUser(organizer);
+        List<EventDTO> eventDTOList = new ArrayList<>();
+        for (Event event : eventDB) {
+            EventDTO eventDTO = convertToDTO(event);
+            eventDTOList.add(eventDTO);
+        }
+        return eventDTOList;
+    }
+
+    @Override
+    public Response deleteEventAndRefunds(HttpServletRequest request, int eventId) throws Exception {
+        Optional<Event> event = eventRepository.findById(eventId);
+        if(event.isPresent()) {
+            if("Complete".equals(event.get().getEventStatus())){
+                Response response = new Response(404, "Failed","Can not delete the events that have been completed");
+                return response;
+            }
+        }
+        List<Transaction> transactions = transactionRepository.transactions(eventId);
+        if( !transactions.isEmpty()) {
+            for (Transaction transaction : transactions) {
+                TransactionDTO transactionDTO = new TransactionDTO();
+                BeanUtils.copyProperties(transaction, transactionDTO);
+                System.out.println(transactionDTO);
+                vnpayService.refund(request, transaction);
+            }
+        }
+
+        eventRepository.deleteById(eventId);
+        Response response = new Response(200, "Success", "Event deleted successfully");
+        return response;
+    }
 }

@@ -4,6 +4,7 @@ package hcmute.fit.event_management.service;
 import hcmute.fit.event_management.dto.EventDTO;
 import hcmute.fit.event_management.dto.EventEditDTO;
 import hcmute.fit.event_management.entity.Event;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.transaction.Transactional;
 import org.springframework.http.ResponseEntity;
 import payload.Response;
@@ -52,4 +53,10 @@ public interface IEventService {
     List<EventDTO> topEventsByTicketsSold();
 
     List<EventDTO> top10FavoriteEvents();
+
+    List<String> top10Cities();
+
+    List<EventDTO> getEventsByUSer(int userId);
+
+    Response deleteEventAndRefunds(HttpServletRequest request, int eventId) throws Exception;
 }

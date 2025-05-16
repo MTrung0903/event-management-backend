@@ -63,4 +63,11 @@ public interface EventRepository extends JpaRepository<Event, Integer> {
             "GROUP BY e " +
             "ORDER BY COUNT(f) DESC")
     List<Event> findTop10FavoriteEvents(Pageable pageable);
+
+    @Query("SELECT e.eventLocation.city " +
+            "FROM Event e " +
+            "WHERE e.eventLocation.city IS NOT NULL AND e.eventLocation.city != ''" +
+            "GROUP BY e.eventLocation.city " +
+            "ORDER BY COUNT(e) DESC")
+    List<String> findTop10CitiesByEventCount(Pageable pageable);
 }

@@ -202,7 +202,7 @@ public class UserServiceImpl implements IUserService {
             user.setEmail(userChange.getEmail());
         }
         user.setFullName(userChange.getFullName());
-        user.setPassword(passwordEncoder.encode(userChange.getPassword()));
+
         user.setGender(userChange.getGender());
         if (userChange.getBirthday().isAfter(LocalDate.now())) {
             logger.error("Invalid birthday: {}", userChange.getBirthday());

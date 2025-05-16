@@ -5,6 +5,7 @@ import hcmute.fit.event_management.entity.Event;
 import hcmute.fit.event_management.repository.OrganizerRepository;
 import hcmute.fit.event_management.service.*;
 import hcmute.fit.event_management.service.Impl.EventServiceImpl;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -95,9 +96,9 @@ public class EventController {
     }
     @DeleteMapping("/delete/{eventId}")
     @PreAuthorize("hasRole('ORGANIZER')")
-    public ResponseEntity<Boolean> deleteEvent(@PathVariable int eventId) {
-        eventService.deleteEvent(eventId);
-        return ResponseEntity.ok(true);
+    public ResponseEntity<Response> deleteEvent(HttpServletRequest request,@PathVariable int eventId) throws Exception {
+
+        return ResponseEntity.ok(eventService.deleteEventAndRefunds(request,eventId));
     }
 
     @GetMapping("/edit/{eventId}")
@@ -185,5 +186,9 @@ public class EventController {
         ProfileOrganizerDTO profile = new ProfileOrganizerDTO(organizerDTO,events);
         return profile;
 
+    }
+    @GetMapping("/search/top-cities-popular")
+    public List<String> topCitiesPopular() {
+        return eventService.top10Cities();
     }
 }
