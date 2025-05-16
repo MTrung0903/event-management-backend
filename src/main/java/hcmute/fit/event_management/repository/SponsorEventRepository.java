@@ -17,4 +17,7 @@ public interface SponsorEventRepository extends JpaRepository<SponsorEvent, Spon
     @Query("select sp from  SponsorEvent sp where sp.event.eventID = :id and  sp.sponsor.sponsorId = :sponsorId")
     SponsorEvent findSponsorEvent(@Param("id") int id, @Param("sponsorId") int sponsorId);
     Boolean existsByIdEventIdAndIdSponsorId(int eventId, int sponsorId);
+    @Query("SELECT COUNT(se) FROM SponsorEvent se WHERE se.event.user.userId = :userId")
+    long countSponsorsByOrganizer(int userId);
+
 }

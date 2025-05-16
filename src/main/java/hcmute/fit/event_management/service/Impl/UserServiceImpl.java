@@ -568,4 +568,8 @@ public class UserServiceImpl implements IUserService {
                 .collect(Collectors.toList());
         return users;
     }
+    @Override
+    public Optional<User> findByEmail(String email) {
+        return userRepository.findByEmail(email);
+    }
 }

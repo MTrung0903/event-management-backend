@@ -82,4 +82,6 @@ public interface IBookingService {
     boolean hasBoughtFreeTicket(int userId, int eventId);
 
     List<Booking> findByUserId(int userId);
+
+
 }

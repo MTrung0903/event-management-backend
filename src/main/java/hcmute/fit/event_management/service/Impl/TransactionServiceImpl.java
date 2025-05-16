@@ -25,6 +25,14 @@ public class TransactionServiceImpl implements ITransactionService {
     public void flush() {
         transactionRepository.flush();
     }
+    @Override
+    public List<Transaction> findByOrganizer(int userId) {
+        return transactionRepository.findByOrganizer(userId);
+    }
+    @Override
+    public double sumRevenueByOrganizer(int userId) {
+        return transactionRepository.sumRevenueByOrganizer(userId);
+    }
 
     @Override
     public List<Transaction> findAllById(Iterable<Integer> integers) {

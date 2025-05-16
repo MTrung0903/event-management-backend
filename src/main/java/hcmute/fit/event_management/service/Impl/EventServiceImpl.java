@@ -23,7 +23,6 @@ import payload.Response;
 
 import java.io.IOException;
 import java.text.Normalizer;
-import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -438,5 +437,9 @@ public class EventServiceImpl implements IEventService {
         return events.stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
+    }
+    @Override
+    public List<Event> findByUserUserId(int userId) {
+        return eventRepository.findByUserUserId(userId);
     }
 }

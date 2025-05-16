@@ -13,6 +13,7 @@ import java.util.Optional;
 @Repository
 public interface BookingRepository extends JpaRepository<Booking, Integer> {
     Optional<Booking> findByBookingCode(String code);
+
     @Query("select b from Booking b where b.user.userId = :userId")
     List<Booking> findByUserId(@Param("userId") int userId);
 
@@ -27,6 +28,10 @@ public interface BookingRepository extends JpaRepository<Booking, Integer> {
 
     @Query("SELECT COUNT(b) FROM Booking b WHERE MONTH(b.createDate) = :month AND YEAR(b.createDate) = :year")
     long countBookingsByMonth(@Param("month") int month, @Param("year") int year);
+
     @Query("SELECT COUNT(b) FROM Booking b WHERE b.bookingStatus = 'PAID'")
     long countBookings();
+
+
+
 }

@@ -33,6 +33,6 @@ public interface EventRepository extends JpaRepository<Event, Integer> {
     List<Event> findByEventIdAndUserId(@Param("eventId") Integer eventId, @Param("userId") Integer userId);
     @Query("SELECT COUNT(e) FROM Event e WHERE MONTH(e.eventStart) = :month AND YEAR(e.eventStart) = :year")
     long countEventsByMonth(@Param("month") int month, @Param("year") int year);
-
+    List<Event> findByUserUserId(int userId);
 
 }

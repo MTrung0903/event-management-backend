@@ -40,7 +40,6 @@ public class EventController {
     @PostMapping("/create")
     @PreAuthorize("hasRole('ORGANIZER')")
     public ResponseEntity<Response> createEvent(@RequestBody EventDTO event) throws IOException {
-
         return eventService.saveEventToDB(event);
     }
     @PostMapping("/create-event")

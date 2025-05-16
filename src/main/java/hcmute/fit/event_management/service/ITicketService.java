@@ -21,4 +21,6 @@ public interface ITicketService {
 
 
     void deleteTicketByEventId(int eventId);
+
+    List<Ticket> findByEventUserUserId(int userId);
 }

@@ -39,4 +39,6 @@ public interface IEventService {
     ResponseEntity<Response> saveEventToDB(EventDTO eventDTO);
 
     List<EventDTO> getAllEventByHost(String email);
+
+    List<Event> findByUserUserId(int userId);
 }

@@ -34,9 +34,11 @@ public class EventDTO {
     private String refunds;
     private int validityDays;
     private List<String> eventImages;
+    private String eventImage;
     private String textContent;
     private List<String> mediaContent;
     private Integer userId;
-    private int sold;
+    private long sold;
+    private double eventRevenue;
     private Double total;
 }

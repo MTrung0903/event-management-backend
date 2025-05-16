@@ -41,4 +41,9 @@ public class SponsorEventServiceImpl implements ISponsorEventService {
     public <S extends SponsorEvent> List<S> saveAll(Iterable<S> entities) {
         return sponsorEventRepository.saveAll(entities);
     }
+
+    @Override
+    public long countSponsorsByOrganizer(int userId) {
+        return sponsorEventRepository.countSponsorsByOrganizer(userId);
+    }
 }

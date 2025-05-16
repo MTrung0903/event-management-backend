@@ -61,7 +61,7 @@ public class CheckoutController {
     }
 
     @GetMapping("/vnpay-ipn")
-    public void vnpayIPN(HttpServletRequest request) throws UnsupportedEncodingException {
+    public void vnpayIPN(HttpServletRequest request) throws Exception {
         vnPayService.ipn(request);
     }
 

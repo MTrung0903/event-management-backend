@@ -20,12 +20,10 @@ public class InvoiceController {
     IInvoiceService invoiceService;
     @GetMapping("/{orderId}")
     public ResponseEntity<byte[]> downloadInvoice(@PathVariable("orderId") String orderCode) {
-
         Booking booking = bookingService.findByBookingCode(orderCode)
                 .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
         // Sinh file PDF
         byte[] pdfBytes = invoiceService.generatePdfInvoice(booking);
-
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_PDF);
         headers.setContentDisposition(ContentDisposition
@@ -34,5 +32,4 @@ public class InvoiceController {
                 .build());
         return new ResponseEntity<>(pdfBytes, headers, HttpStatus.OK);
     }
-
 }

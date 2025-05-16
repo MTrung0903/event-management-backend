@@ -14,9 +14,15 @@ import java.util.Optional;
 public interface TransactionRepository extends JpaRepository<Transaction, Integer> {
     @Query("select t from Transaction t where t.referenceCode = :orderCode")
     Optional<Transaction> findByOrderCode(@Param("orderCode") String orderCode);
-    @Query(value = "SELECT SUM(transaction_amount) FROM transaction WHERE SUBSTRING(transaction_date, 1, 6) = :yearMonth AND transaction_status = 'SUCCESSFULLY'", nativeQuery = true)
+    @Query(value = "SELECT SUM(transaction_amount)*0.05 FROM transaction WHERE SUBSTRING(transaction_date, 1, 6) = :yearMonth AND transaction_status = 'SUCCESSFULLY'", nativeQuery = true)
     Double getRevenueByMonth(@Param("yearMonth") String yearMonth); // Ví dụ: "202505"
 
-    @Query(value = "SELECT SUM(transaction_amount) FROM transaction WHERE transaction_status = 'SUCCESSFULLY'", nativeQuery = true)
+    @Query(value = "SELECT SUM(transaction_amount)*0.05 FROM transaction WHERE transaction_status = 'SUCCESSFULLY'", nativeQuery = true)
     Double getRevenue();
+
+    @Query("SELECT SUM(t.transactionAmount) FROM Transaction t WHERE t.booking.event.user.userId = :userId")
+    double sumRevenueByOrganizer(int userId);
+
+    @Query("SELECT t FROM Transaction t WHERE t.booking.event.user.userId = :userId")
+    List<Transaction> findByOrganizer(int userId);
 }

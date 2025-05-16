@@ -7,9 +7,11 @@ import com.google.zxing.common.BitMatrix;
 import com.google.zxing.qrcode.QRCodeWriter;
 import hcmute.fit.event_management.dto.*;
 import hcmute.fit.event_management.entity.*;
+import hcmute.fit.event_management.repository.BookingRepository;
 import hcmute.fit.event_management.service.IBookingDetailsService;
 import hcmute.fit.event_management.service.IBookingService;
 import hcmute.fit.event_management.service.ITransactionService;
+import hcmute.fit.event_management.service.Impl.EmailServiceImpl;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -28,6 +30,8 @@ import java.io.ByteArrayOutputStream;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static hcmute.fit.event_management.util.QRCodeUtil.generateQrCodeBase64;
+
 @RestController
 @RequestMapping("/api/v1/booking")
 public class OrderController {
@@ -39,6 +43,10 @@ public class OrderController {
     ITransactionService transactionService;
     @Autowired
     private Cloudinary cloudinary;
+    @Autowired
+    private EmailServiceImpl emailServiceImpl;
+    @Autowired
+    BookingRepository bookingRepository;
     @GetMapping("/{userId}")
     public ResponseEntity<?> getOrder(@PathVariable("userId") int userId) {
         List<Booking> bookings = bookingService.findByUserId(userId);
@@ -145,17 +153,22 @@ public class OrderController {
         viewTicketDTO.setTickets(tickets);
         return ResponseEntity.ok(viewTicketDTO);
     }
-    public String generateQrCodeBase64(String text) throws Exception {
-        QRCodeWriter qrCodeWriter = new QRCodeWriter();
-        BitMatrix bitMatrix = qrCodeWriter.encode(text, BarcodeFormat.QR_CODE, 200, 200);
 
-        BufferedImage qrImage = MatrixToImageWriter.toBufferedImage(bitMatrix);
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        ImageIO.write(qrImage, "png", baos);
+   @GetMapping("/test")
+    public void test() throws Exception {
+       Optional<Booking> optionalBooking = bookingRepository.findByBookingCode("1746417955367");
+       if (optionalBooking.isEmpty()) return;
+       Booking booking = optionalBooking.get();
+       List<Ticket> ticketsToUpdate = booking.getBookingDetails().stream()
+               .map(details -> {
+                   Ticket ticket = details.getTicket();
+                   ticket.setQuantity(ticket.getQuantity() - details.getQuantity());
+                   return ticket;
+               })
+               .collect(Collectors.toList());
 
-        byte[] imageBytes = baos.toByteArray();
-        return Base64.getEncoder().encodeToString(imageBytes);
-    }
+        emailServiceImpl.sendThanksPaymentEmail("sidedlove03@gmail.com", "Event ABC", "1746417955367", "UserABC", ticketsToUpdate);
+   }
 
 
 }

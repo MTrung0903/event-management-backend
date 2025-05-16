@@ -36,4 +36,6 @@ public interface IUserService {
     List<UserDTO> getAllUsers();
 
     List<UserDTO> searchUserForChat(String query, int currentUserId);
+
+    Optional<User> findByEmail(String email);
 }
