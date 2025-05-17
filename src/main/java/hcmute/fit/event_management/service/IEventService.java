@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 public interface IEventService {
     Event saveEvent(EventDTO eventDTO) throws IOException;
@@ -60,4 +61,12 @@ public interface IEventService {
 
     Response deleteEventAndRefunds(HttpServletRequest request, int eventId) throws Exception;
     List<Event> findByUserUserId(int userId);
+
+    Set<EventDTO> findEventsByPreferredEventTypes(String email);
+
+    Set<EventDTO> findEventsByPreferredTags(String email);
+
+    Set<EventDTO> findEventsByPreferredTypesAndTags(String email);
+
+    List<String> getAllTags();
 }

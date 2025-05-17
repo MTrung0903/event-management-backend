@@ -40,6 +40,16 @@ public class User {
     @Column(name = "is_active")
     private boolean isActive;
 
+    @ElementCollection
+    @CollectionTable(name = "user_preferred_event_types", joinColumns = @JoinColumn(name = "user_id"))
+    @Column(name = "event_type")
+    private List<String> preferredEventTypes;
+
+    @ElementCollection
+    @CollectionTable(name = "user_preferred_tags", joinColumns = @JoinColumn(name = "user_id"))
+    @Column(name = "tag")
+    private List<String> preferredTags;
+
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private List<Notification> listNoti;
 

@@ -149,7 +149,12 @@ public class UserServiceImpl implements IUserService {
         user.setBirthday(userDTO.getBirthday());
         user.setAddress(userDTO.getAddress());
         user.setActive(true);
-
+        if (userDTO.getPreferredEventTypes() != null) {
+            user.setPreferredEventTypes(new ArrayList<>(userDTO.getPreferredEventTypes()));
+        }
+        if (userDTO.getPreferredTags() != null) {
+            user.setPreferredTags(new ArrayList<>(userDTO.getPreferredTags()));
+        }
         // Lưu user
         User savedUser = userRepository.save(user);
 

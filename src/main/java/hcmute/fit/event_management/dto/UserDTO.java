@@ -23,5 +23,6 @@ public class UserDTO {
     private boolean isActive;
     private List<RoleDTO> roles;
     private OrganizerDTO organizer;
-
+    private List<String> preferredEventTypes;
+    private List<String> preferredTags;
 }

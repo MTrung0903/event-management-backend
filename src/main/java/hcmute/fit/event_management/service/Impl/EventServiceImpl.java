@@ -25,10 +25,7 @@ import payload.Response;
 import java.io.IOException;
 import java.text.Normalizer;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -578,4 +575,146 @@ public class EventServiceImpl implements IEventService {
         Response response = new Response(200, "Success", "Event deleted successfully");
         return response;
     }
+
+    @Override
+    public Set<EventDTO> findEventsByPreferredEventTypes(String email) {
+        updateEventStatus();
+        Optional<User> userOpt = userRepository.findByEmail(email);
+
+
+        User user = userOpt.get();
+        List<String> preferredEventTypes = user.getPreferredEventTypes() ;
+
+        if (preferredEventTypes.isEmpty()) {
+            return new HashSet<>();
+        }
+
+        List<Event> matchedEvents = new ArrayList<>();
+        for (String eventType : preferredEventTypes) {
+            List<Event> events = eventRepository.findByEventTypeContainingIgnoreCase(eventType);
+            matchedEvents.addAll(events);
+        }
+
+        Set<EventDTO> eventDTOS  = new HashSet<>();
+        for (Event event : matchedEvents) {
+            EventDTO eventDTO = convertToDTO(event);
+            if(!"Complete".equals(event.getEventStatus())){eventDTOS.add(eventDTO);}
+
+        }
+        return eventDTOS;
+    }
+    @Override
+    public Set<EventDTO> findEventsByPreferredTags(String email) {
+        updateEventStatus();
+        Optional<User> userOpt = userRepository.findByEmail(email);
+
+        User user = userOpt.get();
+        List<String> preferredTags = user.getPreferredTags() ;
+
+        if ( preferredTags.isEmpty()) {
+            return new HashSet<>();
+        }
+
+        List<Event> matchedEvents =new ArrayList<>();
+        for (String tag : preferredTags) {
+            List<Event> events = eventRepository.findByTagsContainingIgnoreCase(tag);
+            matchedEvents.addAll(events);
+        }
+        Set<EventDTO> eventDTOS  = new HashSet<>();
+        for (Event event : matchedEvents) {
+            EventDTO eventDTO = convertToDTO(event);
+            if(!"Complete".equals(event.getEventStatus())){eventDTOS.add(eventDTO);}
+        }
+        return eventDTOS;
+    }
+    @Override
+    public Set<EventDTO> findEventsByPreferredTypesAndTags(String email) {
+        updateEventStatus();
+        Optional<User> userOpt = userRepository.findByEmail(email);
+
+
+        User user = userOpt.get();
+        List<String> preferredEventTypes = user.getPreferredEventTypes() ;
+        List<String> preferredTags = user.getPreferredTags() ;
+
+        if (preferredEventTypes.isEmpty() && preferredTags.isEmpty()) {
+            return new HashSet<>();
+        }
+        List<Event> matchedEvents = new ArrayList<>();
+
+        // Tìm sự kiện theo eventType
+        for (String eventType : preferredEventTypes) {
+            List<Event> events = eventRepository.findByEventTypeContainingIgnoreCase(eventType);
+            matchedEvents.addAll(events);
+        }
+
+        // Tìm sự kiện theo tags
+        for (String tag : preferredTags) {
+            List<Event> events = eventRepository.findByTagsContainingIgnoreCase(tag);
+            matchedEvents.addAll(events);
+        }
+
+        Set<EventDTO> eventDTOS  = new HashSet<>();
+        for (Event event : matchedEvents) {
+            EventDTO eventDTO = convertToDTO(event);
+            if(!"Complete".equals(event.getEventStatus())){eventDTOS.add(eventDTO);}
+        }
+        return eventDTOS;
+    }
+    public  String[] splitByPipe(String input) {
+
+        if (input == null || input.trim().isEmpty()) {
+            return new String[0];
+        }
+
+        return Arrays.stream(input.split("\\|"))
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .toArray(String[]::new);
+    }
+    @Override
+    public List<String> getAllTags(){
+        Map<String, Integer> tagFrequency = new HashMap<>();
+        List<Event> events = eventRepository.findAll();
+
+        // Duyệt qua từng sự kiện để đếm tần suất tag
+        for (Event event : events) {
+            EventDTO eventDTO = convertToDTO(event);
+            String tags = eventDTO.getTags();
+            if (tags != null && !tags.trim().isEmpty()) {
+                String[] tagArray = splitByPipe(tags);
+                for (String tag : tagArray) {
+                    tagFrequency.put(tag, tagFrequency.getOrDefault(tag, 0) + 1);
+                }
+            }
+        }
+
+        List<Map.Entry<String, Integer>> tagList = new ArrayList<>(tagFrequency.entrySet());
+
+        // Sắp xếp danh sách theo tần suất giảm dần, nếu bằng thì theo thứ tự chữ cái
+        for (int i = 0; i < tagList.size(); i++) {
+            for (int j = i + 1; j < tagList.size(); j++) {
+                Map.Entry<String, Integer> entry1 = tagList.get(i);
+                Map.Entry<String, Integer> entry2 = tagList.get(j);
+                // So sánh tần suất
+                int freqCompare = entry2.getValue().compareTo(entry1.getValue());
+                if (freqCompare == 0) {
+                    freqCompare = entry1.getKey().compareTo(entry2.getKey());
+                }
+                if (freqCompare > 0) {
+                    tagList.set(i, entry2);
+                    tagList.set(j, entry1);
+                }
+            }
+        }
+
+
+        List<String> topTags = new ArrayList<>();
+        for (int i = 0; i < Math.min(10, tagList.size()); i++) {
+            topTags.add(tagList.get(i).getKey());
+        }
+
+        return topTags;
+    }
+
 }

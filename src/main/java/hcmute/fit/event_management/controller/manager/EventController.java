@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 
 @RestController
 @RequestMapping("/api/events")
@@ -161,6 +162,11 @@ public class EventController {
         List<EventDTO> events = eventService.findEventsByDate(eventStart);
         return ResponseEntity.ok(events);
     }
+    @GetMapping("/search/upcoming")
+    public ResponseEntity<List<EventDTO>> searchEventsUpComming(){
+        List<EventDTO> events = eventService.findEventsByCurrentMonth();
+        return ResponseEntity.ok(events);
+    }
     @GetMapping("/search/multiple-filters")
     public List<EventDTO> searchEventsByMultipleFilters(
             @RequestParam(required = false) String eventCategory,
@@ -190,5 +196,27 @@ public class EventController {
     @GetMapping("/search/top-cities-popular")
     public List<String> topCitiesPopular() {
         return eventService.top10Cities();
+    }
+    @GetMapping("/recommended/{email}")
+    public ResponseEntity<Set<EventDTO>> getRecommendedEvents(@PathVariable String email) {
+        Set<EventDTO> events = eventService.findEventsByPreferredTypesAndTags(email);
+        return ResponseEntity.ok(events);
+    }
+
+    @GetMapping("/recommended/by-types/{email}")
+    public ResponseEntity<Set<EventDTO>> getEventsByPreferredTypes(@PathVariable String email) {
+        Set<EventDTO> events = eventService.findEventsByPreferredEventTypes(email);
+        return ResponseEntity.ok(events);
+    }
+
+    @GetMapping("/recommended/by-tags/{email}")
+    public ResponseEntity<Set<EventDTO>> getEventsByPreferredTags(@PathVariable String email) {
+        Set<EventDTO> events = eventService.findEventsByPreferredTags(email);
+        return ResponseEntity.ok(events);
+    }
+    @GetMapping("/search/all-tags")
+    public ResponseEntity<List<String>> getAllTags() {
+        List<String> tags = eventService.getAllTags();
+        return ResponseEntity.ok(tags);
     }
 }
