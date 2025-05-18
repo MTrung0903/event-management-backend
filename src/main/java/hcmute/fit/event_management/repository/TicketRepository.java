@@ -14,5 +14,6 @@ public interface TicketRepository extends JpaRepository<Ticket, Integer> {
     List<Ticket> findByEventID(@Param("eventId") int eventId);
 
     List<Ticket> findByEventUserUserId(int userId);
+    List<Ticket> findByEventEventID(int eventId);
 
 }

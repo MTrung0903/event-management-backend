@@ -21,24 +21,18 @@ public class Ticket {
     private int ticketId;
     @Column(name = "ticket_name")
     private String ticketName;
-
     @Column(name = "ticket_type")
     private String ticketType;
-
     @Column(name="price")
     private double price;
-
     @Column(name = "quantity")
     private int quantity;
-    @Column(name = "ticketCode")
-    private String ticketCode;
     @JsonFormat(pattern = "yyyy-MM-dd ", timezone = "UTC")
     @Column(name = "start_time")
     private Date startTime;
     @JsonFormat(pattern = "yyyy-MM-dd", timezone = "UTC")
     @Column(name = "end_time")
     private Date endTime;
-
     @ManyToOne
     @JoinColumn(name ="event_id")
     private Event event;

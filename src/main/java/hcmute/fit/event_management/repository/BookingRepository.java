@@ -31,7 +31,6 @@ public interface BookingRepository extends JpaRepository<Booking, Integer> {
 
     @Query("SELECT COUNT(b) FROM Booking b WHERE b.bookingStatus = 'PAID'")
     long countBookings();
-
-
-
+    List<Booking> findByEventEventID(int eventId);
+    List<Booking> findByEventEventIDOrderByCreateDateDesc(int eventId);
 }

@@ -1,5 +1,6 @@
 package hcmute.fit.event_management.service.Impl;
 
+import hcmute.fit.event_management.entity.Booking;
 import hcmute.fit.event_management.entity.CheckInTicket;
 import hcmute.fit.event_management.repository.CheckInTicketRepository;
 import hcmute.fit.event_management.service.ICheckInTicketService;
@@ -176,5 +177,9 @@ public class ICheckInTicketServiceImpl implements ICheckInTicketService {
     @Override
     public CheckInTicket getById(String s) {
         return checkInTicketRepository.getById(s);
+    }
+    @Override
+    public List<CheckInTicket> findByBookingDetailsBookingEventEventID(int eventID) {
+        return checkInTicketRepository.findByBookingDetailsBookingEventEventID(eventID);
     }
 }

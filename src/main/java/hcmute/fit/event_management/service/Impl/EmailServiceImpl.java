@@ -6,6 +6,7 @@ import com.google.zxing.WriterException;
 import com.google.zxing.client.j2se.MatrixToImageWriter;
 import com.google.zxing.common.BitMatrix;
 import com.google.zxing.qrcode.QRCodeWriter;
+import hcmute.fit.event_management.entity.CheckInTicket;
 import hcmute.fit.event_management.entity.Ticket;
 import hcmute.fit.event_management.service.EmailService;
 import jakarta.mail.MessagingException;
@@ -19,8 +20,6 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Base64;
@@ -28,7 +27,9 @@ import java.util.Random;
 
 import java.util.List;
 
-import static hcmute.fit.event_management.util.QRCodeUtil.generateQrCodeBase64;
+
+import static org.unbescape.html.HtmlEscape.escapeHtml4;
+
 @Slf4j
 @Service
 public class EmailServiceImpl implements EmailService {
@@ -46,7 +47,7 @@ public class EmailServiceImpl implements EmailService {
     }
 
     @Override
-    public void sendThanksPaymentEmail(String to, String eventName, String orderCode, String userName, List<Ticket> tickets) throws Exception {
+    public void sendThanksPaymentEmail(String to, String eventName, String orderCode, String userName, List<CheckInTicket> tickets) throws Exception {
         if (to == null || !to.matches("^[A-Za-z0-9+_.-]+@(.+)$")) {
             log.error("Địa chỉ email không hợp lệ: {}", to);
             throw new IllegalArgumentException("Địa chỉ email không hợp lệ");
@@ -55,8 +56,8 @@ public class EmailServiceImpl implements EmailService {
             log.error("Danh sách vé rỗng hoặc null cho đơn hàng: {}", orderCode);
             throw new IllegalArgumentException("Danh sách vé không được rỗng");
         }
-        String safeUserName = userName != null && !userName.trim().isEmpty() ? StringEscapeUtils.escapeHtml4(userName) : "Khách hàng";
-        String safeEventName = StringEscapeUtils.escapeHtml4(eventName);
+        String safeUserName = userName != null && !userName.trim().isEmpty() ? escapeHtml4(userName) : "Khách hàng";
+        String safeEventName = escapeHtml4(eventName);
 
         StringBuilder content = new StringBuilder();
         content.append("<!DOCTYPE html>")
@@ -69,10 +70,7 @@ public class EmailServiceImpl implements EmailService {
                 .append("body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 20px; }")
                 .append("ul { list-style-type: none; padding: 0; }")
                 .append("li { margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px; }")
-                .append("img { margin: 10px 0; display: block; max-width: 200px; border: 1px solid #ddd; }")
-                .append("a { color: #007bff; text-decoration: none; }")
                 .append("a:hover { text-decoration: underline; }")
-                .append(".fallback { color: #555; font-style: italic; }")
                 .append("</style>")
                 .append("</head>")
                 .append("<body>")
@@ -81,25 +79,17 @@ public class EmailServiceImpl implements EmailService {
                 .append("<h3>Thông tin vé của bạn:</h3>")
                 .append("<ul>");
         String qrUrl = "http://localhost:3000"  + "/view-tickets/" + orderCode;
-        for (Ticket ticket : tickets) {
-
+        for (CheckInTicket ticket : tickets) {
             try {
-                String qrBase64 = generateQrCodeBase64("http://localhost:3000" + "/check-in/" + ticket.getTicketId());
                 content.append("<li>")
-                        .append("<strong>Mã vé:</strong> ").append(StringEscapeUtils.escapeHtml4(String.valueOf(ticket.getTicketId()))).append("<br>")
-                        .append("<img src='data:image/png;base64,").append(qrBase64).append("' alt='Mã QR cho vé ").append(StringEscapeUtils.escapeHtml4(String.valueOf(ticket.getTicketId()))).append("' width='200' style='display: block; margin: 10px 0;' />")
-                        .append("<p class='fallback'>Nếu mã QR không hiển thị, vui lòng kiểm tra tệp đính kèm hoặc truy cập liên kết bên dưới.</p>")
+                        .append("<strong>Mã vé:</strong> ").append(ticket.getTicketCode()).append("<br>")
                         .append("<strong>Sự kiện:</strong> ").append(safeEventName).append("<br>")
-                        .append("<strong>Giá vé:</strong> $").append(String.format("%.2f", ticket.getPrice())).append("<br>")
+                        .append("<strong>Thời gian:</strong> ").append(ticket.getBookingDetails().getTicket().getEvent().getEventStart().toString()).append("<br>")
+                        .append("<strong>Địa điểm:</strong> ").append(ticket.getBookingDetails().getTicket().getEvent().getEventLocation().getVenueName()).append(", ").append(ticket.getBookingDetails().getTicket().getEvent().getEventLocation().getAddress()).append(", ").append(ticket.getBookingDetails().getTicket().getEvent().getEventLocation().getCity()).append("<br>")
+                        .append("<strong>Giá vé:</strong> ").append(String.format("%.2f", ticket.getBookingDetails().getTicket().getPrice())).append("VNĐ").append("<br>")
                         .append("</li>");
             } catch (Exception e) {
-                log.error("Lỗi khi tạo mã QR cho vé {}: {}", ticket.getTicketId(), e.getMessage(), e);
-                content.append("<li>")
-                        .append("<strong>Mã vé:</strong> ").append(StringEscapeUtils.escapeHtml4(String.valueOf(ticket.getTicketId()))).append("<br>")
-                        .append("<p style='color: red;'>Lỗi: Không thể tạo mã QR cho vé này. Vui lòng kiểm tra tệp đính kèm.</p>")
-                        .append("<strong>Sự kiện:</strong> ").append(safeEventName).append("<br>")
-                        .append("<strong>Giá vé:</strong> $").append(String.format("%.2f", ticket.getPrice())).append("<br>")
-                        .append("</li>");
+
             }
         }
         content.append("</ul>")
@@ -109,32 +99,10 @@ public class EmailServiceImpl implements EmailService {
                 .append("<p>Trân trọng,<br>Đội ngũ tổ chức sự kiện</p>")
                 .append("</body>")
                 .append("</html>");
-
         String subject = "Vé sự kiện của bạn – " + safeEventName;
         sendHtmlEmail(to, subject, content.toString(), tickets);
     }
-
-    private String generateQrCodeBase64(String text) throws WriterException, IOException {
-        try {
-            QRCodeWriter qrCodeWriter = new QRCodeWriter();
-            BitMatrix bitMatrix = qrCodeWriter.encode(text, BarcodeFormat.QR_CODE, 200, 200);
-            ByteArrayOutputStream pngOutputStream = new ByteArrayOutputStream();
-            MatrixToImageWriter.writeToStream(bitMatrix, "PNG", pngOutputStream);
-            byte[] pngData = pngOutputStream.toByteArray();
-            String base64 = Base64.getEncoder().encodeToString(pngData);
-            if (base64 == null || base64.isEmpty()) {
-                log.error("Chuỗi Base64 của mã QR rỗng cho URL: {}", text);
-                throw new IOException("Không thể tạo mã QR Base64");
-            }
-            log.info("Tạo mã QR Base64 thành công cho URL: {}, độ dài chuỗi: {}", text, base64.length());
-            return base64;
-        } catch (WriterException | IOException e) {
-            log.error("Lỗi khi tạo mã QR cho URL {}: {}", text, e.getMessage(), e);
-            throw e;
-        }
-    }
-
-    public void sendHtmlEmail(String to, String subject, String htmlContent, List<Ticket> tickets) throws MessagingException {
+    public void sendHtmlEmail(String to, String subject, String htmlContent, List<CheckInTicket> tickets) throws MessagingException {
         MimeMessage mimeMessage = mailSender.createMimeMessage();
         try {
             MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
@@ -143,17 +111,16 @@ public class EmailServiceImpl implements EmailService {
             helper.setSubject(subject);
             helper.setText(htmlContent, true);
             if (tickets != null) {
-                for (Ticket ticket : tickets) {
-
+                for (CheckInTicket ticket : tickets) {
                     try {
                         ByteArrayOutputStream pngOutputStream = new ByteArrayOutputStream();
                         MatrixToImageWriter.writeToStream(
-                                new QRCodeWriter().encode("http://localhost:3000"  + "/check-in/" + ticket.getTicketId(), BarcodeFormat.QR_CODE, 200, 200),
+                                new QRCodeWriter().encode("http://localhost:3000"  + "/check-in/" + ticket.getTicketCode(), BarcodeFormat.QR_CODE, 200, 200),
                                 "PNG", pngOutputStream
                         );
-                        helper.addAttachment("qr_" + ticket.getTicketId() + ".png", new ByteArrayResource(pngOutputStream.toByteArray()));
+                        helper.addAttachment(ticket.getTicketCode() + ".png", new ByteArrayResource(pngOutputStream.toByteArray()));
                     } catch (WriterException | IOException e) {
-                        log.error("Lỗi khi đính kèm mã QR cho vé {}: {}", ticket.getTicketId(), e.getMessage(), e);
+                        log.error("Lỗi khi đính kèm mã QR cho vé {}: {}", ticket.getTicketCode(), e.getMessage(), e);
                     }
                 }
             }
@@ -181,17 +148,13 @@ public class EmailServiceImpl implements EmailService {
 
     @Override
     public String sendVerificationCode(String email) throws MessagingException {
-
         String code = String.format("%06d", new Random().nextInt(999999));
-
-
         MimeMessage message = mailSender.createMimeMessage();
         MimeMessageHelper helper = new MimeMessageHelper(message, false);
         helper.setTo(email);
         helper.setSubject("Mã Xác Minh Đăng Ký");
         helper.setText(code);
         mailSender.send(message);
-
         return code;
     }
 

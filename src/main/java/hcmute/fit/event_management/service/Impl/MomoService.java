@@ -191,7 +191,7 @@ public class MomoService {
         for (BookingDetails bkdt : bkdts) {
             for (int i = 0; i < bkdt.getQuantity(); i++) {
                 CheckInTicket ticket = new CheckInTicket();
-                ticket.setStatus(false);
+                ticket.setStatus(0);
                 ticket.setTicketCode(UUID.randomUUID().toString().replace("-", "").substring(0, 10).toUpperCase());
                 ticket.setBookingDetails(bkdt);
                 tickets.add(ticket);

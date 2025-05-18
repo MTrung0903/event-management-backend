@@ -144,12 +144,10 @@ public class EventServiceImpl implements IEventService {
                 .map(publicId -> cloudinary.url().generate(publicId))
                 .collect(Collectors.toList());
         dto.setEventImages(imageUrls);
-
         List<String> mediaUrls = event.getMediaContent().stream()
                 .map(publicId -> cloudinary.url().generate(publicId))
                 .collect(Collectors.toList());
         dto.setMediaContent(mediaUrls);
-
         return dto;
     }
 

@@ -5,6 +5,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Data
 @AllArgsConstructor
@@ -15,8 +17,9 @@ public class CheckInTicket {
     @Column(name = "ticket_code")
     private String ticketCode;
     @Column(name = "status")
-    private boolean status;
-
+    private int status;
+    @Column(name = "check_date")
+    private LocalDateTime checkDate;
     @ManyToOne
     @JoinColumn(name = "booking_details_id")
     private BookingDetails bookingDetails;

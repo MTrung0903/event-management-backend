@@ -89,19 +89,9 @@ public class OrganizerDashboardController {
                             ? booking.getTransaction().getTransactionAmount()
                             : 0)
                     .sum();
-            EventDTO eventDTO = new EventDTO();
-            eventDTO.setEventId(event.getEventID());
-            eventDTO.setEventName(event.getEventName());
-            EventLocationDTO eventLocationDTO = new EventLocationDTO();
-            BeanUtils.copyProperties(event.getEventLocation(), eventLocationDTO);
-            eventDTO.setEventLocation(eventLocationDTO);
-            eventDTO.setEventType(event.getEventType());
-            eventDTO.setEventHost(event.getEventHost());
-            eventDTO.setEventStatus(event.getEventStatus());
+            EventDTO eventDTO = eventService.convertToDTO(event);
             eventDTO.setSold(sold);
             eventDTO.setEventRevenue(eventRevenue);
-            eventDTO.setEventImage(event.getEventImages() != null && !event.getEventImages().isEmpty()
-                    ? event.getEventImages().getFirst() : "");
             return eventDTO;
         }).toList();
 

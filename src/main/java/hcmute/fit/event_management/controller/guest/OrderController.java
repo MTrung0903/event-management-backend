@@ -159,15 +159,12 @@ public class OrderController {
        Optional<Booking> optionalBooking = bookingRepository.findByBookingCode("1746417955367");
        if (optionalBooking.isEmpty()) return;
        Booking booking = optionalBooking.get();
-       List<Ticket> ticketsToUpdate = booking.getBookingDetails().stream()
-               .map(details -> {
-                   Ticket ticket = details.getTicket();
-                   ticket.setQuantity(ticket.getQuantity() - details.getQuantity());
-                   return ticket;
-               })
-               .collect(Collectors.toList());
-
-        emailServiceImpl.sendThanksPaymentEmail("sidedlove03@gmail.com", "Event ABC", "1746417955367", "UserABC", ticketsToUpdate);
+       List<BookingDetails> bkdts = booking.getBookingDetails();
+       List<CheckInTicket> tickets = new ArrayList<>();
+       for (BookingDetails bkdt : bkdts) {
+           tickets.addAll(bkdt.getCheckInTickets());
+       }
+       emailServiceImpl.sendThanksPaymentEmail("sidedlove03@gmail.com", "Event ABC", "1746417955367", "UserABC", tickets);
    }
 
 
