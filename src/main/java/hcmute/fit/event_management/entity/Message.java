@@ -26,7 +26,13 @@ public class Message {
     private User recipient;
 
     @Column(nullable = false)
-    private String content;
+    private String content; // For text or emoji
+
+    @Column
+    private String mediaUrl; // URL to image or video
+
+    @Column(nullable = false)
+    private String contentType; // "TEXT", "EMOJI", "IMAGE", "VIDEO"
 
     @Column(nullable = false)
     private LocalDateTime timestamp;

@@ -45,7 +45,9 @@ public class AuthTokenFilter extends OncePerRequestFilter {
             "/api/events/all",
             "/api/events/detail/**",
             "/api/ticket/detail/**",
-            "/api/segment/detail/**"
+            "/api/segment/detail/**",
+            "/chat/upload/**",
+            "/uploads/**"
     );
 
     @Override

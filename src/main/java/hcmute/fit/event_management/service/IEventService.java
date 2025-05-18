@@ -4,6 +4,7 @@ package hcmute.fit.event_management.service;
 import hcmute.fit.event_management.dto.EventDTO;
 import hcmute.fit.event_management.dto.EventEditDTO;
 import hcmute.fit.event_management.entity.Event;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.transaction.Transactional;
 import org.springframework.http.ResponseEntity;
 import payload.Response;
@@ -12,6 +13,7 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 public interface IEventService {
     Event saveEvent(EventDTO eventDTO) throws IOException;
@@ -32,6 +34,15 @@ public interface IEventService {
     List<EventDTO> findEventsByLocation(String eventLocation);
     List<EventDTO> findEventsByTags(String tag);
     List<EventDTO> findEventsByType(String eventType);
+
+    List<EventDTO> findEventsByCurrentWeek();
+
+    List<EventDTO> findEventsByCurrentMonth();
+
+    List<EventDTO> findEventsByTicketType(String type);
+
+    List<EventDTO> searchEventsByMultipleFilters(String eventCategory, String eventLocation, String eventStart, String ticketType);
+
     List<EventDTO> findEventsByNameAndLocation(String name, String location);
     List<EventDTO> searchEventsByNameAndCity(String searchTerm, String cityKey);
 
@@ -40,5 +51,22 @@ public interface IEventService {
 
     List<EventDTO> getAllEventByHost(String email);
 
+    List<EventDTO> topEventsByTicketsSold();
+
+    List<EventDTO> top10FavoriteEvents();
+
+    List<String> top10Cities();
+
+    List<EventDTO> getEventsByUSer(int userId);
+
+    Response deleteEventAndRefunds(HttpServletRequest request, int eventId) throws Exception;
     List<Event> findByUserUserId(int userId);
+
+    Set<EventDTO> findEventsByPreferredEventTypes(String email);
+
+    Set<EventDTO> findEventsByPreferredTags(String email);
+
+    Set<EventDTO> findEventsByPreferredTypesAndTags(String email);
+
+    List<String> getAllTags();
 }

@@ -18,9 +18,7 @@ public class CloudinaryService {
     // Upload file
     public String uploadFile(MultipartFile file) throws IOException {
         try {
-            Map uploadResult = cloudinary.uploader().upload(file.getBytes(), ObjectUtils.asMap(
-                    "resource_type", "auto"
-            ));
+            Map uploadResult = cloudinary.uploader().upload(file.getBytes(), ObjectUtils.asMap("resource_type", "auto"));
             System.out.println("Upload result: " + uploadResult);
             return (String) uploadResult.get("public_id");
         } catch (Exception e) {
@@ -40,7 +38,7 @@ public class CloudinaryService {
         return "ok".equals(result.get("result"));
     }
 
-    // Lấy publicId từ URL (nếu cần)
+    // Lấy publicId từ URL
     public String extractPublicIdFromUrl(String url) {
         String[] parts = url.split("/");
         String fileNameWithVersion = parts[parts.length - 1]; // vd: v1234567890/sample.jpg

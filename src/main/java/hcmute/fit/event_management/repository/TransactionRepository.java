@@ -20,6 +20,9 @@ public interface TransactionRepository extends JpaRepository<Transaction, Intege
     @Query(value = "SELECT SUM(transaction_amount)*0.05 FROM transaction WHERE transaction_status = 'SUCCESSFULLY'", nativeQuery = true)
     Double getRevenue();
 
+    @Query("select t from Transaction t where t.booking.event.eventID = :eventId")
+    List<Transaction> transactions(@Param("eventId") int eventId);
+
     @Query("SELECT SUM(t.transactionAmount) FROM Transaction t WHERE t.booking.event.user.userId = :userId")
     double sumRevenueByOrganizer(int userId);
 

@@ -3,31 +3,29 @@ package hcmute.fit.event_management.service.Impl;
 import com.cloudinary.Cloudinary;
 import hcmute.fit.event_management.dto.*;
 import hcmute.fit.event_management.entity.*;
-import hcmute.fit.event_management.repository.EventRepository;
-import hcmute.fit.event_management.repository.SegmentRepository;
-import hcmute.fit.event_management.repository.TicketRepository;
-import hcmute.fit.event_management.repository.UserRepository;
+import hcmute.fit.event_management.repository.*;
 import hcmute.fit.event_management.service.IEventService;
 import hcmute.fit.event_management.service.ISegmentService;
 import hcmute.fit.event_management.service.ITicketService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.rest.webmvc.ResourceNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import payload.Response;
 
+
 import java.io.IOException;
 import java.text.Normalizer;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -47,18 +45,24 @@ public class EventServiceImpl implements IEventService {
     private ITicketService ticketService;
     @Autowired
     private UserRepository userRepository;
+    @Autowired
+    private TransactionRepository transactionRepository;
+   @Autowired
+           private VNPAYService vnpayService;
+
     Logger logger = LoggerFactory.getLogger(this.getClass());
-    private static final Map<String, String> cityMap = Map.of(
-            "ho-chi-minh", "TP. Hồ Chí Minh",
-            "ha-noi", "Hà Nội",
-            "da-nang", "Đà Nẵng",
-            "hai-phong", "Hải Phòng",
-            "can-tho", "Cần Thơ",
-            "nha-trang", "Nha Trang",
-            "da-lat", "Đà Lạt",
-            "binh-duong", "Bình Dương",
-            "dong-nai", "Đồng Nai",
-            "quang-ninh", "Quảng Ninh"
+    private static final Map<String, String> cityMap = Map.ofEntries(
+            Map.entry("ho-chi-minh", "TP. Hồ Chí Minh"),
+            Map.entry("ha-noi", "Hà Nội"),
+            Map.entry("da-nang", "Đà Nẵng"),
+            Map.entry("hai-phong", "Hải Phòng"),
+            Map.entry("can-tho", "Cần Thơ"),
+            Map.entry("nha-trang", "Nha Trang"),
+            Map.entry("da-lat", "Đà Lạt"),
+            Map.entry("binh-duong", "Bình Dương"),
+            Map.entry("dong-nai", "Đồng Nai"),
+            Map.entry("quang-ninh", "Quảng Ninh"),
+            Map.entry("bac-lieu", "Bạc Liêu")
     );
 
     private String getCityDisplayName(String slug) {
@@ -89,28 +93,7 @@ public class EventServiceImpl implements IEventService {
     public EventDTO getEventById(int eventId) {
         updateEventStatus();
         Event event = findById(eventId).orElseThrow(() -> new RuntimeException("Event not found"));
-        EventDTO dto = new EventDTO();
-        BeanUtils.copyProperties(event, dto, "eventLocation");
-
-        EventLocationDTO locationDTO = new EventLocationDTO();
-        if (event.getEventLocation() != null) {
-            BeanUtils.copyProperties(event.getEventLocation(), locationDTO);
-            locationDTO.setCity(getCityDisplayName(locationDTO.getCity()));
-            dto.setEventLocation(locationDTO);
-        }
-
-        dto.setEventId(event.getEventID());
-
-        List<String> imageUrls = event.getEventImages().stream()
-                .map(publicId -> cloudinary.url().generate(publicId))
-                .collect(Collectors.toList());
-        dto.setEventImages(imageUrls);
-
-        List<String> mediaUrls = event.getMediaContent().stream()
-                .map(publicId -> cloudinary.url().generate(publicId))
-                .collect(Collectors.toList());
-        dto.setMediaContent(mediaUrls);
-        dto.setUserId(event.getUser().getUserId());
+        EventDTO dto = convertToDTO(event);
         return dto;
     }
 
@@ -284,7 +267,7 @@ public class EventServiceImpl implements IEventService {
         updateEventStatus();
         List<Event> events = eventRepository.findByEventHostContainingIgnoreCase(eventHost);
         return events.stream()
-                .filter(event -> !"Complete".equals(event.getEventStatus()))
+
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
@@ -318,7 +301,83 @@ public class EventServiceImpl implements IEventService {
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
+    @Override
+    public List<EventDTO> findEventsByCurrentWeek() {
+        updateEventStatus();
+        List<Event> events = eventRepository.findEventsByCurrentWeek();
+        return events.stream()
+                .filter(event -> !"Complete".equals(event.getEventStatus()))
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+    @Override
+    public List<EventDTO> findEventsByCurrentMonth() {
+        updateEventStatus();
+        List<Event> events = eventRepository.findEventsByCurrentMonth();
+        return events.stream()
+                .filter(event -> !"Complete".equals(event.getEventStatus()))
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+    @Override
+    public List<EventDTO> findEventsByTicketType(String type) {
+        updateEventStatus();
+        List<Event> events = eventRepository.findEventsByTicketType(type);
+        return events.stream()
+                .filter(event -> !"Complete".equals(event.getEventStatus()))
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+    @Override
+    public List<EventDTO> searchEventsByMultipleFilters(String eventCategory, String eventLocation, String eventStart, String ticketType) {
+        updateEventStatus();
+        List<Event> resultEvents = eventRepository.findAll();
 
+        // Filter by event category
+        if (eventCategory != null && !eventCategory.equals("all-types")) {
+            List<Event> categoryEvents = eventRepository.findByEventTypeContainingIgnoreCase(eventCategory);
+            resultEvents = resultEvents.stream()
+                    .filter(categoryEvents::contains)
+                    .collect(Collectors.toList());
+        }
+
+        // Filter by event location
+        if (eventLocation != null && !eventLocation.equals("all-locations")) {
+            List<Event> locationEvents = eventRepository.findByEventLocationCityContainingIgnoreCase(eventLocation);
+            resultEvents = resultEvents.stream()
+                    .filter(locationEvents::contains)
+                    .collect(Collectors.toList());
+        }
+
+        // Filter by event start time
+        if (eventStart != null && !eventStart.equals("all-times")) {
+            List<Event> timeEvents;
+            if (eventStart.equals("this-week")) {
+                timeEvents = eventRepository.findEventsByCurrentWeek();
+            } else if (eventStart.equals("this-month")) {
+                timeEvents = eventRepository.findEventsByCurrentMonth();
+            } else {
+                timeEvents = eventRepository.findAll(); // Default case, no time filter
+            }
+            resultEvents = resultEvents.stream()
+                    .filter(timeEvents::contains)
+                    .collect(Collectors.toList());
+        }
+
+        // Filter by ticket type
+        if (ticketType != null && !ticketType.equals("all-types")) {
+            List<Event> ticketEvents = eventRepository.findEventsByTicketType(ticketType);
+            resultEvents = resultEvents.stream()
+                    .filter(ticketEvents::contains)
+                    .collect(Collectors.toList());
+        }
+
+        // Remove completed events and convert to DTO
+        return resultEvents.stream()
+                .filter(event -> !"Complete".equals(event.getEventStatus()))
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
     @Override
     public List<EventDTO> findEventsByNameAndLocation(String name, String location) {
         updateEventStatus();
@@ -364,9 +423,13 @@ public class EventServiceImpl implements IEventService {
     @Override
     public List<EventDTO> searchEventsByNameAndCity(String searchTerm, String cityKey) {
         updateEventStatus();
-        List<Event> filteredEvents = eventRepository
-                .findByEventNameContainingIgnoreCaseAndEventLocationCityContainingIgnoreCase(searchTerm, cityKey);
-
+        List<Event> filteredEvents = new ArrayList<>();
+        if("all-locations".equals(cityKey)) {
+            filteredEvents = eventRepository.findByEventNameContainingIgnoreCase(searchTerm);
+        }else {
+           filteredEvents = eventRepository
+                    .findByEventNameContainingIgnoreCaseAndEventLocationCityContainingIgnoreCase(searchTerm, cityKey);
+        }
         return filteredEvents.stream()
                 .map(event -> {
                     EventDTO dto = convertToDTO(event);
@@ -440,4 +503,216 @@ public class EventServiceImpl implements IEventService {
     public List<Event> findByUserUserId(int userId) {
         return eventRepository.findByUserUserId(userId);
     }
+
+    @Override
+    public List<EventDTO> topEventsByTicketsSold(){
+        Pageable pageable =  PageRequest.of(0, 10);
+        List<Event> topEvents = eventRepository.findTopEventsByTicketsSold("PAID", "SUCCESSFULLY", pageable);
+        List<EventDTO> topEventDTO = new ArrayList<>();
+        for (Event event : topEvents) {
+            EventDTO eventDTO = convertToDTO(event);
+            topEventDTO.add(eventDTO);
+        }
+        return topEventDTO;
+    }
+    @Override
+    public List<EventDTO> top10FavoriteEvents(){
+        Pageable pageable =  PageRequest.of(0, 10);
+        List<Event> topEvents = eventRepository.findTop10FavoriteEvents(pageable);
+        List<EventDTO> topEventDTO = new ArrayList<>();
+        for (Event event : topEvents) {
+            EventDTO eventDTO = convertToDTO(event);
+            topEventDTO.add(eventDTO);
+        }
+        return topEventDTO;
+    }
+    @Override
+    public List<String> top10Cities(){
+        Pageable pageable =  PageRequest.of(0, 10);
+        List<String> top10Cities = eventRepository.findTop10CitiesByEventCount(pageable);
+        List<String> topCity = new ArrayList<>();
+        for(String city : top10Cities){
+            String cityName = cityMap.get(city);
+            topCity.add(cityName);
+        }
+        return topCity;
+    }
+
+    @Override
+    public List<EventDTO> getEventsByUSer(int userId){
+        User organizer = userRepository.findById(userId).get();
+        List<Event> eventDB = eventRepository.findByUser(organizer);
+        List<EventDTO> eventDTOList = new ArrayList<>();
+        for (Event event : eventDB) {
+            EventDTO eventDTO = convertToDTO(event);
+            eventDTOList.add(eventDTO);
+        }
+        return eventDTOList;
+    }
+
+    @Override
+    public Response deleteEventAndRefunds(HttpServletRequest request, int eventId) throws Exception {
+        Optional<Event> event = eventRepository.findById(eventId);
+        if(event.isPresent()) {
+            if("Complete".equals(event.get().getEventStatus())){
+                Response response = new Response(404, "Failed","Can not delete the events that have been completed");
+                return response;
+            }
+        }
+        List<Transaction> transactions = transactionRepository.transactions(eventId);
+        if( !transactions.isEmpty()) {
+            for (Transaction transaction : transactions) {
+                TransactionDTO transactionDTO = new TransactionDTO();
+                BeanUtils.copyProperties(transaction, transactionDTO);
+                System.out.println(transactionDTO);
+                vnpayService.refund(request, transaction);
+            }
+        }
+
+        eventRepository.deleteById(eventId);
+        Response response = new Response(200, "Success", "Event deleted successfully");
+        return response;
+    }
+
+    @Override
+    public Set<EventDTO> findEventsByPreferredEventTypes(String email) {
+        updateEventStatus();
+        Optional<User> userOpt = userRepository.findByEmail(email);
+
+
+        User user = userOpt.get();
+        List<String> preferredEventTypes = user.getPreferredEventTypes() ;
+
+        if (preferredEventTypes.isEmpty()) {
+            return new HashSet<>();
+        }
+
+        List<Event> matchedEvents = new ArrayList<>();
+        for (String eventType : preferredEventTypes) {
+            List<Event> events = eventRepository.findByEventTypeContainingIgnoreCase(eventType);
+            matchedEvents.addAll(events);
+        }
+
+        Set<EventDTO> eventDTOS  = new HashSet<>();
+        for (Event event : matchedEvents) {
+            EventDTO eventDTO = convertToDTO(event);
+            if(!"Complete".equals(event.getEventStatus())){eventDTOS.add(eventDTO);}
+
+        }
+        return eventDTOS;
+    }
+    @Override
+    public Set<EventDTO> findEventsByPreferredTags(String email) {
+        updateEventStatus();
+        Optional<User> userOpt = userRepository.findByEmail(email);
+
+        User user = userOpt.get();
+        List<String> preferredTags = user.getPreferredTags() ;
+
+        if ( preferredTags.isEmpty()) {
+            return new HashSet<>();
+        }
+
+        List<Event> matchedEvents =new ArrayList<>();
+        for (String tag : preferredTags) {
+            List<Event> events = eventRepository.findByTagsContainingIgnoreCase(tag);
+            matchedEvents.addAll(events);
+        }
+        Set<EventDTO> eventDTOS  = new HashSet<>();
+        for (Event event : matchedEvents) {
+            EventDTO eventDTO = convertToDTO(event);
+            if(!"Complete".equals(event.getEventStatus())){eventDTOS.add(eventDTO);}
+        }
+        return eventDTOS;
+    }
+    @Override
+    public Set<EventDTO> findEventsByPreferredTypesAndTags(String email) {
+        updateEventStatus();
+        Optional<User> userOpt = userRepository.findByEmail(email);
+
+
+        User user = userOpt.get();
+        List<String> preferredEventTypes = user.getPreferredEventTypes() ;
+        List<String> preferredTags = user.getPreferredTags() ;
+
+        if (preferredEventTypes.isEmpty() && preferredTags.isEmpty()) {
+            return new HashSet<>();
+        }
+        List<Event> matchedEvents = new ArrayList<>();
+
+        // Tìm sự kiện theo eventType
+        for (String eventType : preferredEventTypes) {
+            List<Event> events = eventRepository.findByEventTypeContainingIgnoreCase(eventType);
+            matchedEvents.addAll(events);
+        }
+
+        // Tìm sự kiện theo tags
+        for (String tag : preferredTags) {
+            List<Event> events = eventRepository.findByTagsContainingIgnoreCase(tag);
+            matchedEvents.addAll(events);
+        }
+
+        Set<EventDTO> eventDTOS  = new HashSet<>();
+        for (Event event : matchedEvents) {
+            EventDTO eventDTO = convertToDTO(event);
+            if(!"Complete".equals(event.getEventStatus())){eventDTOS.add(eventDTO);}
+        }
+        return eventDTOS;
+    }
+    public  String[] splitByPipe(String input) {
+
+        if (input == null || input.trim().isEmpty()) {
+            return new String[0];
+        }
+
+        return Arrays.stream(input.split("\\|"))
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .toArray(String[]::new);
+    }
+    @Override
+    public List<String> getAllTags(){
+        Map<String, Integer> tagFrequency = new HashMap<>();
+        List<Event> events = eventRepository.findAll();
+
+        // Duyệt qua từng sự kiện để đếm tần suất tag
+        for (Event event : events) {
+            EventDTO eventDTO = convertToDTO(event);
+            String tags = eventDTO.getTags();
+            if (tags != null && !tags.trim().isEmpty()) {
+                String[] tagArray = splitByPipe(tags);
+                for (String tag : tagArray) {
+                    tagFrequency.put(tag, tagFrequency.getOrDefault(tag, 0) + 1);
+                }
+            }
+        }
+
+        List<Map.Entry<String, Integer>> tagList = new ArrayList<>(tagFrequency.entrySet());
+
+        // Sắp xếp danh sách theo tần suất giảm dần, nếu bằng thì theo thứ tự chữ cái
+        for (int i = 0; i < tagList.size(); i++) {
+            for (int j = i + 1; j < tagList.size(); j++) {
+                Map.Entry<String, Integer> entry1 = tagList.get(i);
+                Map.Entry<String, Integer> entry2 = tagList.get(j);
+                // So sánh tần suất
+                int freqCompare = entry2.getValue().compareTo(entry1.getValue());
+                if (freqCompare == 0) {
+                    freqCompare = entry1.getKey().compareTo(entry2.getKey());
+                }
+                if (freqCompare > 0) {
+                    tagList.set(i, entry2);
+                    tagList.set(j, entry1);
+                }
+            }
+        }
+
+
+        List<String> topTags = new ArrayList<>();
+        for (int i = 0; i < Math.min(10, tagList.size()); i++) {
+            topTags.add(tagList.get(i).getKey());
+        }
+
+        return topTags;
+    }
+
 }

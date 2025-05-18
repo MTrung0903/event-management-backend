@@ -2,6 +2,7 @@ package hcmute.fit.event_management.repository;
 
 import hcmute.fit.event_management.entity.Event;
 import hcmute.fit.event_management.entity.User;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -9,6 +10,7 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 
 @Repository
@@ -35,4 +37,38 @@ public interface EventRepository extends JpaRepository<Event, Integer> {
     long countEventsByMonth(@Param("month") int month, @Param("year") int year);
     List<Event> findByUserUserId(int userId);
 
+    Optional<Event> findByEventID(Integer eventId);
+
+    @Query(value = "SELECT * FROM event WHERE WEEK(event_start, 1) = WEEK(CURRENT_DATE, 1) AND YEAR(event_start) = YEAR(CURRENT_DATE)", nativeQuery = true)
+    List<Event> findEventsByCurrentWeek();
+
+    @Query("SELECT e FROM Event e WHERE FUNCTION('MONTH', e.eventStart) = FUNCTION('MONTH', CURRENT_DATE) AND FUNCTION('YEAR', e.eventStart) = FUNCTION('YEAR', CURRENT_DATE)")
+    List<Event> findEventsByCurrentMonth();
+
+    @Query("select e from  Event e join Ticket t on e.eventID = t.event.eventID where t.ticketType = :type")
+    List<Event> findEventsByTicketType(@Param("type") String type);
+
+    @Query("SELECT e " +
+            "FROM Event e " +
+            "JOIN e.bookings b " +
+            "JOIN b.bookingDetails bd " +
+            "JOIN b.transaction t " +
+            "WHERE b.bookingStatus = :status " +
+            "AND t.transactionStatus = :transactionStatus " +
+            "GROUP BY e " +
+            "ORDER BY SUM(bd.quantity) DESC")
+    List<Event> findTopEventsByTicketsSold(@Param("status") String status,
+                                           @Param("transactionStatus") String transactionStatus, Pageable pageable);
+    @Query("SELECT e FROM Event e " +
+            "JOIN e.favoritedByUsers f " +
+            "GROUP BY e " +
+            "ORDER BY COUNT(f) DESC")
+    List<Event> findTop10FavoriteEvents(Pageable pageable);
+
+    @Query("SELECT e.eventLocation.city " +
+            "FROM Event e " +
+            "WHERE e.eventLocation.city IS NOT NULL AND e.eventLocation.city != ''" +
+            "GROUP BY e.eventLocation.city " +
+            "ORDER BY COUNT(e) DESC")
+    List<String> findTop10CitiesByEventCount(Pageable pageable);
 }

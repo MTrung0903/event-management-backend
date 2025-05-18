@@ -18,6 +18,9 @@ public class Organizer {
     @Column(name = "organizer_id")
     private int organizerId;
 
+    @Column(name ="organizer_logo")
+    private String organizerLogo;
+
     @Column(name = "organizer_name", nullable = false)
     private String organizerName;
 
