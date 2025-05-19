@@ -1,5 +1,6 @@
 package hcmute.fit.event_management.service;
 
+import hcmute.fit.event_management.entity.Booking;
 import hcmute.fit.event_management.entity.CheckInTicket;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.Page;
@@ -76,4 +77,6 @@ public interface ICheckInTicketService {
 
     @Deprecated
     CheckInTicket getById(String s);
+
+    List<CheckInTicket> findByBookingDetailsBookingEventEventID(int eventID);
 }

@@ -209,14 +209,14 @@ public class VNPAYService {
             for (BookingDetails bkdt : bkdts) {
                 for (int i = 0; i < bkdt.getQuantity(); i++) {
                     CheckInTicket ticket = new CheckInTicket();
-                    ticket.setStatus(false);
+                    ticket.setStatus(0);
                     ticket.setTicketCode(UUID.randomUUID().toString().replace("-", "").substring(0, 10).toUpperCase());
                     ticket.setBookingDetails(bkdt);
                     tickets.add(ticket);
                 }
             }
             checkInTicketRepository.saveAll(tickets);
-            emailService.sendThanksPaymentEmail(booking.getUser().getEmail(), booking.getEvent().getEventName(), booking.getBookingCode(), booking.getUser().getFullName(),ticketsToUpdate);
+            emailService.sendThanksPaymentEmail(booking.getUser().getEmail(), booking.getEvent().getEventName(), booking.getBookingCode(), booking.getUser().getFullName(),tickets);
         } else {
             updateBookingStatus(booking, "FAILED");
         }
@@ -297,6 +297,17 @@ public class VNPAYService {
                 responseEntity.setMsg("FAILED");
             }
             transactionRepository.save(transaction);
+            Booking booking = transaction.getBooking();
+            booking.setBookingStatus("CANCELED");
+            bookingRepository.save(booking);
+            List<BookingDetails> bkts = booking.getBookingDetails();
+            for (BookingDetails bookingDetails : bkts) {
+                List<CheckInTicket> tickets = bookingDetails.getCheckInTickets();
+                for (CheckInTicket checkInTicket : tickets) {
+                    checkInTicket.setStatus(-1);
+                }
+                checkInTicketRepository.saveAll(tickets);
+            }
             refundRepository.save(refund);
         }
         BeanUtils.copyProperties(refund, refundDTO);

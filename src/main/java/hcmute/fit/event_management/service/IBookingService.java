@@ -84,4 +84,7 @@ public interface IBookingService {
     List<Booking> findByUserId(int userId);
 
 
+    List<Booking> findByEventEventID(int eventId);
+
+    List<Booking> findByEventEventIDOrderByCreateDateDesc(int eventId);
 }

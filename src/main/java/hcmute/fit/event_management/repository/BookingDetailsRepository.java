@@ -35,4 +35,5 @@ public interface BookingDetailsRepository extends JpaRepository<BookingDetails, 
     List<Object[]> getEventSalesSummaryWithImage();
     @Query("SELECT SUM(bd.quantity) FROM BookingDetails bd WHERE bd.booking.event.user.userId = :userId")
     long countTicketsSoldByOrganizer(int userId);
+    List<BookingDetails> findByTicketTicketId(int ticketId);
 }

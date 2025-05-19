@@ -193,6 +193,12 @@ public class BookingServiceImpl implements IBookingService {
     public List<Booking> findByUserId(int userId) {
         return bookingRepository.findByUserId(userId);
     }
-
-
+    @Override
+    public List<Booking> findByEventEventID(int eventId) {
+        return bookingRepository.findByEventEventID(eventId);
+    }
+    @Override
+    public List<Booking> findByEventEventIDOrderByCreateDateDesc(int eventId) {
+        return bookingRepository.findByEventEventIDOrderByCreateDateDesc(eventId);
+    }
 }

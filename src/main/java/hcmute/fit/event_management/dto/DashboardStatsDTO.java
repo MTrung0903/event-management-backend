@@ -30,7 +30,7 @@ public class DashboardStatsDTO {
     private Long totalTicketsSoldThisMonth;
     private String totalTicketsSoldChange;
 
-    private List<EventDTO> events; // Thay đổi từ List<EventSalesDTO> sang List<Event>
+    private List<EventDTO> events;
     private List<TransactionDTO> transactions;
 
     private Double totalRevenueYTD;

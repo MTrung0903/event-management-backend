@@ -88,4 +88,6 @@ public interface IBookingDetailsService {
     <S extends BookingDetails> S save(S entity);
 
     long countTicketsSoldByOrganizer(int userId);
+
+    List<BookingDetails> findByTicketTicketId(int ticketId);
 }
