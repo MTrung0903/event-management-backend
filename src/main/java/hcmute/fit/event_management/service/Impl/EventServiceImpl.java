@@ -399,17 +399,20 @@ public class EventServiceImpl implements IEventService {
         List<SegmentDTO> dtos = new ArrayList<>();
         for (Segment segment : list) {
             SegmentDTO dto = new SegmentDTO();
-            Speaker speaker = segment.getSpeaker();
-            SpeakerDTO speakerDTO = new SpeakerDTO();
-            BeanUtils.copyProperties(speaker, speakerDTO);
-            String urlImage = cloudinary.url().generate(speaker.getSpeakerImage());
-            speakerDTO.setSpeakerImage(urlImage);
+           if(segment.getSpeaker() != null){
+               Speaker speaker = segment.getSpeaker();
+               SpeakerDTO speakerDTO = new SpeakerDTO();
+               BeanUtils.copyProperties(speaker, speakerDTO);
+               String urlImage = cloudinary.url().generate(speaker.getSpeakerImage());
+               speakerDTO.setSpeakerImage(urlImage);
+               dto.setSpeaker(speakerDTO);
+           }
             BeanUtils.copyProperties(segment, dto);
             dto.setEventID(eventId);
             dto.setStartTime(segment.getStartTime());
             dto.setEndTime(segment.getEndTime());
             dto.setSegmentId(segment.getSegmentId());
-            dto.setSpeaker(speakerDTO);
+
             dtos.add(dto);
         }
         return dtos;
