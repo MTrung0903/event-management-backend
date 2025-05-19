@@ -43,6 +43,7 @@ public class RolerServiceImpl implements IRoleService {
         // tạo role mới nếu role chưa tồn tại
         Role role = new Role();
         role.setName(roleDTO.getName().toUpperCase());
+        role.setCreatedBy("ADMIN");
         roleRepository.save(role);
 
         logger.info("Role {} created successfully", roleDTO.getName());
