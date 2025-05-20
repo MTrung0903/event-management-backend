@@ -48,6 +48,7 @@ public class AuthTokenFilter extends OncePerRequestFilter {
             "/api/segment/detail/**",
             "/chat/upload/**",
             "/uploads/**"
+
     );
 
     @Override

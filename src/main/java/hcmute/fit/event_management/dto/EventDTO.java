@@ -28,6 +28,7 @@ public class EventDTO {
     @FutureOrPresent(message = "Event end time must be in the present or future")
     private LocalDateTime eventEnd;
     private EventLocationDTO eventLocation;
+    private String meetingLink;
     private String tags;
     private String eventVisibility;
     private LocalDateTime publishTime;
