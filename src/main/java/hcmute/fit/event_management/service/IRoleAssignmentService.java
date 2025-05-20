@@ -20,4 +20,6 @@ public interface IRoleAssignmentService {
     List<AssignedEventDTO> getAssignedEvents(int userId);
 
     AssignedEventTeamDTO getTeam(int eventId);
+
+    boolean deleteAssignedRole(int userId, int eventId, int roleId);
 }

@@ -45,6 +45,8 @@ public class UserServiceImpl implements IUserService {
 
     @Autowired
     private Cloudinary cloudinary;
+    @Autowired
+    private MessageRepository messageRepository;
 
     Logger logger = LoggerFactory.getLogger(this.getClass());
 
@@ -469,14 +471,28 @@ public class UserServiceImpl implements IUserService {
 
     @Override
     public List<UserDTO> searchUserForChat(String query, int currentUserId) {
-        List<UserDTO> users = getAllUsers()
-                .stream()
-                .filter(user ->
-                        user.getUserId() != currentUserId && user.isActive() &&
-                                (user.getEmail().toLowerCase().contains(query.toLowerCase()) ||
-                                        user.getFullName().toLowerCase().contains(query.toLowerCase())))
+        if (query == null || query.trim().isEmpty()) {
+            logger.warn("Search query is empty for user ID: {}", currentUserId);
+            return Collections.emptyList();
+        }
+
+        List<User> users = userRepository.findActiveUsersByFullNameOrEmail(query.trim());
+        List<UserDTO> userDTOs = users.stream()
+                .filter(user -> user.getUserId() != currentUserId)
+                .map(user -> {
+                    UserDTO userDTO = new UserDTO();
+                    userDTO.setUserId(user.getUserId());
+                    userDTO.setEmail(user.getEmail() != null ? user.getEmail() : "");
+                    userDTO.setFullName(user.getFullName() != null ? user.getFullName() : "");
+                    userDTO.setActive(user.isActive());
+                    long unreadCount = messageRepository.countUnreadMessages(currentUserId, user.getUserId());
+                    userDTO.setUnreadCount((int) unreadCount);
+                    return userDTO;
+                })
                 .collect(Collectors.toList());
-        return users;
+
+        logger.info("Found {} users for query '{}' and user ID {}", userDTOs.size(), query, currentUserId);
+        return userDTOs;
     }
     @Override
     public Optional<User> findByEmail(String email) {

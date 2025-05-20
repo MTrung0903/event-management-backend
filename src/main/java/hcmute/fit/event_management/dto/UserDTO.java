@@ -18,6 +18,7 @@ public class UserDTO {
     private String email;
     private String password;
     private String gender;
+    private int unreadCount;
     private LocalDate birthday;
     private String address;
     private boolean isActive;
