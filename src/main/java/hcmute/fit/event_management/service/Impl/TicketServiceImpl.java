@@ -1,14 +1,17 @@
 package hcmute.fit.event_management.service.Impl;
 
 import hcmute.fit.event_management.dto.TicketDTO;
+import hcmute.fit.event_management.entity.BookingDetails;
 import hcmute.fit.event_management.entity.Event;
 import hcmute.fit.event_management.entity.Ticket;
+import hcmute.fit.event_management.repository.BookingDetailsRepository;
 import hcmute.fit.event_management.repository.EventRepository;
 import hcmute.fit.event_management.repository.TicketRepository;
 import hcmute.fit.event_management.service.ITicketService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import payload.Response;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,6 +24,9 @@ public class TicketServiceImpl implements ITicketService {
     @Autowired
     private EventRepository eventRepository;
 
+    @Autowired
+    private BookingDetailsRepository bookingDetailsRepository;
+
     public TicketServiceImpl(TicketRepository ticketRepository) {
         this.ticketRepository = ticketRepository;
     }
@@ -31,8 +37,35 @@ public class TicketServiceImpl implements ITicketService {
     }
 
     @Override
-    public void deleteById(Integer ticketId) {
-        ticketRepository.deleteById(ticketId);
+    public Response deleteById(Integer ticketId) {
+        Optional<Ticket> ticket = ticketRepository.findById(ticketId);
+        Response response = new Response();
+        if (ticket.isPresent()) {
+            Event event = ticket.get().getEvent();
+            if("Complete".equals(event.getEventStatus())){
+
+                response.setStatusCode(401);
+                response.setMsg("The event has been completed, cannot delete tickets");
+                response.setData(false);
+                return response;
+            }
+            List<BookingDetails> list = bookingDetailsRepository.findByTicketId(ticketId);
+            if (!list.isEmpty() && list.size() > 0) {
+                response.setStatusCode(401);
+                response.setMsg("Tickets of the event were sold, not possible");
+                response.setData(false);
+                return response;
+            }else {
+                ticketRepository.deleteById(ticketId);
+
+                response.setStatusCode(200);
+                response.setMsg("Successful delete tickets");
+                response.setData(true);
+                return response;
+            }
+        }
+
+        return null;
     }
 
     @Override

@@ -49,9 +49,9 @@ public class TicketController {
 
     @DeleteMapping("delete/{ticketId}")
     @PreAuthorize("hasRole('ORGANIZER')")
-    public ResponseEntity<Boolean> deleteTicket(@PathVariable int ticketId) {
-        ticketService.deleteById(ticketId);
-        return ResponseEntity.ok(true);
+    public ResponseEntity<Response> deleteTicket(@PathVariable int ticketId) {
+
+        return ResponseEntity.ok( ticketService.deleteById(ticketId));
     }
 
     @GetMapping("/check-in/{ticketCode}")

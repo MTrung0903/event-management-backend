@@ -80,7 +80,7 @@ public class AuthController {
         return ResponseEntity.ok(userDTO);
     }
     @PostMapping("/user/upgrade-organizer/{email}")
-    @PreAuthorize("hasRole('ATTENDEE')")
+    @PreAuthorize("hasAnyRole('ATTENDEE','ADMIN')")
     public ResponseEntity<Response> upgradeToOrganizer(@PathVariable @Email String email, @RequestBody OrganizerDTO organizerDTO) {
         return userService.upgradeToOrganizer(email, organizerDTO);
     }
