@@ -21,11 +21,6 @@ public class UserDTO {
     private LocalDate birthday;
     private String address;
     private boolean isActive;
-
-    private String zoomAccessToken;
-
-
-    private String zoomRefreshToken;
     private List<RoleDTO> roles;
     private OrganizerDTO organizer;
     private List<String> preferredEventTypes;

@@ -39,11 +39,7 @@ public class User {
 
     @Column(name = "is_active")
     private boolean isActive;
-    @Column(name = "zoom_access_token")
-    private String zoomAccessToken;
 
-    @Column(name = "zoom_refresh_token")
-    private String zoomRefreshToken;
     @ElementCollection
     @CollectionTable(name = "user_preferred_event_types", joinColumns = @JoinColumn(name = "user_id"))
     @Column(name = "event_type")

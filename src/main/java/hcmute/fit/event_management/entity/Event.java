@@ -35,9 +35,6 @@ public class Event {
     private String refunds;
     private int validityDays;
 
-    @Column(name = "meeting_link") // Thêm trường mới
-    private String meetingLink;
-
     @ElementCollection
     private List<String> eventImages;
     @Column(columnDefinition = "TEXT")

@@ -69,7 +69,4 @@ public interface IEventService {
     Set<EventDTO> findEventsByPreferredTypesAndTags(String email);
 
     List<String> getAllTags();
-
-    @Transactional
-    EventDTO createEvent(EventDTO eventDTO, String zoomAuthCode);
 }

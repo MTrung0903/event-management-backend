@@ -21,6 +21,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import payload.Response;
 
+
 import java.io.IOException;
 import java.text.Normalizer;
 import java.time.LocalDateTime;
@@ -46,10 +47,8 @@ public class EventServiceImpl implements IEventService {
     private UserRepository userRepository;
     @Autowired
     private TransactionRepository transactionRepository;
-    @Autowired
-    private VNPAYService vnpayService;
-    @Autowired
-    private ZoomService zoomService;
+   @Autowired
+           private VNPAYService vnpayService;
 
     Logger logger = LoggerFactory.getLogger(this.getClass());
     private static final Map<String, String> cityMap = Map.ofEntries(
@@ -268,6 +267,7 @@ public class EventServiceImpl implements IEventService {
         updateEventStatus();
         List<Event> events = eventRepository.findByEventHostContainingIgnoreCase(eventHost);
         return events.stream()
+
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
@@ -301,7 +301,6 @@ public class EventServiceImpl implements IEventService {
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
-
     @Override
     public List<EventDTO> findEventsByCurrentWeek() {
         updateEventStatus();
@@ -311,7 +310,6 @@ public class EventServiceImpl implements IEventService {
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
-
     @Override
     public List<EventDTO> findEventsByCurrentMonth() {
         updateEventStatus();
@@ -321,7 +319,6 @@ public class EventServiceImpl implements IEventService {
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
-
     @Override
     public List<EventDTO> findEventsByTicketType(String type) {
         updateEventStatus();
@@ -331,7 +328,6 @@ public class EventServiceImpl implements IEventService {
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
-
     @Override
     public List<EventDTO> searchEventsByMultipleFilters(String eventCategory, String eventLocation, String eventStart, String ticketType) {
         updateEventStatus();
@@ -382,7 +378,6 @@ public class EventServiceImpl implements IEventService {
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
-
     @Override
     public List<EventDTO> findEventsByNameAndLocation(String name, String location) {
         updateEventStatus();
@@ -402,14 +397,14 @@ public class EventServiceImpl implements IEventService {
         List<SegmentDTO> dtos = new ArrayList<>();
         for (Segment segment : list) {
             SegmentDTO dto = new SegmentDTO();
-            if(segment.getSpeaker() != null){
-                Speaker speaker = segment.getSpeaker();
-                SpeakerDTO speakerDTO = new SpeakerDTO();
-                BeanUtils.copyProperties(speaker, speakerDTO);
-                String urlImage = cloudinary.url().generate(speaker.getSpeakerImage());
-                speakerDTO.setSpeakerImage(urlImage);
-                dto.setSpeaker(speakerDTO);
-            }
+           if(segment.getSpeaker() != null){
+               Speaker speaker = segment.getSpeaker();
+               SpeakerDTO speakerDTO = new SpeakerDTO();
+               BeanUtils.copyProperties(speaker, speakerDTO);
+               String urlImage = cloudinary.url().generate(speaker.getSpeakerImage());
+               speakerDTO.setSpeakerImage(urlImage);
+               dto.setSpeaker(speakerDTO);
+           }
             BeanUtils.copyProperties(segment, dto);
             dto.setEventID(eventId);
             dto.setStartTime(segment.getStartTime());
@@ -435,7 +430,7 @@ public class EventServiceImpl implements IEventService {
         if("all-locations".equals(cityKey)) {
             filteredEvents = eventRepository.findByEventNameContainingIgnoreCase(searchTerm);
         }else {
-            filteredEvents = eventRepository
+           filteredEvents = eventRepository
                     .findByEventNameContainingIgnoreCaseAndEventLocationCityContainingIgnoreCase(searchTerm, cityKey);
         }
         return filteredEvents.stream()
@@ -507,7 +502,6 @@ public class EventServiceImpl implements IEventService {
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
-
     @Override
     public List<Event> findByUserUserId(int userId) {
         return eventRepository.findByUserUserId(userId);
@@ -515,7 +509,7 @@ public class EventServiceImpl implements IEventService {
 
     @Override
     public List<EventDTO> topEventsByTicketsSold(){
-        Pageable pageable = PageRequest.of(0, 10);
+        Pageable pageable =  PageRequest.of(0, 10);
         List<Event> topEvents = eventRepository.findTopEventsByTicketsSold("PAID", "SUCCESSFULLY", pageable);
         List<EventDTO> topEventDTO = new ArrayList<>();
         for (Event event : topEvents) {
@@ -524,10 +518,9 @@ public class EventServiceImpl implements IEventService {
         }
         return topEventDTO;
     }
-
     @Override
     public List<EventDTO> top10FavoriteEvents(){
-        Pageable pageable = PageRequest.of(0, 10);
+        Pageable pageable =  PageRequest.of(0, 10);
         List<Event> topEvents = eventRepository.findTop10FavoriteEvents(pageable);
         List<EventDTO> topEventDTO = new ArrayList<>();
         for (Event event : topEvents) {
@@ -536,10 +529,9 @@ public class EventServiceImpl implements IEventService {
         }
         return topEventDTO;
     }
-
     @Override
     public List<String> top10Cities(){
-        Pageable pageable = PageRequest.of(0, 10);
+        Pageable pageable =  PageRequest.of(0, 10);
         List<String> top10Cities = eventRepository.findTop10CitiesByEventCount(pageable);
         List<String> topCity = new ArrayList<>();
         for(String city : top10Cities){
@@ -590,8 +582,9 @@ public class EventServiceImpl implements IEventService {
         updateEventStatus();
         Optional<User> userOpt = userRepository.findByEmail(email);
 
+
         User user = userOpt.get();
-        List<String> preferredEventTypes = user.getPreferredEventTypes();
+        List<String> preferredEventTypes = user.getPreferredEventTypes() ;
 
         if (preferredEventTypes.isEmpty()) {
             return new HashSet<>();
@@ -603,47 +596,47 @@ public class EventServiceImpl implements IEventService {
             matchedEvents.addAll(events);
         }
 
-        Set<EventDTO> eventDTOS = new HashSet<>();
+        Set<EventDTO> eventDTOS  = new HashSet<>();
         for (Event event : matchedEvents) {
             EventDTO eventDTO = convertToDTO(event);
             if(!"Complete".equals(event.getEventStatus())){eventDTOS.add(eventDTO);}
+
         }
         return eventDTOS;
     }
-
     @Override
     public Set<EventDTO> findEventsByPreferredTags(String email) {
         updateEventStatus();
         Optional<User> userOpt = userRepository.findByEmail(email);
 
         User user = userOpt.get();
-        List<String> preferredTags = user.getPreferredTags();
+        List<String> preferredTags = user.getPreferredTags() ;
 
-        if (preferredTags.isEmpty()) {
+        if ( preferredTags.isEmpty()) {
             return new HashSet<>();
         }
 
-        List<Event> matchedEvents = new ArrayList<>();
+        List<Event> matchedEvents =new ArrayList<>();
         for (String tag : preferredTags) {
             List<Event> events = eventRepository.findByTagsContainingIgnoreCase(tag);
             matchedEvents.addAll(events);
         }
-        Set<EventDTO> eventDTOS = new HashSet<>();
+        Set<EventDTO> eventDTOS  = new HashSet<>();
         for (Event event : matchedEvents) {
             EventDTO eventDTO = convertToDTO(event);
             if(!"Complete".equals(event.getEventStatus())){eventDTOS.add(eventDTO);}
         }
         return eventDTOS;
     }
-
     @Override
     public Set<EventDTO> findEventsByPreferredTypesAndTags(String email) {
         updateEventStatus();
         Optional<User> userOpt = userRepository.findByEmail(email);
 
+
         User user = userOpt.get();
-        List<String> preferredEventTypes = user.getPreferredEventTypes();
-        List<String> preferredTags = user.getPreferredTags();
+        List<String> preferredEventTypes = user.getPreferredEventTypes() ;
+        List<String> preferredTags = user.getPreferredTags() ;
 
         if (preferredEventTypes.isEmpty() && preferredTags.isEmpty()) {
             return new HashSet<>();
@@ -662,15 +655,15 @@ public class EventServiceImpl implements IEventService {
             matchedEvents.addAll(events);
         }
 
-        Set<EventDTO> eventDTOS = new HashSet<>();
+        Set<EventDTO> eventDTOS  = new HashSet<>();
         for (Event event : matchedEvents) {
             EventDTO eventDTO = convertToDTO(event);
             if(!"Complete".equals(event.getEventStatus())){eventDTOS.add(eventDTO);}
         }
         return eventDTOS;
     }
+    public  String[] splitByPipe(String input) {
 
-    public String[] splitByPipe(String input) {
         if (input == null || input.trim().isEmpty()) {
             return new String[0];
         }
@@ -680,7 +673,6 @@ public class EventServiceImpl implements IEventService {
                 .filter(s -> !s.isEmpty())
                 .toArray(String[]::new);
     }
-
     @Override
     public List<String> getAllTags(){
         Map<String, Integer> tagFrequency = new HashMap<>();
@@ -717,6 +709,7 @@ public class EventServiceImpl implements IEventService {
             }
         }
 
+
         List<String> topTags = new ArrayList<>();
         for (int i = 0; i < Math.min(10, tagList.size()); i++) {
             topTags.add(tagList.get(i).getKey());
@@ -725,106 +718,4 @@ public class EventServiceImpl implements IEventService {
         return topTags;
     }
 
-    @Transactional
-    @Override
-    public EventDTO createEvent(EventDTO eventDTO, String zoomAuthCode) {
-//        // Tìm user theo organizerName
-//        String organizerName = eventDTO.getEventHost();
-//        Optional<User> userOpt = userRepository.findByOrganizerName(organizerName);
-//        if (!userOpt.isPresent()) {
-//            logger.error("User with organizerName {} not found", organizerName);
-//            throw new RuntimeException("User not found with organizerName: " + organizerName);
-//        }
-//        User user = userOpt.get();
-//
-//
-//        // Kiểm tra thời gian
-//        if (eventDTO.getEventStart().isAfter(eventDTO.getEventEnd())) {
-//            logger.error("Event start time {} is after end time {}", eventDTO.getEventStart(), eventDTO.getEventEnd());
-//            throw new IllegalArgumentException("Event start time must be before end time");
-//        }
-//        if (eventDTO.getEventStart().isBefore(LocalDateTime.now())) {
-//            logger.error("Event start time {} is in the past", eventDTO.getEventStart());
-//            throw new IllegalArgumentException("Event start time cannot be in the past");
-//        }
-//
-//        // Chuyển đổi DTO thành entity
-//        Event event = new Event();
-//        BeanUtils.copyProperties(eventDTO, event, "eventLocation", "eventImages", "mediaContent");
-//        event.setEventHost(organizerName);
-//        event.setUser(user);
-//
-//        EventLocation eventLocation = new EventLocation();
-//        EventLocationDTO locationDTO = eventDTO.getEventLocation();
-//        if (locationDTO != null) {
-//            BeanUtils.copyProperties(locationDTO, eventLocation);
-//            event.setEventLocation(eventLocation);
-//        }
-//
-//        if (eventDTO.getEventImages() != null) {
-//            event.setEventImages(new ArrayList<>(eventDTO.getEventImages()));
-//        }
-//        if (eventDTO.getMediaContent() != null) {
-//            event.setMediaContent(new ArrayList<>(eventDTO.getMediaContent()));
-//        }
-//
-//        // Xử lý Zoom cho sự kiện online
-//        String userId = String.valueOf(user.getUserId());
-//        if ("online".equals(eventDTO.getEventType())) {
-//            if (zoomAuthCode == null || zoomAuthCode.isEmpty()) {
-//                logger.error("Zoom authorization code is required for online event: {}", eventDTO.getEventName());
-//                throw new IllegalArgumentException("Zoom authorization code is required for online events");
-//            }
-//
-//            try {
-//                zoomService.getAccessToken(zoomAuthCode, userId);
-//                int duration = calculateDuration(eventDTO.getEventStart(), eventDTO.getEventEnd());
-//                String meetingLink = zoomService.createMeeting(
-//                        userId,
-//                        eventDTO.getEventName(),
-//                        eventDTO.getEventStart(),
-//                        duration
-//                );
-//                event.setMeetingLink(meetingLink);
-//                logger.info("Zoom meeting created for event: {}", eventDTO.getEventName());
-//            } catch (Exception e) {
-//                logger.error("Failed to create Zoom meeting for event {}: {}", eventDTO.getEventName(), e.getMessage());
-//                throw new RuntimeException("Failed to create Zoom meeting: " + e.getMessage());
-//            }
-//        } else if (zoomAuthCode != null && !zoomAuthCode.isEmpty()) {
-//            logger.warn("Zoom authorization code provided for non-online event: {}", eventDTO.getEventName());
-//            throw new IllegalArgumentException("Zoom authorization code is not required for non-online events");
-//        }
-//
-//        // Lưu sự kiện
-//        try {
-//            Event savedEvent = eventRepository.save(event);
-//            logger.info("Event {} created successfully by user {}", event.getEventName(), organizerName);
-//
-//            // Thu hồi và xóa access_token
-//            if ("online".equals(eventDTO.getEventType())) {
-//                try {
-//                    String accessToken = zoomService.getStoredAccessToken(userId);
-//                    if (accessToken != null) {
-//                        zoomService.revokeAccessToken(accessToken);
-//                        zoomService.clearStoredAccessToken(userId);
-//                        logger.info("Zoom access token revoked and cleared for event {}", event.getEventName());
-//                    }
-//                } catch (Exception e) {
-//                    logger.error("Failed to revoke Zoom access token for event {}: {}", event.getEventName(), e.getMessage());
-//                    // Không ném lỗi để không làm gián đoạn việc tạo sự kiện
-//                }
-//            }
-//
-//            return convertToDTO(savedEvent);
-//        } catch (Exception e) {
-//            logger.error("Failed to save event {}: {}", eventDTO.getEventName(), e.getMessage());
-//            throw new RuntimeException("Failed to save event: " + e.getMessage());
-//        }
-        return null;
-    }
-
-    private int calculateDuration(LocalDateTime start, LocalDateTime end) {
-        return (int) java.time.Duration.between(start, end).toMinutes();
-    }
 }
