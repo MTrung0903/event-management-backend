@@ -25,4 +25,6 @@ public interface AssignedRoleRepository extends JpaRepository<AssignedRole, Inte
 
     @Query("select a.role.name from AssignedRole a where a.user.userId = :userId  and a.event.eventID = :eventId")
     List<String> getRoleNameAssigned(@Param("userId") int userId, @Param("eventId") int eventId);
+
+
 }

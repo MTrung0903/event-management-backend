@@ -38,7 +38,7 @@ public class MessageServiceImpl implements IMessageService {
         message.setSender(sender);
         message.setRecipient(recipient);
         message.setContent(messageDTO.getContent());
-        message.setMediaUrl(messageDTO.getMediaUrl()); // Store filename only
+        message.setMediaUrl(messageDTO.getMediaUrl());
         message.setContentType(messageDTO.getContentType());
         message.setTimestamp(parseTimestamp(messageDTO.getTimestamp()));
         message.setRead(false);
@@ -68,7 +68,7 @@ public class MessageServiceImpl implements IMessageService {
         dto.setContent(message.getContent());
         dto.setSenderEmail(message.getSender().getEmail());
         dto.setRecipientEmail(message.getRecipient().getEmail());
-        dto.setMediaUrl(message.getMediaUrl()); // Filename only
+        dto.setMediaUrl(message.getMediaUrl());
         dto.setContentType(message.getContentType());
         ZonedDateTime zonedDateTime = message.getTimestamp().atZone(ZoneId.of("Asia/Ho_Chi_Minh"));
         dto.setTimestamp(zonedDateTime.format(DateTimeFormatter.ISO_INSTANT));
@@ -91,6 +91,9 @@ public class MessageServiceImpl implements IMessageService {
                         userDTO.setUserId(user.getUserId());
                         userDTO.setEmail(user.getEmail() != null ? user.getEmail() : "");
                         userDTO.setFullName(user.getFullName() != null ? user.getFullName() : "");
+                        // Calculate unread messages for this user
+                        long unreadCount = messageRepository.countUnreadMessages(userId, user.getUserId());
+                        userDTO.setUnreadCount((int) unreadCount);
                         return userDTO;
                     })
                     .collect(Collectors.toList());

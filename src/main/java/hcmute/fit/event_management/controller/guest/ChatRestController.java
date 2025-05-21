@@ -22,6 +22,7 @@ public class ChatRestController {
 
     @Autowired
     private IMessageService messageService;
+
     @Autowired
     private IUserService userService;
 
@@ -70,8 +71,13 @@ public class ChatRestController {
 
     @GetMapping("/search")
     public ResponseEntity<List<UserDTO>> searchUsers(@RequestParam String query, @RequestParam int currentUserId) {
-        List<UserDTO> findUser = userService.searchUserForChat(query, currentUserId);
-        System.out.println("Search users with query: " + query);
-        return new ResponseEntity<>(findUser, HttpStatus.OK);
+        try {
+            List<UserDTO> users = userService.searchUserForChat(query, currentUserId);
+            System.out.println("Search users with query: " + query);
+            return new ResponseEntity<>(users, HttpStatus.OK);
+        } catch (Exception e) {
+            System.err.println("Search failed: " + e.getMessage());
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 }

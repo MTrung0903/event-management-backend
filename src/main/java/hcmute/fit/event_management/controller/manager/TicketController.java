@@ -42,6 +42,7 @@ public class TicketController {
     }
 
     @GetMapping("detail/{eventId}")
+    @PreAuthorize("hasAnyRole('ORGANIZER','TICKET MANAGER','CHECK-IN STAFF')")
     public ResponseEntity<List<TicketDTO>> getTicket(@PathVariable int eventId) {
         List<TicketDTO> list = ticketService.getTicketsByEventId(eventId);
         return ResponseEntity.ok(list);
@@ -55,7 +56,7 @@ public class TicketController {
     }
 
     @GetMapping("/check-in/{ticketCode}")
-    @PreAuthorize("hasRole('ORGANIZER')")
+    @PreAuthorize("hasAnyRole('ORGANIZER','TICKET MANAGER','CHECK-IN STAFF')")
     public ResponseEntity<?> checkIn(@PathVariable String ticketCode, Authentication authentication) {
         Response response = new Response();
         String username = authentication.getName();
@@ -95,7 +96,7 @@ public class TicketController {
     }
 
     @GetMapping("{eventId}/stats")
-    @PreAuthorize("hasRole('ORGANIZER')")
+    @PreAuthorize("hasAnyRole('ORGANIZER','TICKET MANAGER','CHECK-IN STAFF')")
     public Map<String, String> getEventStats(@PathVariable int eventId) {
         // Tổng số vé có sẵn
         List<Ticket> tickets = ticketService.findByEventEventID(eventId);
@@ -129,6 +130,7 @@ public class TicketController {
     }
 
     @GetMapping("{eventId}/ticket-types")
+    @PreAuthorize("hasAnyRole('ORGANIZER','TICKET MANAGER','CHECK-IN STAFF')")
     public List<Map<String, String>> getTicketTypes(@PathVariable int eventId) {
         List<Ticket> tickets = ticketService.findByEventEventID(eventId);
         List<Map<String, String>> ticketTypes = new ArrayList<>();
@@ -148,6 +150,7 @@ public class TicketController {
         return ticketTypes;
     }
     @GetMapping("{eventId}/recent-orders")
+    @PreAuthorize("hasAnyRole('ORGANIZER','TICKET MANAGER','CHECK-IN STAFF')")
     public List<Map<String, String>> getRecentOrders(@PathVariable int eventId) {
         List<Booking> bookings = bookingService.findByEventEventIDOrderByCreateDateDesc(eventId);
         List<Map<String, String>> orders = new ArrayList<>();

@@ -40,10 +40,7 @@ public class RoleAssignmentServiceImpl implements IRoleAssignmentService {
     @Override
     public ResponseEntity<Response> assignRoleToEvent(String email, int roleId, int eventId) {
         UserDTO userDTO = userService.getInfor(email);
-        boolean isAttendee = userDTO.getRoles().stream().anyMatch(role -> role.getName().equals("ROLE_ATTENDEE"));
-        if (!isAttendee) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new Response(400, "Bad Request", "Người dùng không phải attendee"));
-        }
+//
         Optional<Role> roleOpt = roleRepository.findById(roleId);
         Optional<Event> eventOpt = eventRepository.findById(eventId);
         Optional<AssignedRole> existingAssignment = assignedRoleRepository.getAssigned(userDTO.getUserId(), roleId, eventId);
@@ -121,5 +118,14 @@ public class RoleAssignmentServiceImpl implements IRoleAssignmentService {
             eventsId.add(assignedRole.getEvent().getEventID());
         }
 
+    }
+    @Override
+    public boolean deleteAssignedRole(int userId, int eventId, int roleId) {
+        Optional<AssignedRole> assignedRole = assignedRoleRepository.getAssigned(userId,roleId,eventId);
+        if(assignedRole.isPresent()) {
+            assignedRoleRepository.delete(assignedRole.get());
+            return true;
+        }
+        return false;
     }
 }

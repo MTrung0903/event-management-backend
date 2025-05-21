@@ -13,4 +13,5 @@ public  class OrganizerDTO {
     private String organizerWebsite;
     private String organizerPhone;
     private String organizerDesc;
+    private String organizerEmail;
 }

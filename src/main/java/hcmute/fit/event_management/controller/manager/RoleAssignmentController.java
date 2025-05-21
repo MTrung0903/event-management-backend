@@ -77,4 +77,8 @@ public class RoleAssignmentController {
         }
         return ResponseEntity.ok(finalEvents);
     }
+    @DeleteMapping("delete")
+    public ResponseEntity<Boolean> deleteAssignedRole(@RequestParam int userId, @RequestParam int roleId, @RequestParam int eventId) {
+        return ResponseEntity.ok(roleAssignmentService.deleteAssignedRole(userId, eventId,roleId));
+    }
 }

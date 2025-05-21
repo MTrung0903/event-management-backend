@@ -41,7 +41,8 @@ public class EventController {
     @Autowired
     private SimpMessagingTemplate template;
 
-
+@Autowired
+private IUserService userService;
     @Autowired
     private INotificationService notificationService;
 
@@ -80,10 +81,12 @@ public class EventController {
         if(sponsorService.getAllSponsorsInEvent(eventId) !=null){
             detailDTO.setSponsors(sponsorService.getAllSponsorsInEvent(eventId));
         }
-
+        UserDTO organizer = userService.findById(detailDTO.getEvent().getUserId());
         if(detailDTO.getEvent()!=null && detailDTO.getEvent().getEventHost() != null) {
             String eventHost = detailDTO.getEvent().getEventHost();
-            detailDTO.setOrganizer(organizerService.getOrganizerInforByEventHost(eventHost));
+            OrganizerDTO infor = organizerService.getOrganizerInforByEventHost(eventHost);
+            infor.setOrganizerEmail(organizer.getEmail());
+            detailDTO.setOrganizer(infor);
         }
 
         return ResponseEntity.ok(detailDTO);
