@@ -46,4 +46,8 @@ public class SponsorEventServiceImpl implements ISponsorEventService {
     public long countSponsorsByOrganizer(int userId) {
         return sponsorEventRepository.countSponsorsByOrganizer(userId);
     }
+    @Override
+    public List<SponsorEvent> findByEventUserUserId(int eventId) {
+        return sponsorEventRepository.findByEventUserUserId(eventId);
+    }
 }

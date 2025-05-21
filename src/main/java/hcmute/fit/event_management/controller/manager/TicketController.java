@@ -167,5 +167,20 @@ public class TicketController {
         }
         return orders;
     }
-
+    @GetMapping("{eventId}/check-in-tickets")
+    @PreAuthorize("hasRole('ORGANIZER')")
+    public List<Map<String, String>> getCheckInTickets(@PathVariable int eventId) {
+        List<CheckInTicket> checkInTickets = checkInTicketService.findByBookingDetailsBookingEventEventID(eventId);
+        List<Map<String, String>> checkInTicketList = new ArrayList<>();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        for (CheckInTicket checkIn : checkInTickets) {
+            Map<String, String> ticketInfo = new HashMap<>();
+            ticketInfo.put("ticketCode", checkIn.getTicketCode());
+            ticketInfo.put("status", checkIn.getStatus() == 1 ? "Checked" : checkIn.getStatus() == -1 ? "Canceled" : "Uncheck");
+            ticketInfo.put("checkDate", checkIn.getCheckDate() != null ? checkIn.getCheckDate().format(formatter) : "N/A");
+            ticketInfo.put("ticketType", checkIn.getBookingDetails().getTicket().getTicketType());
+            checkInTicketList.add(ticketInfo);
+        }
+        return checkInTicketList;
+    }
 }

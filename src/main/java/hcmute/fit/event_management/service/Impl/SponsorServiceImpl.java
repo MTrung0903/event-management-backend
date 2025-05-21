@@ -91,9 +91,6 @@ public class SponsorServiceImpl implements ISponsorService {
             sponsorEventDTO.setSponsorRepresentativePosition(sponsorEvent.getSponsor().getSponsorRepresentativePosition());
             sponsorEventDTO.setSponsorType(sponsorEvent.getSponsorType());
             sponsorEventDTO.setSponsorLevel(sponsorEvent.getSponsorLevel());
-            sponsorEventDTO.setSponsorAmount(sponsorEvent.getSponsorAmount());
-            sponsorEventDTO.setSponsorContract(sponsorEvent.getSponsorContract());
-            sponsorEventDTO.setSponsorContribution(sponsorEvent.getSponsorContribution());
             sponsorEventDTO.setSponsorStartDate(sponsorEvent.getSponsorStartDate());
             sponsorEventDTO.setSponsorEndDate(sponsorEvent.getSponsorEndDate());
             sponsorEventDTO.setSponsorStatus(sponsorEvent.getSponsorStatus());

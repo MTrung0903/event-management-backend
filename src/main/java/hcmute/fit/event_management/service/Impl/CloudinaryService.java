@@ -2,6 +2,7 @@ package hcmute.fit.event_management.service.Impl;
 
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
+import org.mapstruct.Named;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -28,6 +29,7 @@ public class CloudinaryService {
     }
 
     // Download file (trả về URL để client tự tải)
+    @Named("getFileUrl")
     public String getFileUrl(String publicId) {
         return cloudinary.url().secure(true).resourceType("image").generate(publicId);
     }

@@ -18,12 +18,14 @@ public class Transaction {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "transaction_id")
     private int transactionId;
+    @Column(name ="payment_method")
+    private String paymentMethod;
     @Column(name = "transaction_date")
     private String transactionDate;
     @Column(name = "transaction_amount")
     private double transactionAmount;
-    @Column(name ="payment_method")
-    private String paymentMethod;
+    @Column(name ="transaction_no")
+    private String transactionNo;
     @Column(name = "transaction_status")
     private String transactionStatus;
     @Column(name = "reference_code")

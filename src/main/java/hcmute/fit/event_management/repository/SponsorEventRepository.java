@@ -1,5 +1,6 @@
 package hcmute.fit.event_management.repository;
 
+
 import hcmute.fit.event_management.entity.SponsorEvent;
 import hcmute.fit.event_management.entity.keys.SponsorEventId;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -19,5 +20,5 @@ public interface SponsorEventRepository extends JpaRepository<SponsorEvent, Spon
     Boolean existsByIdEventIdAndIdSponsorId(int eventId, int sponsorId);
     @Query("SELECT COUNT(se) FROM SponsorEvent se WHERE se.event.user.userId = :userId")
     long countSponsorsByOrganizer(int userId);
-
+    List<SponsorEvent> findByEventUserUserId(int eventId);
 }

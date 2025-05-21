@@ -86,7 +86,7 @@ public class OrganizerDashboardController {
                     .sum();
             double eventRevenue = event.getBookings().stream()
                     .mapToDouble(booking -> booking.getTransaction() != null
-                            ? booking.getTransaction().getTransactionAmount()
+                            ? booking.getTransaction().getTransactionAmount() * 0.05
                             : 0)
                     .sum();
             EventDTO eventDTO = eventService.convertToDTO(event);
