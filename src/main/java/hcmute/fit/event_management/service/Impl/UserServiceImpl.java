@@ -270,6 +270,7 @@ public class UserServiceImpl implements IUserService {
         return ResponseEntity.ok(new Response(200, "Success", "Role added successfully"));
     }
 
+    @Transactional
     @Override
     public ResponseEntity<Response> deleteRoleInUser(String email, String roleName) {
         Optional<User> userOpt = userRepository.findByEmail(email);
@@ -295,6 +296,18 @@ public class UserServiceImpl implements IUserService {
             for (UserRole ur : userRolesOpt.get()) {
                 if (ur.getRole().getRoleId() == role.getRoleId()) {
                     userRoleRepository.delete(ur);
+                    // Nếu vai trò là ROLE_ORGANIZER, xóa thông tin Organizer
+                    if ("ROLE_ORGANIZER".equals(roleName) && user.getOrganizer() != null) {
+                        try {
+                            organizerRepository.deleteById(user.getOrganizer().getOrganizerId());
+                            logger.info("Organizer with ID {} removed for user {}", user.getOrganizer().getOrganizerId(), email);
+                            user.setOrganizer(null); // Đặt lại tham chiếu Organizer
+                            userRepository.save(user); // Lưu thay đổi vào cơ sở dữ liệu
+                        } catch (Exception e) {
+                            logger.error("Failed to delete Organizer for user {}: {}", email, e.getMessage());
+                            throw new RuntimeException("Failed to delete Organizer", e);
+                        }
+                    }
                     logger.info("Role {} removed from user {}", roleName, email);
                     return ResponseEntity.ok(new Response(200, "Success", "Role removed successfully"));
                 }
