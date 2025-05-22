@@ -23,4 +23,7 @@ public interface EventViewRepository extends JpaRepository<EventView, Long> {
     long countRecentViewsByUser(@Param("eventId") Integer eventId, @Param("userId") Integer userId, @Param("threshold") LocalDateTime threshold);
 
     long countByEventEventID(Integer eventId);
+
+    @Query("select e from EventView e where e.event.eventID = :eventId")
+   EventView getEventView(@Param("eventId") Integer eventId);
 }
