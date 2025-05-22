@@ -22,7 +22,9 @@ public class Event {
     private String eventName;
     @Column(columnDefinition = "TEXT")
     private String eventDesc;
-    private String eventType;
+    @ManyToOne
+    @JoinColumn(name = "event_type_id", nullable = false)
+    private EventType eventType;
     private String eventHost;
     private String eventStatus;
     private LocalDateTime eventStart;

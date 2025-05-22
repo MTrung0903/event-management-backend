@@ -290,10 +290,19 @@ public class UserServiceImpl implements IUserService {
         User user = userOpt.get();
         Role role = roleOpt.get();
 
-        // Tìm và xóa UserRole
+        // Kiểm tra số lượng vai trò của người dùng
         Optional<List<UserRole>> userRolesOpt = userRoleRepository.findAllByUser(user);
         if (userRolesOpt.isPresent()) {
-            for (UserRole ur : userRolesOpt.get()) {
+            List<UserRole> userRoles = userRolesOpt.get();
+            // Nếu người dùng chỉ có 1 vai trò và vai trò đó là vai trò cần xóa
+            if (userRoles.size() == 1 && userRoles.get(0).getRole().getRoleId() == role.getRoleId()) {
+                logger.warn("Cannot remove role {} from user {}: User has only one role", roleName, email);
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(new Response(400, "Bad Request", "Cannot remove the only role of the user"));
+            }
+
+            // Tìm và xóa UserRole
+            for (UserRole ur : userRoles) {
                 if (ur.getRole().getRoleId() == role.getRoleId()) {
                     userRoleRepository.delete(ur);
                     // Nếu vai trò là ROLE_ORGANIZER, xóa thông tin Organizer
