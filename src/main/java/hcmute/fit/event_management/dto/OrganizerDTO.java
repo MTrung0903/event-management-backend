@@ -7,6 +7,7 @@ import lombok.*;
 @AllArgsConstructor
 @NoArgsConstructor
 public  class OrganizerDTO {
+    private int organizerId;
     private String organizerName;
     private String organizerLogo;
     private String organizerAddress;
