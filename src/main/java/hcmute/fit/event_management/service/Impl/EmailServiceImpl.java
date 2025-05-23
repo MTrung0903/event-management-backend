@@ -35,11 +35,37 @@ public class EmailServiceImpl implements EmailService {
 
     @Override
     public void sendResetEmail(String to, String resetToken) {
-        String subject = "Password Reset Request";
+        String subject = "Yêu cầu đặt lại mật khẩu";
         String resetUrl = "http://localhost:3000/reset-password?token=" + resetToken;
-        String content = "<p>Click the link below to reset it:</p>"
-                + "<p><a href=\"" + resetUrl + "\">Reset my password</a></p>";
-        sendHtmlEmail(to, subject, content);
+        String htmlContent = "<!DOCTYPE html>" +
+                "<html lang='vi'>" +
+                "<head>" +
+                "<meta charset='UTF-8'>" +
+                "<meta name='viewport' content='width=device-width, initial-scale=1.0'>" +
+                "<title>Đặt lại mật khẩu</title>" +
+                "<style>" +
+                "body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 20px; }" +
+                ".container { max-width: 600px; margin: 0 auto; background: #f9f9f9; padding: 20px; border-radius: 8px; }" +
+                "h2 { color: #2c3e50; }" +
+                "a { color: #3498db; text-decoration: none; }" +
+                "a:hover { text-decoration: underline; }" +
+                ".button { display: inline-block; padding: 10px 20px; background: #3498db; color: white; border-radius: 5px; text-align: center; }" +
+                "</style>" +
+                "</head>" +
+                "<body>" +
+                "<div class='container'>" +
+                "<h2>Đặt lại mật khẩu</h2>" +
+                "<p>Kính gửi Quý khách,</p>" +
+                "<p>Chúng tôi nhận được yêu cầu đặt lại mật khẩu cho tài khoản của bạn. Vui lòng nhấp vào nút dưới đây để đặt lại mật khẩu:</p>" +
+                "<p><a href='" + resetUrl + "' class='button'>Đặt lại mật khẩu</a></p>" +
+                "<p>Nếu bạn không thực hiện yêu cầu này, xin vui lòng bỏ qua email này.</p>" +
+                "<p>Nếu cần hỗ trợ, vui lòng liên hệ qua email: <a href='mailto:tungvladgod@gmail.com'>support@eventmanagement.com</a>.</p>" +
+                "<p>Trân trọng,<br>Đội ngũ Event Management</p>" +
+                "</div>" +
+                "</body>" +
+                "</html>";
+
+        sendHtmlEmail(to, subject, htmlContent);
     }
 
     @Override

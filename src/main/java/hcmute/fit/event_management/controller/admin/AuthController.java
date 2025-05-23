@@ -7,6 +7,7 @@ import hcmute.fit.event_management.service.IFollowService;
 import hcmute.fit.event_management.service.IUserService;
 import hcmute.fit.event_management.service.Impl.AuthServiceImpl;
 import hcmute.fit.event_management.service.Impl.EmailServiceImpl;
+import jakarta.mail.MessagingException;
 import jakarta.validation.constraints.Email;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,7 +45,7 @@ public class AuthController {
     }
 
     @PostMapping("/forgot")
-    public ResponseEntity<Response> forgotPassword(@RequestBody ForgotPasswordDTO forgotPasswordDTO) {
+    public ResponseEntity<Response> forgotPassword(@RequestBody ForgotPasswordDTO forgotPasswordDTO) throws MessagingException {
         return authService.sendResetPassword(forgotPasswordDTO.getEmail());
     }
 
