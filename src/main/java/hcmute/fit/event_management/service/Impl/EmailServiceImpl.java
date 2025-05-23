@@ -4,15 +4,12 @@ package hcmute.fit.event_management.service.Impl;
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.WriterException;
 import com.google.zxing.client.j2se.MatrixToImageWriter;
-import com.google.zxing.common.BitMatrix;
 import com.google.zxing.qrcode.QRCodeWriter;
 import hcmute.fit.event_management.entity.CheckInTicket;
-import hcmute.fit.event_management.entity.Ticket;
 import hcmute.fit.event_management.service.EmailService;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringEscapeUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -22,7 +19,6 @@ import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.Base64;
 import java.util.Random;
 
 import java.util.List;
@@ -179,6 +175,42 @@ public class EmailServiceImpl implements EmailService {
         mailSender.send(message);
         return code;
     }
+    @Override
+    public void sendNewEventNotification(String to, String eventName, String eventStart, String eventLocation, String eventUrl) throws MessagingException {
+        String safeEventName = escapeHtml4(eventName);
+        String subject = "Sự kiện mới: " + safeEventName;
 
+        String htmlContent = "<!DOCTYPE html>" +
+                "<html lang='vi'>" +
+                "<head>" +
+                "<meta charset='UTF-8'>" +
+                "<meta name='viewport' content='width=device-width, initial-scale=1.0'>" +
+                "<title>Thông báo sự kiện mới</title>" +
+                "<style>" +
+                "body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 20px; }" +
+                ".container { max-width: 600px; margin: 0 auto; background: #f9f9f9; padding: 20px; border-radius: 8px; }" +
+                "h2 { color: #2c3e50; }" +
+                "a { color: #3498db; text-decoration: none; }" +
+                "a:hover { text-decoration: underline; }" +
+                ".button { display: inline-block; padding: 10px 20px; background: #3498db; color: white; border-radius: 5px; text-align: center; }" +
+                "</style>" +
+                "</head>" +
+                "<body>" +
+                "<div class='container'>" +
+                "<h2>Thông báo sự kiện mới</h2>" +
+                "<p>Kính gửi Quý khách,</p>" +
+                "<p>Chúng tôi rất vui thông báo rằng một sự kiện mới vừa được tạo: <strong>" + safeEventName + "</strong>.</p>" +
+                "<p><strong>Thời gian:</strong> " + eventStart + "</p>" +
+                "<p><strong>Địa điểm:</strong> " + eventLocation + "</p>" +
+                "<p>Hãy tham gia ngay để không bỏ lỡ sự kiện thú vị này!</p>" +
+                "<p><a href='" + eventUrl + "' class='button'>Xem chi tiết sự kiện</a></p>" +
+                "<p>Nếu cần hỗ trợ, vui lòng liên hệ qua email: <a href='mailto:tungvladgod@gmail.com'>support@eventmanagement.com</a>.</p>" +
+                "<p>Trân trọng,<br>Đội ngũ Event Management</p>" +
+                "</div>" +
+                "</body>" +
+                "</html>";
+
+        sendHtmlEmail(to, subject, htmlContent);
+    }
 
 }

@@ -3,11 +3,13 @@ package hcmute.fit.event_management.controller.manager;
 import hcmute.fit.event_management.dto.*;
 import hcmute.fit.event_management.entity.Event;
 import hcmute.fit.event_management.entity.EventType;
+import hcmute.fit.event_management.entity.User;
 import hcmute.fit.event_management.repository.EventTypeRepository;
 import hcmute.fit.event_management.repository.OrganizerRepository;
 import hcmute.fit.event_management.service.*;
 import hcmute.fit.event_management.service.Impl.EventServiceImpl;
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -47,14 +49,21 @@ public class EventController {
     @Autowired
     private EventTypeRepository eventTypeRepository;
 
-@Autowired
-private IUserService userService;
+    @Autowired
+    private IUserService userService;
     @Autowired
     private INotificationService notificationService;
+
+    @Autowired
+    private EmailService emailService;
+
+    @Autowired
+    private IFollowService followService;
 
     @PostMapping("/create")
     @PreAuthorize("hasRole('ORGANIZER')")
     public ResponseEntity<Response> createEvent(@RequestBody EventDTO event) throws IOException {
+        // Create notification for Organizer
         NotificationDTO notificationDTO = new NotificationDTO();
         notificationDTO.setTitle("Tin nhắn mới");
         notificationDTO.setMessage(event.getEventName() + " được tạo thành công");
@@ -63,7 +72,44 @@ private IUserService userService;
         notificationDTO.setCreatedAt(new Date());
         notificationService.createNotification(notificationDTO);
 
-        return eventService.saveEventToDB(event);
+        // Save event and get response
+        ResponseEntity<Response> response = eventService.saveEventToDB(event);
+        if (response.getStatusCode() == HttpStatus.CREATED) {
+            // Get created event
+            EventDTO createdEvent = (EventDTO) response.getBody().getData();
+            // Get Organizer's ID
+            OrganizerDTO organizer = organizerService.getOrganizerInforByEventHost(event.getEventHost());
+            if (organizer != null && organizer.getOrganizerId() > 0  ) {
+                List<User> followers = followService.getFollowers(organizer.getOrganizerId());
+                List<UserDTO> followersDTO = new ArrayList<>();
+                for (User user : followers) {
+                    UserDTO userDTO = new UserDTO();
+                    BeanUtils.copyProperties(user, userDTO);
+                    followersDTO.add(userDTO);
+                }
+                // Send email to each follower
+                String eventUrl = "http://localhost:3000/events/detail/" + createdEvent.getEventId();
+                String eventLocation = createdEvent.getEventLocation().getVenueName() + ", " +
+                        createdEvent.getEventLocation().getAddress() + ", " +
+                        createdEvent.getEventLocation().getCity();
+                for (UserDTO follower : followersDTO) {
+                    try {
+                        emailService.sendNewEventNotification(
+                                follower.getEmail(),
+                                createdEvent.getEventName(),
+                                createdEvent.getEventStart().toString(),
+                                eventLocation,
+                                eventUrl
+                        );
+                    } catch (Exception e) {
+                        // Log error but don't fail the event creation
+                        System.err.println("Failed to send email to " + follower.getEmail() + ": " + e.getMessage());
+                    }
+                }
+            }
+        }
+
+        return response;
     }
     @PostMapping("/create-event")
     @PreAuthorize("hasRole('ORGANIZER')")
