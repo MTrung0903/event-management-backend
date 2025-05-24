@@ -16,6 +16,7 @@ public class TicketDTO {
     private String ticketType;
     private double price;
     private int quantity;
+    private int sold;
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
     private Date startTime;
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
