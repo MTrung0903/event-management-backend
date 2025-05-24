@@ -170,5 +170,9 @@ public class TicketController {
         }
         return orders;
     }
+    @GetMapping("{email}/check/{eventId}")
+    public ResponseEntity<Response> checkBeforeBuyTicket(@PathVariable String email, @PathVariable int eventId) {
+        return ResponseEntity.ok(ticketService.checkBeforeBuyTicket(email,eventId));
+    }
 
 }

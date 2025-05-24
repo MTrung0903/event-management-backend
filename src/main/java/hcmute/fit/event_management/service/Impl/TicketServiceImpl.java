@@ -1,21 +1,15 @@
 package hcmute.fit.event_management.service.Impl;
 
 import hcmute.fit.event_management.dto.TicketDTO;
-import hcmute.fit.event_management.entity.BookingDetails;
-import hcmute.fit.event_management.entity.Event;
-import hcmute.fit.event_management.entity.Ticket;
-import hcmute.fit.event_management.repository.BookingDetailsRepository;
-import hcmute.fit.event_management.repository.EventRepository;
-import hcmute.fit.event_management.repository.TicketRepository;
+import hcmute.fit.event_management.entity.*;
+import hcmute.fit.event_management.repository.*;
 import hcmute.fit.event_management.service.ITicketService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import payload.Response;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @Service
 public class TicketServiceImpl implements ITicketService {
@@ -26,6 +20,10 @@ public class TicketServiceImpl implements ITicketService {
 
     @Autowired
     private BookingDetailsRepository bookingDetailsRepository;
+    @Autowired
+    private BookingRepository bookingRepository;
+    @Autowired
+    private UserRepository userRepository;
 
     public TicketServiceImpl(TicketRepository ticketRepository) {
         this.ticketRepository = ticketRepository;
@@ -136,5 +134,73 @@ public class TicketServiceImpl implements ITicketService {
     @Override
     public List<Ticket> findByEventEventID(int eventId) {
         return ticketRepository.findByEventEventID(eventId);
+    }
+
+    @Override
+    public Response checkBeforeBuyTicket(String userEmail, int eventId) {
+        Response response = new Response();
+
+        // Find user by email
+        Optional<User> userOpt = userRepository.findByEmail(userEmail);
+        if (userOpt.isEmpty()) {
+            response.setStatusCode(404);
+            response.setMsg("User not found with email: " + userEmail);
+            response.setData(null);
+            return response;
+        }
+        User user = userOpt.get();
+
+        // Find event
+        Optional<Event> eventOpt = eventRepository.findById(eventId);
+        if (eventOpt.isEmpty()) {
+            response.setStatusCode(404);
+            response.setMsg("Event not found with id: " + eventId);
+            response.setData(null);
+            return response;
+        }
+
+        // Get all bookings for the user and event
+        List<Booking> bookings = bookingRepository.findByEventEventID(eventId);
+        int paidTicketCount = 0;
+        int freeTicketCount = 0;
+
+        for (Booking booking : bookings) {
+            if (booking.getUser().getUserId() == user.getUserId()) {
+                List<BookingDetails> bookingDetails = bookingDetailsRepository.findByBookingId(booking.getBookingId());
+                for (BookingDetails detail : bookingDetails) {
+                    String ticketType = detail.getTicket().getTicketType().toLowerCase();
+                    if (ticketType.equals("free")) {
+                        freeTicketCount += detail.getQuantity();
+                    } else {
+                        paidTicketCount += detail.getQuantity();
+                    }
+                }
+            }
+        }
+
+        // Calculate remaining tickets
+        int maxFreeTickets = 1;
+        int maxPaidTickets = 10;
+        int remainingFreeTickets = maxFreeTickets - freeTicketCount;
+        int remainingPaidTickets = maxPaidTickets - paidTicketCount;
+
+        // Prepare response data
+        Map<String, Integer> remainingTickets = new HashMap<>();
+        remainingTickets.put("remainingFreeTickets", Math.max(0, remainingFreeTickets));
+        remainingTickets.put("remainingPaidTickets", Math.max(0, remainingPaidTickets));
+
+        // Check if user can still purchase tickets
+        if (remainingFreeTickets <= 0 && remainingPaidTickets <= 0) {
+            response.setStatusCode(403);
+            response.setMsg("User has reached the maximum limit for both free and paid tickets for this event.");
+            response.setData(remainingTickets);
+            return response;
+        }
+
+        response.setStatusCode(200);
+        response.setMsg("User can purchase up to " + remainingFreeTickets + " free ticket(s) and " +
+                remainingPaidTickets + " paid ticket(s) for this event.");
+        response.setData(remainingTickets);
+        return response;
     }
 }
