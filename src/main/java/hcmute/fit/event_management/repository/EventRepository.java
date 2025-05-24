@@ -1,6 +1,7 @@
 package hcmute.fit.event_management.repository;
 
 import hcmute.fit.event_management.entity.Event;
+import hcmute.fit.event_management.entity.EventType;
 import hcmute.fit.event_management.entity.User;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -20,7 +21,8 @@ public interface EventRepository extends JpaRepository<Event, Integer> {
     List<Event> findByEventStart(LocalDateTime eventStart);
     List<Event> findByEventHostContainingIgnoreCase(String eventHost);
     List<Event> findByTagsContainingIgnoreCase(String tag);
-    List<Event> findByEventTypeContainingIgnoreCase(String eventType);
+
+    List<Event> findByEventType(EventType eventType);
     List<Event> findByEventLocationCityContainingIgnoreCase(String city);
     List<Event> findByEventLocationVenueNameContainingIgnoreCase(String venueName);
     List<Event> findByUser(User user);
@@ -71,4 +73,8 @@ public interface EventRepository extends JpaRepository<Event, Integer> {
             "GROUP BY e.eventLocation.city " +
             "ORDER BY COUNT(e) DESC")
     List<String> findTop10CitiesByEventCount(Pageable pageable);
+
+    @Query("SELECT e FROM Event e WHERE e.eventStatus IN (:statuses) OR e.eventEnd <= :endOfDay")
+    List<Event> findEventsForStatusUpdate(@Param("statuses") List<String> statuses,
+                                          @Param("endOfDay") LocalDateTime endOfDay);
 }

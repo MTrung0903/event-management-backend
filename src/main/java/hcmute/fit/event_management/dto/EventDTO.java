@@ -18,6 +18,7 @@ public class EventDTO {
     private int eventId;
     private String eventName;
     private String eventDesc;
+    private Long eventTypeId;
     private String eventType;
     private String eventHost;
     private String eventStatus;
@@ -41,4 +42,5 @@ public class EventDTO {
     private long sold;
     private double eventRevenue;
     private Double total;
+    private Long viewCount;
 }

@@ -3,6 +3,7 @@ package hcmute.fit.event_management.service;
 
 import hcmute.fit.event_management.dto.EventDTO;
 import hcmute.fit.event_management.dto.EventEditDTO;
+import hcmute.fit.event_management.dto.EventViewDTO;
 import hcmute.fit.event_management.entity.Event;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.transaction.Transactional;
@@ -66,7 +67,11 @@ public interface IEventService {
 
     Set<EventDTO> findEventsByPreferredTags(String email);
 
-    Set<EventDTO> findEventsByPreferredTypesAndTags(String email);
+    List<EventDTO> findEventsByPreferredTypesAndTags(String email);
 
     List<String> getAllTags();
+
+    void recordEventView(Integer eventId, Integer userId);
+
+    List<EventViewDTO> getTopViewedEvents(int limit);
 }

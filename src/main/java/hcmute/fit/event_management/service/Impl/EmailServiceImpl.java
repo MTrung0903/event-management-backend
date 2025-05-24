@@ -3,15 +3,12 @@ package hcmute.fit.event_management.service.Impl;
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.WriterException;
 import com.google.zxing.client.j2se.MatrixToImageWriter;
-
 import com.google.zxing.qrcode.QRCodeWriter;
 import hcmute.fit.event_management.entity.CheckInTicket;
-
 import hcmute.fit.event_management.service.EmailService;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.extern.slf4j.Slf4j;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -20,7 +17,6 @@ import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.Base64;
 import java.util.Random;
 import java.util.List;
 
@@ -35,11 +31,37 @@ public class EmailServiceImpl implements EmailService {
 
     @Override
     public void sendResetEmail(String to, String resetToken) {
-        String subject = "Password Reset Request";
+        String subject = "Yêu cầu đặt lại mật khẩu";
         String resetUrl = "http://localhost:3000/reset-password?token=" + resetToken;
-        String content = "Click the link below to reset it:\n"
-                + "<a href=\"" + resetUrl + "\">Reset my password</a>";
-        sendHtmlEmail(to, subject, content);
+        String htmlContent = "<!DOCTYPE html>" +
+                "<html lang='vi'>" +
+                "<head>" +
+                "<meta charset='UTF-8'>" +
+                "<meta name='viewport' content='width=device-width, initial-scale=1.0'>" +
+                "<title>Đặt lại mật khẩu</title>" +
+                "<style>" +
+                "body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 20px; }" +
+                ".container { max-width: 600px; margin: 0 auto; background: #f9f9f9; padding: 20px; border-radius: 8px; }" +
+                "h2 { color: #2c3e50; }" +
+                "a { color: #3498db; text-decoration: none; }" +
+                "a:hover { text-decoration: underline; }" +
+                ".button { display: inline-block; padding: 10px 20px; background: #3498db; color: white; border-radius: 5px; text-align: center; }" +
+                "</style>" +
+                "</head>" +
+                "<body>" +
+                "<div class='container'>" +
+                "<h2>Đặt lại mật khẩu</h2>" +
+                "<p>Kính gửi Quý khách,</p>" +
+                "<p>Chúng tôi nhận được yêu cầu đặt lại mật khẩu cho tài khoản của bạn. Vui lòng nhấp vào nút dưới đây để đặt lại mật khẩu:</p>" +
+                "<p><a href='" + resetUrl + "' class='button'>Đặt lại mật khẩu</a></p>" +
+                "<p>Nếu bạn không thực hiện yêu cầu này, xin vui lòng bỏ qua email này.</p>" +
+                "<p>Nếu cần hỗ trợ, vui lòng liên hệ qua email: <a href='mailto:tungvladgod@gmail.com'>support@eventmanagement.com</a>.</p>" +
+                "<p>Trân trọng,<br>Đội ngũ Event Management</p>" +
+                "</div>" +
+                "</body>" +
+                "</html>";
+
+        sendHtmlEmail(to, subject, htmlContent);
     }
 
     @Override
@@ -175,11 +197,71 @@ public class EmailServiceImpl implements EmailService {
     public String sendVerificationCode(String email) throws MessagingException {
         String code = String.format("%06d", new Random().nextInt(999999));
         MimeMessage message = mailSender.createMimeMessage();
-        MimeMessageHelper helper = new MimeMessageHelper(message, false);
+        MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8"); // Enable HTML content
         helper.setTo(email);
-        helper.setSubject("Registration Verification Code");
-        helper.setText(code);
+        helper.setSubject("Mã Xác Minh Đăng Ký Tài Khoản");
+
+        // Nội dung email được định dạng bằng HTML
+        String htmlContent = "<!DOCTYPE html>" +
+                "<html>" +
+                "<body style='font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;'>" +
+                "<h2 style='color: #2c3e50;'>Xác Minh Đăng Ký Tài Khoản</h2>" +
+                "<p>Kính gửi Quý khách,</p>" +
+                "<p>Cảm ơn bạn đã đăng ký tài khoản tại hệ thống của chúng tôi. Để hoàn tất quá trình đăng ký, vui lòng sử dụng mã xác minh dưới đây:</p>" +
+                "<div style='background-color: #f8f9fa; padding: 15px; text-align: center; border-radius: 5px; margin: 20px 0;'>" +
+                "<h3 style='color: #e74c3c; margin: 0;'>Mã xác minh: " + code + "</h3>" +
+                "</div>" +
+                "<p>Vui lòng nhập mã này vào trang xác minh trên website của chúng tôi để kích hoạt tài khoản </p>" +
+                "<p><strong>Lưu ý:</strong> Vui lòng không chia sẻ mã xác minh này với bất kỳ ai để đảm bảo an toàn cho tài khoản của bạn.</p>" +
+                "<p>Nếu bạn không thực hiện yêu cầu này, xin vui lòng bỏ qua email này.</p>" +
+                "<p>Nếu cần hỗ trợ, vui lòng liên hệ với chúng tôi qua email: <a href='mailto:\n" +
+                "tungvladgod@gmail.com' style='color: #3498db;'>support@eventmanagement.com</a>.</p>" +
+                "<p>Trân trọng,<br>Đội ngũ Event Management</p>" +
+                "<hr style='border-top: 1px solid #eee;'>" +
+                "<p style='font-size: 12px; color: #777;'>Đây là email tự động, vui lòng không trả lời trực tiếp. Nếu cần hỗ trợ, liên hệ qua email hỗ trợ ở trên.</p>" +
+                "</body>" +
+                "</html>";
+
+        helper.setText(htmlContent, true); // true để bật chế độ HTML
         mailSender.send(message);
         return code;
     }
+    @Override
+    public void sendNewEventNotification(String to, String eventName, String eventStart, String eventLocation, String eventUrl) throws MessagingException {
+        String safeEventName = escapeHtml4(eventName);
+        String subject = "Sự kiện mới: " + safeEventName;
+
+        String htmlContent = "<!DOCTYPE html>" +
+                "<html lang='vi'>" +
+                "<head>" +
+                "<meta charset='UTF-8'>" +
+                "<meta name='viewport' content='width=device-width, initial-scale=1.0'>" +
+                "<title>Thông báo sự kiện mới</title>" +
+                "<style>" +
+                "body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 20px; }" +
+                ".container { max-width: 600px; margin: 0 auto; background: #f9f9f9; padding: 20px; border-radius: 8px; }" +
+                "h2 { color: #2c3e50; }" +
+                "a { color: #3498db; text-decoration: none; }" +
+                "a:hover { text-decoration: underline; }" +
+                ".button { display: inline-block; padding: 10px 20px; background: #3498db; color: white; border-radius: 5px; text-align: center; }" +
+                "</style>" +
+                "</head>" +
+                "<body>" +
+                "<div class='container'>" +
+                "<h2>Thông báo sự kiện mới</h2>" +
+                "<p>Kính gửi Quý khách,</p>" +
+                "<p>Chúng tôi rất vui thông báo rằng một sự kiện mới vừa được tạo: <strong>" + safeEventName + "</strong>.</p>" +
+                "<p><strong>Thời gian:</strong> " + eventStart + "</p>" +
+                "<p><strong>Địa điểm:</strong> " + eventLocation + "</p>" +
+                "<p>Hãy tham gia ngay để không bỏ lỡ sự kiện thú vị này!</p>" +
+                "<p><a href='" + eventUrl + "' class='button'>Xem chi tiết sự kiện</a></p>" +
+                "<p>Nếu cần hỗ trợ, vui lòng liên hệ qua email: <a href='mailto:tungvladgod@gmail.com'>support@eventmanagement.com</a>.</p>" +
+                "<p>Trân trọng,<br>Đội ngũ Event Management</p>" +
+                "</div>" +
+                "</body>" +
+                "</html>";
+
+        sendHtmlEmail(to, subject, htmlContent);
+    }
+
 }

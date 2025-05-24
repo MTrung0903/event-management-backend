@@ -140,7 +140,7 @@ public class AdminServiceImpl {
         // 7.6 Top Event Category (Loại sự kiện có doanh thu cao nhất)
         Map<String, Double> revenueByCategory = events.stream()
                 .collect(Collectors.toMap(
-                        Event::getEventType,
+                        event -> event.getEventType().getTypeName(), // Lấy typeName từ EventType
                         event -> event.getBookings().stream()
                                 .filter(b -> "PAID".equals(b.getBookingStatus()))
                                 .mapToDouble(b -> b.getTransaction() != null ? b.getTransaction().getTransactionAmount() : 0.0)

@@ -14,4 +14,6 @@ public interface EmailService {
     void sendHtmlEmail(String to, String subject, String htmlContent);
 
     String sendVerificationCode(String email) throws MessagingException;
+
+    void sendNewEventNotification(String to, String eventName, String eventStart, String eventLocation, String eventUrl) throws MessagingException;
 }

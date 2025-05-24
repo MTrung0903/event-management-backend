@@ -8,6 +8,7 @@ import hcmute.fit.event_management.repository.UserRepository;
 import hcmute.fit.event_management.repository.PasswordResetTokenRepository;
 import hcmute.fit.event_management.service.AuthService;
 import hcmute.fit.event_management.util.JwtTokenUtil;
+import jakarta.mail.MessagingException;
 import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -78,7 +79,7 @@ public class AuthServiceImpl implements AuthService {
     }
     @Transactional
     @Override
-    public ResponseEntity<Response> sendResetPassword(String email) {
+    public ResponseEntity<Response> sendResetPassword(String email) throws MessagingException {
         // Tìm tài khoản theo email
         Optional<User> accountOpt = userRepository.findByEmail(email);
         if (accountOpt.isEmpty()) {
