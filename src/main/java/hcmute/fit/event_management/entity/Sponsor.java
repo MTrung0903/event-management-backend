@@ -38,8 +38,6 @@ public class Sponsor {
     private String sponsorRepresentativeEmail;
     @Column(name = "representative_phone")
     private String sponsorRepresentativePhone;
-
-
     @OneToMany(mappedBy = "sponsor")
     private List<SponsorEvent> listSponsorEvents;
 }

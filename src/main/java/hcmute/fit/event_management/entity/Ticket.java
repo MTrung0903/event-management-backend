@@ -27,6 +27,8 @@ public class Ticket {
     private double price;
     @Column(name = "quantity")
     private int quantity;
+    @Column(name = "sold", columnDefinition = "INT DEFAULT 0")
+    private int sold;
     @JsonFormat(pattern = "yyyy-MM-dd ", timezone = "UTC")
     @Column(name = "start_time")
     private Date startTime;

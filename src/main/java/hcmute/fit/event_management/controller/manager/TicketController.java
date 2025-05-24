@@ -104,10 +104,7 @@ public class TicketController {
 
         // Vé đã bán
         List<Booking> bookings = bookingService.findByEventEventID(eventId);
-        int soldTickets = bookings.stream()
-                .flatMap(b -> b.getBookingDetails().stream())
-                .mapToInt(bd -> bd.getQuantity())
-                .sum();
+        int soldTickets = tickets.stream().mapToInt(Ticket::getSold).sum();
 
         // Vé đã check-in
         List<CheckInTicket> checkIns = checkInTicketService.findByBookingDetailsBookingEventEventID(eventId);

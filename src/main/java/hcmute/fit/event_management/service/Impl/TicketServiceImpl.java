@@ -137,4 +137,8 @@ public class TicketServiceImpl implements ITicketService {
     public List<Ticket> findByEventEventID(int eventId) {
         return ticketRepository.findByEventEventID(eventId);
     }
+    @Override
+    public <S extends Ticket> S save(S entity) {
+        return ticketRepository.save(entity);
+    }
 }

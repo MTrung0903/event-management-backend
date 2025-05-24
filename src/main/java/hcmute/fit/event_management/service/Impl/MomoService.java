@@ -169,7 +169,7 @@ public class MomoService {
         // Cập nhật số lượng vé
         List<Ticket> updatedTickets = booking.getBookingDetails().stream().map(detail -> {
             Ticket ticket = detail.getTicket();
-            ticket.setQuantity(ticket.getQuantity() - detail.getQuantity());
+            ticket.setSold(ticket.getSold() + detail.getQuantity());
             return ticket;
         }).collect(Collectors.toList());
 

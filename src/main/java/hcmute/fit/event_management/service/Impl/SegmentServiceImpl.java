@@ -124,4 +124,9 @@ public class SegmentServiceImpl implements ISegmentService {
             }
         }
     }
+
+    @Override
+    public List<Speaker> getSpeakerByEventId(int eventId) {
+        return segmentRepository.getSpeakerByEventId(eventId);
+    }
 }

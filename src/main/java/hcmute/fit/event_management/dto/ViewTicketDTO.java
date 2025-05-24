@@ -13,5 +13,4 @@ import java.util.List;
 public class ViewTicketDTO {
     private EventDTO event;
     private List<CheckInTicketDTO> tickets;
-
 }

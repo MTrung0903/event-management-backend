@@ -187,7 +187,7 @@ public class VNPAYService {
             List<Ticket> ticketsToUpdate = booking.getBookingDetails().stream()
                     .map(details -> {
                         Ticket ticket = details.getTicket();
-                        ticket.setQuantity(ticket.getQuantity() - details.getQuantity());
+                        ticket.setSold(ticket.getSold() + details.getQuantity());
                         return ticket;
                     })
                     .collect(Collectors.toList());

@@ -1,8 +1,11 @@
 package hcmute.fit.event_management.service;
 
 
+import hcmute.fit.event_management.entity.Sponsor;
 import hcmute.fit.event_management.entity.SponsorEvent;
 import hcmute.fit.event_management.entity.keys.SponsorEventId;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 import java.util.Optional;
@@ -23,5 +26,8 @@ public interface ISponsorEventService {
 
     long countSponsorsByOrganizer(int userId);
 
-    List<SponsorEvent> findByEventUserUserId(int eventId);
+    List<Sponsor> findDistinctSponsorsByEventUserUserId(int eventId);
+
+    Page<SponsorEvent> findByEventId(int eventId, Pageable pageable);
+    Page<SponsorEvent> findByEventIdWithFilters(int eventId, String search, String level, Pageable pageable);
 }
