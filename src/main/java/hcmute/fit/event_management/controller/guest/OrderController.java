@@ -53,12 +53,12 @@ public class OrderController {
 
         // Lọc các đơn hết hạn & chưa thanh toán để xóa
         List<Booking> expiredUnpaidBookings = bookings.stream()
-                .filter(b -> b.getExpireDate().before(new Date()) && !"PAID".equals(b.getBookingStatus()))
+                .filter(b -> b.getExpireDate().before(new Date()) && "PENDING".equals(b.getBookingStatus()))
                 .collect(Collectors.toList());
 
         // Chỉ lấy các đơn đã thanh toán
         List<Booking> paidBookings = bookings.stream()
-                .filter(b -> "PAID".equals(b.getBookingStatus()))
+                .filter(b -> "PAID".equals(b.getBookingStatus()) || "CANCELED".equals(b.getBookingStatus()))
                 .toList();
 
         // Xóa các đơn hết hạn chưa thanh toán
@@ -67,14 +67,12 @@ public class OrderController {
         // Chuyển đổi sang MyOrderDTO
         List<MyOrderDTO> myOrderDTOList = paidBookings.stream().map(booking -> {
             MyOrderDTO myOrderDTO = new MyOrderDTO();
-
             // Set thông tin giao dịch nếu có
             transactionService.findByOrderCode(booking.getBookingCode()).ifPresent(transaction -> {
                 TransactionDTO transactionDTO = new TransactionDTO();
                 BeanUtils.copyProperties(transaction, transactionDTO);
                 myOrderDTO.setTransaction(transactionDTO);
             });
-
             // Set thông tin sự kiện
             Event event = booking.getEvent();
             EventLocation eventLocation = event.getEventLocation();
@@ -153,19 +151,5 @@ public class OrderController {
         viewTicketDTO.setTickets(tickets);
         return ResponseEntity.ok(viewTicketDTO);
     }
-
-   @GetMapping("/test")
-    public void test() throws Exception {
-       Optional<Booking> optionalBooking = bookingRepository.findByBookingCode("1746417955367");
-       if (optionalBooking.isEmpty()) return;
-       Booking booking = optionalBooking.get();
-       List<BookingDetails> bkdts = booking.getBookingDetails();
-       List<CheckInTicket> tickets = new ArrayList<>();
-       for (BookingDetails bkdt : bkdts) {
-           tickets.addAll(bkdt.getCheckInTickets());
-       }
-       emailServiceImpl.sendThanksPaymentEmail("sidedlove03@gmail.com", "Event ABC", "1746417955367", "UserABC", tickets);
-   }
-
 
 }

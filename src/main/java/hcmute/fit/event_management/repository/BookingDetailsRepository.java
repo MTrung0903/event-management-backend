@@ -16,9 +16,9 @@ public interface BookingDetailsRepository extends JpaRepository<BookingDetails, 
     List<BookingDetails> findByTicketId(@Param("ticketId") int ticketId);
     @Query("select bd from BookingDetails bd where bd.booking.bookingId = :bookingId")
     List<BookingDetails> findByBookingId(@Param("bookingId") int bookingId);
-    @Query("SELECT SUM(bd.quantity) FROM BookingDetails bd")
+    @Query("SELECT COALESCE(SUM(bd.quantity),0) FROM BookingDetails bd")
     Long countTotalTicketsSold();
-    @Query("SELECT SUM(bd.quantity) FROM BookingDetails bd WHERE MONTH(bd.booking.createDate) = :month AND YEAR(bd.booking.createDate) = :year")
+    @Query("SELECT COALESCE(SUM(bd.quantity),0) FROM BookingDetails bd WHERE MONTH(bd.booking.createDate) = :month AND YEAR(bd.booking.createDate) = :year")
     Long countTicketsSoldByMonth(@Param("month") int month, @Param("year") int year);
     @Query(value = """
     SELECT e.event_id AS eventId, e.event_name AS eventName, e.venue_name AS venueName,
@@ -33,7 +33,7 @@ public interface BookingDetailsRepository extends JpaRepository<BookingDetails, 
     GROUP BY e.event_id, e.event_name, e.venue_name, e.event_type, e.event_status
     """, nativeQuery = true)
     List<Object[]> getEventSalesSummaryWithImage();
-    @Query("SELECT SUM(bd.quantity) FROM BookingDetails bd WHERE bd.booking.event.user.userId = :userId")
+    @Query("SELECT COALESCE(SUM(bd.quantity), 0) FROM BookingDetails bd WHERE bd.booking.event.user.userId = :userId")
     long countTicketsSoldByOrganizer(int userId);
     List<BookingDetails> findByTicketTicketId(int ticketId);
 }

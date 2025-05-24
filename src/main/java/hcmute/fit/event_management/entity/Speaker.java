@@ -26,14 +26,8 @@ public class Speaker {
     private String speakerEmail;
     @Column(name = "speaker_phone")
     private String speakerPhone;
-    @Column(name = "speaker_experience")
-    private String speakerExperience;
     @Column(name = "speaker_desc")
     private String speakerDesc;
-    @Column(name = "speaker_social_media")
-    private String speakerSocialMedia;
-    @Column(name = "speaker_status")
-    private String speakerStatus;
     @OneToMany(mappedBy = "speaker",cascade = CascadeType.ALL)
     private List<Segment> segments;
     @OneToMany(mappedBy = "speaker",cascade = CascadeType.ALL)

@@ -22,9 +22,6 @@ public class SponsorEventDTO {
     private String sponsorRepresentativePosition;
     private String sponsorType;
     private String sponsorLevel;
-    private Double sponsorAmount;
-    private String sponsorContribution;
-    private String sponsorContract;
     private String sponsorStartDate;
     private String sponsorEndDate;
     private String sponsorStatus;

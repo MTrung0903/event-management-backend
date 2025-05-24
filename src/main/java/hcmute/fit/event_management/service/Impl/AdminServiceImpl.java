@@ -91,7 +91,22 @@ public class AdminServiceImpl {
 
         // 6. Lấy danh sách sự kiện từ eventRepo
         List<Event> events = eventRepo.findAll();
-        List<EventDTO> eventDTOs = eventService.getAllEvent();
+        List<EventDTO> eventDTOs = events.stream().map(event -> {
+            long sold = event.getBookings().stream()
+                    .mapToLong(booking -> booking.getBookingDetails().stream()
+                            .mapToLong(BookingDetails::getQuantity)
+                            .sum())
+                    .sum();
+            double eventRevenue = event.getBookings().stream()
+                    .mapToDouble(booking -> booking.getTransaction() != null
+                            ? booking.getTransaction().getTransactionAmount()
+                            : 0)
+                    .sum();
+            EventDTO eventDTO = eventService.convertToDTO(event);
+            eventDTO.setSold(sold);
+            eventDTO.setEventRevenue(eventRevenue);
+            return eventDTO;
+        }).toList();
         // 7. Tính các chỉ số mới
         // 7.1 Total Revenue YTD (Doanh thu từ đầu năm 2025 đến nay)
         double totalRevenueYTD = 0.0;

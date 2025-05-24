@@ -1,10 +1,13 @@
 package hcmute.fit.event_management.service.Impl;
 
+import hcmute.fit.event_management.entity.Sponsor;
 import hcmute.fit.event_management.entity.SponsorEvent;
 import hcmute.fit.event_management.entity.keys.SponsorEventId;
 import hcmute.fit.event_management.repository.SponsorEventRepository;
 import hcmute.fit.event_management.service.ISponsorEventService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -45,5 +48,17 @@ public class SponsorEventServiceImpl implements ISponsorEventService {
     @Override
     public long countSponsorsByOrganizer(int userId) {
         return sponsorEventRepository.countSponsorsByOrganizer(userId);
+    }
+    @Override
+    public List<Sponsor> findDistinctSponsorsByEventUserUserId(int eventId) {
+        return sponsorEventRepository.findDistinctSponsorsByEventUserUserId(eventId);
+    }
+    @Override
+    public Page<SponsorEvent> findByEventId(int eventId, Pageable pageable) {
+        return sponsorEventRepository.findByEventId(eventId, pageable);
+    }
+    @Override
+    public Page<SponsorEvent> findByEventIdWithFilters(int eventId, String search, String level, Pageable pageable) {
+        return sponsorEventRepository.findByEventIdWithFilters(eventId, search, level, pageable);
     }
 }

@@ -1,6 +1,5 @@
 package hcmute.fit.event_management.service.Impl;
 
-import hcmute.fit.event_management.entity.Booking;
 import hcmute.fit.event_management.entity.CheckInTicket;
 import hcmute.fit.event_management.repository.CheckInTicketRepository;
 import hcmute.fit.event_management.service.ICheckInTicketService;
@@ -12,6 +11,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.repository.query.FluentQuery;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
@@ -181,5 +181,10 @@ public class ICheckInTicketServiceImpl implements ICheckInTicketService {
     @Override
     public List<CheckInTicket> findByBookingDetailsBookingEventEventID(int eventID) {
         return checkInTicketRepository.findByBookingDetailsBookingEventEventID(eventID);
+    }
+
+    @Override
+    public Page<CheckInTicket> findByBookingDetailsBookingUserUserId(int userId, LocalDate date, String search, Pageable pageable) {
+        return checkInTicketRepository.findByBookingDetailsBookingUserUserId(userId, date, search, pageable);
     }
 }

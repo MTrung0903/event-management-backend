@@ -170,7 +170,7 @@ public class VNPAYService {
         String info = URLDecoder.decode(request.getParameter("vnp_OrderInfo"), StandardCharsets.UTF_8);
         String responseCode = request.getParameter("vnp_ResponseCode");
         String message = request.getParameter(responseCode);
-
+        String transactionNo = request.getParameter("vnp_TransactionNo");
         Optional<Booking> optionalBooking = bookingRepository.findByBookingCode(txnRef);
         if (optionalBooking.isEmpty()) return;
 
@@ -187,7 +187,7 @@ public class VNPAYService {
             List<Ticket> ticketsToUpdate = booking.getBookingDetails().stream()
                     .map(details -> {
                         Ticket ticket = details.getTicket();
-                        ticket.setQuantity(ticket.getQuantity() - details.getQuantity());
+                        ticket.setSold(ticket.getSold() + details.getQuantity());
                         return ticket;
                     })
                     .collect(Collectors.toList());
@@ -195,6 +195,7 @@ public class VNPAYService {
             ticketRepository.saveAll(ticketsToUpdate);
             updateBookingStatus(booking, "PAID");
             Transaction transaction = new Transaction();
+            transaction.setTransactionNo(transactionNo);
             transaction.setBooking(booking);
             transaction.setTransactionInfo(info);
             transaction.setMessage(message);
@@ -233,17 +234,20 @@ public class VNPAYService {
         final String vnp_RequestId = UUID.randomUUID().toString();
         final String vnp_CreateDate = DateTimeFormatter.ofPattern("yyyyMMddHHmmss").format(LocalDateTime.now());
         final String vnp_IpAddr = getIpAddress(req);
+        final String vnp_TxnRef = transaction.getReferenceCode();
         final String vnp_OrderInfo = "Refund order " + transaction.getReferenceCode();
+        final String vnp_TransactionNo = transaction.getTransactionNo();
+        final String vnp_TransactionDate = transaction.getTransactionDate();
         Map<String, String> params = Map.ofEntries(
                 Map.entry("vnp_RequestId", vnp_RequestId),
                 Map.entry("vnp_Version", "2.1.0"),
                 Map.entry("vnp_Command", "refund"),
                 Map.entry("vnp_TmnCode", vnPayConfig.getTmnCode()),
                 Map.entry("vnp_TransactionType", "02"),
-                Map.entry("vnp_TxnRef", transaction.getReferenceCode()),
+                Map.entry("vnp_TxnRef", vnp_TxnRef),
                 Map.entry("vnp_Amount", String.valueOf(refundAmount)),
-                Map.entry("vnp_TransactionNo", String.valueOf(transaction.getTransactionId())),
-                Map.entry("vnp_TransactionDate", transaction.getTransactionDate()),
+                Map.entry("vnp_TransactionNo", vnp_TransactionNo),
+                Map.entry("vnp_TransactionDate", vnp_TransactionDate),
                 Map.entry("vnp_CreateBy", "admin"),
                 Map.entry("vnp_CreateDate", vnp_CreateDate),
                 Map.entry("vnp_IpAddr", vnp_IpAddr),
@@ -252,7 +256,7 @@ public class VNPAYService {
 
         String hashData = buildRawData(params);
         String secureHash = hmacSHA512(vnPayConfig.getSecretKey(), hashData);
-        params = new HashMap<>(params); // chuyển sang HashMap để thêm hash
+        params = new HashMap<>(params);
         params.put("vnp_SecureHash", secureHash);
 
         VNPAYRefund request = VNPAYRefund.builder()
@@ -261,11 +265,11 @@ public class VNPAYService {
                 .vnp_Command("refund")
                 .vnp_TmnCode(vnPayConfig.getTmnCode())
                 .vnp_TransactionType("02")
-                .vnp_TxnRef(transaction.getReferenceCode())
+                .vnp_TxnRef(vnp_TxnRef)
                 .vnp_Amount(refundAmount)
                 .vnp_OrderInfo(vnp_OrderInfo)
-                .vnp_TransactionNo(String.valueOf(transaction.getTransactionId()))
-                .vnp_TransactionDate(transaction.getTransactionDate())
+                .vnp_TransactionNo(vnp_TransactionNo)
+                .vnp_TransactionDate(vnp_TransactionDate)
                 .vnp_CreateBy("admin")
                 .vnp_CreateDate(vnp_CreateDate)
                 .vnp_IpAddr(vnp_IpAddr)
@@ -291,22 +295,22 @@ public class VNPAYService {
                 refund.setStatus("SUCCESSFULLY");
                 responseEntity.setStatusCode(1);
                 responseEntity.setMsg("SUCCESSFULLY");
+                transactionRepository.save(transaction);
+                Booking booking = transaction.getBooking();
+                booking.setBookingStatus("CANCELED");
+                bookingRepository.save(booking);
+                List<BookingDetails> bkts = booking.getBookingDetails();
+                for (BookingDetails bookingDetails : bkts) {
+                    List<CheckInTicket> tickets = bookingDetails.getCheckInTickets();
+                    for (CheckInTicket checkInTicket : tickets) {
+                        checkInTicket.setStatus(-1);
+                    }
+                    checkInTicketRepository.saveAll(tickets);
+                }
             } else {
                 refund.setStatus("FAILED");
                 responseEntity.setStatusCode(0);
                 responseEntity.setMsg("FAILED");
-            }
-            transactionRepository.save(transaction);
-            Booking booking = transaction.getBooking();
-            booking.setBookingStatus("CANCELED");
-            bookingRepository.save(booking);
-            List<BookingDetails> bkts = booking.getBookingDetails();
-            for (BookingDetails bookingDetails : bkts) {
-                List<CheckInTicket> tickets = bookingDetails.getCheckInTickets();
-                for (CheckInTicket checkInTicket : tickets) {
-                    checkInTicket.setStatus(-1);
-                }
-                checkInTicketRepository.saveAll(tickets);
             }
             refundRepository.save(refund);
         }
@@ -314,6 +318,5 @@ public class VNPAYService {
         responseEntity.setData(refundDTO);
         return ResponseEntity.ok(responseEntity);
     }
-
 }
 

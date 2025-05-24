@@ -1,6 +1,7 @@
 package hcmute.fit.event_management.service;
 
 import hcmute.fit.event_management.dto.SegmentDTO;
+import hcmute.fit.event_management.entity.Speaker;
 
 import java.util.List;
 
@@ -15,4 +16,5 @@ public interface ISegmentService {
 
     void deleteSegmentByEventId(int eventId);
 
+    List<Speaker> getSpeakerByEventId(int eventId);
 }

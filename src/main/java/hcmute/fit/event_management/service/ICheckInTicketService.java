@@ -8,6 +8,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.repository.query.FluentQuery;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
@@ -79,4 +80,7 @@ public interface ICheckInTicketService {
     CheckInTicket getById(String s);
 
     List<CheckInTicket> findByBookingDetailsBookingEventEventID(int eventID);
+
+
+    Page<CheckInTicket> findByBookingDetailsBookingUserUserId(int userId, LocalDate date, String search, Pageable pageable);
 }

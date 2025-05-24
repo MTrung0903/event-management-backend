@@ -37,4 +37,5 @@ public interface ISponsorService {
     List<SponsorEventDTO> getAllSponsorsInEvent(int eventId);
 
     Optional<Sponsor> findBySponsorEmailOrSponsorPhone(String email, String phone);
+
 }

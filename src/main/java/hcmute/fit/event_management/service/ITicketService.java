@@ -25,6 +25,6 @@ public interface ITicketService {
     List<Ticket> findByEventUserUserId(int userId);
 
     List<Ticket> findByEventEventID(int eventId);
-
     Response checkBeforeBuyTicket(String userEmail, int eventId);
+    <S extends Ticket> S save(S entity);
 }
