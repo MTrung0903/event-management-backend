@@ -183,4 +183,9 @@ public class TicketController {
         }
         return checkInTicketList;
     }
+    @GetMapping("{email}/check/{eventId}")
+    public ResponseEntity<Response> checkBeforeBuyTicket(@PathVariable String email, @PathVariable int eventId) {
+        return ResponseEntity.ok(ticketService.checkBeforeBuyTicket(email,eventId));
+    }
+
 }
