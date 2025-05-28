@@ -172,8 +172,10 @@ public class EventServiceImpl implements IEventService {
 
     @Override
     public List<EventDTO> getAllEvent() {
+        updateEventStatus();
         List<Event> events = eventRepository.findAll();
         List<EventDTO> eventDTOs = events.stream()
+                .filter(event -> !"Complete".equals(event.getEventStatus()))
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
         return sortEventsByStartTime(eventDTOs);
@@ -271,6 +273,7 @@ public class EventServiceImpl implements IEventService {
 
     @Override
     public List<EventDTO> findEventsByName(String eventName) {
+        updateEventStatus();
         List<Event> events = eventRepository.findByEventNameContainingIgnoreCase(eventName);
         List<EventDTO> eventDTOs = events.stream()
                 .filter(event -> !"Complete".equals(event.getEventStatus()))
@@ -281,8 +284,10 @@ public class EventServiceImpl implements IEventService {
 
     @Override
     public List<EventDTO> findEventsStatus(String eventStatus) {
+        updateEventStatus();
         List<Event> events = eventRepository.findByEventStatusIgnoreCase(eventStatus);
         List<EventDTO> eventDTOs = events.stream()
+                .filter(event -> !"Complete".equals(event.getEventStatus()))
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
         return sortEventsByStartTime(eventDTOs);
@@ -290,6 +295,7 @@ public class EventServiceImpl implements IEventService {
 
     @Override
     public List<EventDTO> findEventsByDate(LocalDateTime eventStart) {
+        updateEventStatus();
         List<Event> events = eventRepository.findByEventStart(eventStart);
         List<EventDTO> eventDTOs = events.stream()
                 .filter(event -> !"Complete".equals(event.getEventStatus()))
@@ -300,8 +306,10 @@ public class EventServiceImpl implements IEventService {
 
     @Override
     public List<EventDTO> findEventsByHost(String eventHost) {
+        updateEventStatus();
         List<Event> events = eventRepository.findByEventHostContainingIgnoreCase(eventHost);
         List<EventDTO> eventDTOs = events.stream()
+                .filter(event -> !"Complete".equals(event.getEventStatus()))
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
         return sortEventsByStartTime(eventDTOs);
@@ -309,6 +317,7 @@ public class EventServiceImpl implements IEventService {
 
     @Override
     public List<EventDTO> findEventsByLocation(String eventLocation) {
+        updateEventStatus();
         List<Event> events = eventRepository.findByEventLocationCityContainingIgnoreCase(eventLocation);
         List<EventDTO> eventDTOs = events.stream()
                 .filter(event -> !"Complete".equals(event.getEventStatus()))
@@ -319,6 +328,7 @@ public class EventServiceImpl implements IEventService {
 
     @Override
     public List<EventDTO> findEventsByTags(String tag) {
+        updateEventStatus();
         List<Event> events = eventRepository.findByTagsContainingIgnoreCase(tag);
         List<EventDTO> eventDTOs = events.stream()
                 .filter(event -> !"Complete".equals(event.getEventStatus()))
@@ -329,6 +339,7 @@ public class EventServiceImpl implements IEventService {
 
     @Override
     public List<EventDTO> findEventsByType(String eventType) {
+        updateEventStatus();
         EventType type = eventTypeRepository.findByTypeName(eventType);
         if (type == null) {
             logger.warn("Event type {} not found", eventType);
@@ -344,6 +355,7 @@ public class EventServiceImpl implements IEventService {
 
     @Override
     public List<EventDTO> findEventsByCurrentWeek() {
+        updateEventStatus();
         List<Event> events = eventRepository.findEventsByCurrentWeek();
         List<EventDTO> eventDTOs = events.stream()
                 .filter(event -> !"Complete".equals(event.getEventStatus()))
@@ -354,6 +366,7 @@ public class EventServiceImpl implements IEventService {
 
     @Override
     public List<EventDTO> findEventsByCurrentMonth() {
+        updateEventStatus();
         List<Event> events = eventRepository.findEventsByCurrentMonth();
         List<EventDTO> eventDTOs = events.stream()
                 .filter(event -> !"Complete".equals(event.getEventStatus()))
@@ -364,6 +377,7 @@ public class EventServiceImpl implements IEventService {
 
     @Override
     public List<EventDTO> findEventsByTicketType(String type) {
+        updateEventStatus();
         List<Event> events = eventRepository.findEventsByTicketType(type);
         List<EventDTO> eventDTOs = events.stream()
                 .filter(event -> !"Complete".equals(event.getEventStatus()))
@@ -374,6 +388,7 @@ public class EventServiceImpl implements IEventService {
 
     @Override
     public List<EventDTO> searchEventsByMultipleFilters(String eventCategory, String eventLocation, String eventStart, String ticketType) {
+        updateEventStatus();
         List<Event> resultEvents = eventRepository.findAll();
 
         if (eventCategory != null && !eventCategory.equals("all-types")) {
@@ -381,6 +396,7 @@ public class EventServiceImpl implements IEventService {
             if (type != null) {
                 List<Event> categoryEvents = eventRepository.findByEventType(type);
                 resultEvents = resultEvents.stream()
+
                         .filter(categoryEvents::contains)
                         .collect(Collectors.toList());
             } else {
@@ -425,6 +441,7 @@ public class EventServiceImpl implements IEventService {
 
     @Override
     public List<EventDTO> findEventsByNameAndLocation(String name, String location) {
+        updateEventStatus();
         List<Event> eventsByLocation = eventRepository.findByEventLocationCityContainingIgnoreCase(location);
         List<Event> filteredEvents = eventsByLocation.stream()
                 .filter(event -> event.getEventName() != null &&
@@ -462,6 +479,7 @@ public class EventServiceImpl implements IEventService {
 
     @Override
     public List<EventDTO> searchEventsByNameAndCity(String searchTerm, String cityKey) {
+        updateEventStatus();
         List<Event> filteredEvents = new ArrayList<>();
         if ("all-locations".equals(cityKey)) {
             filteredEvents = eventRepository.findByEventNameContainingIgnoreCase(searchTerm);
@@ -524,6 +542,7 @@ public class EventServiceImpl implements IEventService {
 
     @Override
     public List<EventDTO> getAllEventByHost(String email) {
+        updateEventStatus();
         Optional<User> host = userRepository.findByEmail(email);
         if (!host.isPresent()) {
             logger.error("User with email {} not found", email);
@@ -548,9 +567,11 @@ public class EventServiceImpl implements IEventService {
 
     @Override
     public List<EventDTO> topEventsByTicketsSold() {
+        updateEventStatus();
         Pageable pageable = PageRequest.of(0, 10);
         List<Event> topEvents = eventRepository.findTopEventsByTicketsSold("PAID", "SUCCESSFULLY", pageable);
         List<EventDTO> topEventDTO = topEvents.stream()
+                .filter(event -> !"Complete".equals(event.getEventStatus()))
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
         return sortEventsByStartTime(topEventDTO);
@@ -558,9 +579,11 @@ public class EventServiceImpl implements IEventService {
 
     @Override
     public List<EventDTO> top10FavoriteEvents() {
+        updateEventStatus();
         Pageable pageable = PageRequest.of(0, 10);
         List<Event> topEvents = eventRepository.findTop10FavoriteEvents(pageable);
         List<EventDTO> topEventDTO = topEvents.stream()
+                .filter(event -> !"Complete".equals(event.getEventStatus()))
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
         return sortEventsByStartTime(topEventDTO);
@@ -568,6 +591,7 @@ public class EventServiceImpl implements IEventService {
 
     @Override
     public List<String> top10Cities() {
+
         Pageable pageable = PageRequest.of(0, 10);
         List<String> top10Cities = eventRepository.findTop10CitiesByEventCount(pageable);
         List<String> topCity = new ArrayList<>();
@@ -580,9 +604,11 @@ public class EventServiceImpl implements IEventService {
 
     @Override
     public List<EventDTO> getEventsByUSer(int userId) {
+        updateEventStatus();
         User organizer = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
         List<Event> eventDB = eventRepository.findByUser(organizer);
         List<EventDTO> eventDTOList = eventDB.stream()
+
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
         return sortEventsByStartTime(eventDTOList);
@@ -616,6 +642,7 @@ public class EventServiceImpl implements IEventService {
 
     @Override
     public Set<EventDTO> findEventsByPreferredEventTypes(String email) {
+        updateEventStatus();
         Optional<User> userOpt = userRepository.findByEmail(email);
         if (!userOpt.isPresent()) {
             logger.error("User with email {} not found", email);
@@ -647,6 +674,7 @@ public class EventServiceImpl implements IEventService {
 
     @Override
     public Set<EventDTO> findEventsByPreferredTags(String email) {
+        updateEventStatus();
         Optional<User> userOpt = userRepository.findByEmail(email);
         if (!userOpt.isPresent()) {
             logger.error("User with email {} not found", email);
@@ -675,6 +703,7 @@ public class EventServiceImpl implements IEventService {
 
     @Override
     public List<EventDTO> findEventsByPreferredTypesAndTags(String email) {
+        updateEventStatus();
         Optional<User> userOpt = userRepository.findByEmail(email);
         if (!userOpt.isPresent()) {
             logger.error("User with email {} not found", email);
@@ -797,6 +826,7 @@ public class EventServiceImpl implements IEventService {
 
     @Override
     public List<EventViewDTO> getTopViewedEvents(int limit) {
+        updateEventStatus();
         List<Object[]> results = eventViewRepository.findTopViewedEvents();
         return results.stream()
                 .limit(limit)
