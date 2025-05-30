@@ -202,8 +202,8 @@ public class TicketServiceImpl implements ITicketService {
         }
 
         response.setStatusCode(200);
-        response.setMsg("User can purchase up to " + remainingFreeTickets + " free ticket(s) and " +
-                remainingPaidTickets + " paid ticket(s) for this event.");
+        response.setMsg("User can purchase up to " + remainingFreeTickets + " free ticket and " +
+                remainingPaidTickets + " paid tickets for this event.");
         response.setData(remainingTickets);
         return response;
     }
