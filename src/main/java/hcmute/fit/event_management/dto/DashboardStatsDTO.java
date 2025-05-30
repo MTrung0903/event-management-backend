@@ -11,35 +11,29 @@ import java.util.List;
 @NoArgsConstructor
 public class DashboardStatsDTO {
     private long totalEvents;
-    private long totalEventsThisMonth;
-    private String totalEventsChange;
-
+    private long currentEvents;
+    private String eventChange;
     private long totalBookings;
-    private long totalBookingsThisMonth;
-    private String totalBookingsChange;
-
+    private long currentBookings;
+    private String bookingChange;
     private Double totalRevenue;
-    private Double totalRevenueThisMonth;
-    private String totalRevenueChange;
-
+    private Double currentRevenue;
+    private String revenueChange;
     private long totalOrganizers;
-    private long totalOrganizersThisMonth;
-    private String totalOrganizersChange;
-
+    private long currentOrganizers;
+    private String organizerChange;
     private Long totalTicketsSold;
-    private Long totalTicketsSoldThisMonth;
-    private String totalTicketsSoldChange;
-
-    private List<EventDTO> events;
+    private Long currentTicketsSold;
+    private String ticketChange;
     private List<TransactionDTO> transactions;
-
-    private Double totalRevenueYTD;
-    private Double averageTicketPrice;
-    private Double refundRate;
+    private double totalRevenueYTD;
+    private double refundRate;
     private long newOrganizersThisMonth;
     private Double bookingConversionRate;
     private String topEventCategory;
     private long userEngagementScore;
-    private long totalActiveEvents; // Thêm trường mới
+    private long totalActiveEvents;
+    private List<EventDTO> events;
+
 }
 

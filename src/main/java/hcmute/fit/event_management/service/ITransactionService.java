@@ -83,4 +83,8 @@ public interface ITransactionService {
 
 
     Optional<Transaction> findByOrderCode(String orderCode);
+
+    double sumRevenueByOrganizerAndYear(int userId, int year);
+
+    List<Transaction> findByOrganizerAndYear(int userId, int year);
 }

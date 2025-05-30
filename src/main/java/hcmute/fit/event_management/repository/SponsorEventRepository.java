@@ -37,4 +37,6 @@ public interface SponsorEventRepository extends JpaRepository<SponsorEvent, Spon
                                                 @Param("search") String search,
                                                 @Param("level") String level,
                                                 Pageable pageable);
+    @Query("SELECT COUNT(se) FROM SponsorEvent se WHERE se.event.user.userId = :userId AND YEAR(se.event.eventStart) = :year")
+    long countSponsorsByOrganizerAndYear(@Param("userId") int userId, @Param("year") int year);
 }

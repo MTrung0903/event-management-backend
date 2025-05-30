@@ -90,4 +90,6 @@ public interface IBookingDetailsService {
     long countTicketsSoldByOrganizer(int userId);
 
     List<BookingDetails> findByTicketTicketId(int ticketId);
+
+    long countTicketsSoldByOrganizerAndYear(int userId, int year);
 }

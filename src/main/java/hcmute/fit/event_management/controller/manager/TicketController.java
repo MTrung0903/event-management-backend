@@ -55,23 +55,13 @@ public class TicketController {
         return ResponseEntity.ok( ticketService.deleteById(ticketId));
     }
 
-    @GetMapping("/check-in/{ticketCode}")
+    @GetMapping("/{eventId}/check-in/{ticketCode}")
     @PreAuthorize("hasAnyRole('ORGANIZER','TICKET MANAGER','CHECK-IN STAFF')")
-    public ResponseEntity<?> checkIn(@PathVariable String ticketCode, Authentication authentication) {
-        Response response = new Response();
-        String username = authentication.getName();
-        Optional<User> userOpt = userService.findByEmail(username);
-        if (userOpt.isEmpty()) {
-            response = new Response(0, "User not permission!", "");
-            return ResponseEntity.ok(response);
-        }
-        User user = userOpt.get();
-        int userId = user.getUserId();
-
+    public ResponseEntity<?> checkIn(@PathVariable int eventId, @PathVariable String ticketCode) {
+        Response response;
         CheckInTicket ticket = checkInTicketService.getReferenceById(ticketCode);
         if (ticket != null) {
-            if (ticket.getBookingDetails().getTicket().getEvent().getUser().getUserId() == userId) {
-
+            if (ticket.getBookingDetails().getTicket().getEvent().getEventID() == eventId) {
                 if (ticket.getStatus() == 1) {
                     response = new Response(0, "The ticket was checked", "");
                     return ResponseEntity.ok(response);
@@ -84,7 +74,7 @@ public class TicketController {
                 ticket.setCheckDate(LocalDateTime.now());
                 checkInTicketService.save(ticket);
             } else {
-                response = new Response(0, "The Ticket not in your event!", "");
+                response = new Response(0, "The Ticket not in this event!", "");
                 return ResponseEntity.ok(response);
             }
         } else {

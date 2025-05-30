@@ -14,6 +14,8 @@ public interface OrganizerRepository extends JpaRepository<Organizer, Integer> {
     Optional<Organizer> findByOrganizerName(String organizerName);
     @Query("SELECT COUNT(o) FROM Organizer o WHERE MONTH(o.registrationDate) = :month AND YEAR(o.registrationDate) = :year")
     long countOrganizersByMonth(@Param("month") int month, @Param("year") int year);
+    @Query("SELECT COUNT(o) FROM Organizer o WHERE YEAR(o.registrationDate) = :year")
+    long countOrganizersByYear(@Param("year") int year);
     Organizer findByUserUserId(int userId);
 
 }

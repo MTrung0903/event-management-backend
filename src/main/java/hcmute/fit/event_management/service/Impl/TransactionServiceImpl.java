@@ -191,4 +191,12 @@ public class TransactionServiceImpl implements ITransactionService {
     public Optional<Transaction> findByOrderCode(String orderCode) {
         return transactionRepository.findByOrderCode(orderCode);
     }
+    @Override
+    public double sumRevenueByOrganizerAndYear(int userId, int year) {
+        return transactionRepository.sumRevenueByOrganizerAndYear(userId, year);
+    }
+    @Override
+    public List<Transaction> findByOrganizerAndYear(int userId, int year) {
+        return transactionRepository.findByOrganizerAndYear(userId, year);
+    }
 }

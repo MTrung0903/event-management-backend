@@ -61,4 +61,8 @@ public class SponsorEventServiceImpl implements ISponsorEventService {
     public Page<SponsorEvent> findByEventIdWithFilters(int eventId, String search, String level, Pageable pageable) {
         return sponsorEventRepository.findByEventIdWithFilters(eventId, search, level, pageable);
     }
+    @Override
+    public long countSponsorsByOrganizerAndYear(int userId, int year) {
+        return sponsorEventRepository.countSponsorsByOrganizerAndYear(userId, year);
+    }
 }

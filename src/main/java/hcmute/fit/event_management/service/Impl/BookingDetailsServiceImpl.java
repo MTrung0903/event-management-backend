@@ -199,4 +199,8 @@ public class BookingDetailsServiceImpl implements IBookingDetailsService {
     public List<BookingDetails> findByTicketTicketId(int ticketId) {
         return bookingDetailsRepository.findByTicketTicketId(ticketId);
     }
+    @Override
+    public long countTicketsSoldByOrganizerAndYear(int userId, int year) {
+        return bookingDetailsRepository.countTicketsSoldByOrganizerAndYear(userId, year);
+    }
 }
