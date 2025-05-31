@@ -158,7 +158,7 @@ public class TicketController {
         return orders;
     }
     @GetMapping("{eventId}/check-in-tickets")
-    @PreAuthorize("hasRole('ORGANIZER')")
+    @PreAuthorize("hasAnyRole('ORGANIZER','TICKET MANAGER','CHECK-IN STAFF')")
     public List<Map<String, String>> getCheckInTickets(@PathVariable int eventId) {
         List<CheckInTicket> checkInTickets = checkInTicketService.findByBookingDetailsBookingEventEventID(eventId);
         List<Map<String, String>> checkInTicketList = new ArrayList<>();
