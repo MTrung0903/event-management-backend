@@ -62,7 +62,7 @@ public interface IEventService {
 
     Response deleteEventAndRefunds(HttpServletRequest request, int eventId) throws Exception;
     List<Event> findByUserUserId(int userId);
-
+    List<Event> findByUserUserIdAndYear(int userId, int year);
     Set<EventDTO> findEventsByPreferredEventTypes(String email);
 
     Set<EventDTO> findEventsByPreferredTags(String email);

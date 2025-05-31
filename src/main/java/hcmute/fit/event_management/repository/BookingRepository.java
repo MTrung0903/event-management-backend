@@ -33,4 +33,6 @@ public interface BookingRepository extends JpaRepository<Booking, Integer> {
     long countBookings();
     List<Booking> findByEventEventID(int eventId);
     List<Booking> findByEventEventIDOrderByCreateDateDesc(int eventId);
+    @Query("SELECT COUNT(b) FROM Booking b WHERE YEAR(b.createDate) = :year")
+    long countBookingsByYear(@Param("year") int year);
 }

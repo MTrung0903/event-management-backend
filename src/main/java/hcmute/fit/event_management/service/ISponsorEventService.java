@@ -30,4 +30,6 @@ public interface ISponsorEventService {
 
     Page<SponsorEvent> findByEventId(int eventId, Pageable pageable);
     Page<SponsorEvent> findByEventIdWithFilters(int eventId, String search, String level, Pageable pageable);
+
+    long countSponsorsByOrganizerAndYear(int userId, int year);
 }

@@ -20,6 +20,8 @@ public interface BookingDetailsRepository extends JpaRepository<BookingDetails, 
     Long countTotalTicketsSold();
     @Query("SELECT COALESCE(SUM(bd.quantity),0) FROM BookingDetails bd WHERE MONTH(bd.booking.createDate) = :month AND YEAR(bd.booking.createDate) = :year")
     Long countTicketsSoldByMonth(@Param("month") int month, @Param("year") int year);
+    @Query("SELECT COALESCE(SUM(bd.quantity), 0) FROM BookingDetails bd WHERE YEAR(bd.booking.createDate) = :year")
+    Long countTicketsSoldByYear(@Param("year") int year);
     @Query(value = """
     SELECT e.event_id AS eventId, e.event_name AS eventName, e.venue_name AS venueName,
            e.event_type AS eventType, SUM(bd.quantity) AS totalQuantity,
@@ -36,4 +38,6 @@ public interface BookingDetailsRepository extends JpaRepository<BookingDetails, 
     @Query("SELECT COALESCE(SUM(bd.quantity), 0) FROM BookingDetails bd WHERE bd.booking.event.user.userId = :userId")
     long countTicketsSoldByOrganizer(int userId);
     List<BookingDetails> findByTicketTicketId(int ticketId);
+    @Query("SELECT COALESCE(SUM(bd.quantity), 0) FROM BookingDetails bd WHERE bd.booking.event.user.userId = :userId AND YEAR(bd.booking.createDate) = :year")
+    long countTicketsSoldByOrganizerAndYear(@Param("userId") int userId, @Param("year") int year);
 }

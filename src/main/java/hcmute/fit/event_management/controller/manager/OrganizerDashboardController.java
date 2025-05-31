@@ -2,7 +2,6 @@ package hcmute.fit.event_management.controller.manager;
 
 import hcmute.fit.event_management.dto.DashboardOrganizer;
 import hcmute.fit.event_management.dto.EventDTO;
-import hcmute.fit.event_management.dto.EventLocationDTO;
 import hcmute.fit.event_management.entity.*;
 import hcmute.fit.event_management.service.*;
 import org.springframework.beans.BeanUtils;
@@ -12,6 +11,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.HashMap;
@@ -19,35 +19,27 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-
 @RestController
 @RequestMapping("/api/v1/organizer/dashboard")
 public class OrganizerDashboardController {
     @Autowired
-    IUserService userService;
+    private IUserService userService;
     @Autowired
     private IEventService eventService;
-
     @Autowired
     private IBookingDetailsService bookingDetailsService;
-
     @Autowired
     private ITransactionService transactionService;
-
     @Autowired
     private ISponsorEventService sponsorEventService;
-
     @Autowired
     private IOrganizerService organizerService;
 
-    @Autowired
-    private ITicketService ticketService;
-
-    @Autowired
-    private IOrganizerService organizationService;
     @GetMapping
     @PreAuthorize("hasRole('ORGANIZER')")
-    public ResponseEntity<?> getDashboardData(Authentication authentication) {
+    public ResponseEntity<?> getDashboardData(
+            Authentication authentication,
+            @RequestParam(value = "year", required = false) Integer year) {
         // Get Organizer based on authenticated user
         String username = authentication.getName();
         Optional<User> userOpt = userService.findByEmail(username);
@@ -57,23 +49,33 @@ public class OrganizerDashboardController {
         User user = userOpt.get();
         int userId = user.getUserId();
 
-        // Fetch organizer's events (avoid lazy loading issues)
-        List<Event> events = eventService.findByUserUserId(userId);
+        // Fetch organizer's events, filtered by year if provided
+        List<Event> events = year != null
+                ? eventService.findByUserUserIdAndYear(userId, year)
+                : eventService.findByUserUserId(userId);
 
         // Compute metrics
         long totalEvents = events.size();
-        long totalTicketsSold = bookingDetailsService.countTicketsSoldByOrganizer(userId);
-        double totalRevenue = transactionService.sumRevenueByOrganizer(userId);
-        long totalSponsors = sponsorEventService.countSponsorsByOrganizer(userId);
+        long totalTicketsSold = year != null
+                ? bookingDetailsService.countTicketsSoldByOrganizerAndYear(userId, year)
+                : bookingDetailsService.countTicketsSoldByOrganizer(userId);
+        double totalRevenue = year != null
+                ? transactionService.sumRevenueByOrganizerAndYear(userId, year)
+                : transactionService.sumRevenueByOrganizer(userId);
+        long totalSponsors = year != null
+                ? sponsorEventService.countSponsorsByOrganizerAndYear(userId, year)
+                : sponsorEventService.countSponsorsByOrganizer(userId);
 
-        // Revenue by month
-        List<Transaction> transactions = transactionService.findByOrganizer(userId);
+        // Revenue by month for the specified year (or all years if year is null)
+        List<Transaction> transactions = year != null
+                ? transactionService.findByOrganizerAndYear(userId, year)
+                : transactionService.findByOrganizer(userId);
         double[] revenueByMonth = new double[12];
         transactions.forEach(transaction -> {
-            String monthStr = transaction.getTransactionDate().substring(4, 6);
-            int monthIndex = Integer.parseInt(monthStr, 10) - 1;
+            String dateStr = transaction.getTransactionDate();
+            int monthIndex = Integer.parseInt(dateStr.substring(4, 6), 10) - 1;
             if (monthIndex >= 0 && monthIndex < 12) {
-                revenueByMonth[monthIndex] += transaction.getTransactionAmount();
+                revenueByMonth[monthIndex] += transaction.getTransactionAmount() * 0.95;
             }
         });
 
@@ -97,15 +99,14 @@ public class OrganizerDashboardController {
 
         // Create DashboardOrganizer DTO
         DashboardOrganizer dashboardOrganizer = new DashboardOrganizer();
-        Organizer organizer = organizationService.findByUserUserId(userId);
-        dashboardOrganizer.setOrganizer(organizer != null ? organizer.getOrganizerName() : "N/A"); // Use organizer name or ID
+        Organizer organizer = organizerService.findByUserUserId(userId);
+        dashboardOrganizer.setOrganizer(organizer != null ? organizer.getOrganizerName() : "N/A");
         dashboardOrganizer.setTotalEvents(totalEvents);
         dashboardOrganizer.setRevenueByMonth(revenueByMonth);
         dashboardOrganizer.setEvents(eventsWithStats);
         dashboardOrganizer.setTotalSponsors(totalSponsors);
         dashboardOrganizer.setTotalRevenue(totalRevenue);
         dashboardOrganizer.setTotalTicketsSold(totalTicketsSold);
-
 
         return ResponseEntity.ok(dashboardOrganizer);
     }

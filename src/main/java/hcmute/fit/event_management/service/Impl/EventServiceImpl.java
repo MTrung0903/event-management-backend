@@ -564,6 +564,10 @@ public class EventServiceImpl implements IEventService {
     public List<Event> findByUserUserId(int userId) {
         return eventRepository.findByUserUserId(userId);
     }
+    @Override
+    public List<Event> findByUserUserIdAndYear(int userId, int year) {
+        return eventRepository.findByUserUserIdAndYear(userId, year);
+    }
 
     @Override
     public List<EventDTO> topEventsByTicketsSold() {
