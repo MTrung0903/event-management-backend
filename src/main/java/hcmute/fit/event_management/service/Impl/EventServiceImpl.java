@@ -628,8 +628,10 @@ public class EventServiceImpl implements IEventService {
             }
         }
         // Xóa bản ghi trong event_views
-        EventView eventView = eventViewRepository.getEventView(eventId);
-        eventViewRepository.delete(eventView);
+        List<EventView> eventView = eventViewRepository.getEventView(eventId);
+        for (EventView e : eventView){
+            eventViewRepository.delete(e);
+        }
         List<Transaction> transactions = transactionRepository.transactions(eventId);
         if (!transactions.isEmpty()) {
             for (Transaction transaction : transactions) {

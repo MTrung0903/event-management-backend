@@ -25,5 +25,5 @@ public interface EventViewRepository extends JpaRepository<EventView, Long> {
     long countByEventEventID(Integer eventId);
 
     @Query("select e from EventView e where e.event.eventID = :eventId")
-   EventView getEventView(@Param("eventId") Integer eventId);
+   List<EventView> getEventView(@Param("eventId") Integer eventId);
 }
