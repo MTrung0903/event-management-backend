@@ -271,7 +271,7 @@ public class EventServiceImpl implements IEventService {
         updateEventStatus();
         List<Event> events = eventRepository.findByEventNameContainingIgnoreCase(eventName);
         List<EventDTO> eventDTOs = events.stream()
-                .filter(event -> !"Complete".equals(event.getEventStatus()))
+                .filter(event -> !"Complete".equals(event.getEventStatus()) && !"Draft".equals(event.getEventStatus()))
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
         return sortEventsByStartTime(eventDTOs);
@@ -282,7 +282,7 @@ public class EventServiceImpl implements IEventService {
         updateEventStatus();
         List<Event> events = eventRepository.findByEventStatusIgnoreCase(eventStatus);
         List<EventDTO> eventDTOs = events.stream()
-                .filter(event -> !"Complete".equals(event.getEventStatus()))
+               // .filter(event -> !"Complete".equals(event.getEventStatus()) && !"Draft".equals(event.getEventStatus()))
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
         return sortEventsByStartTime(eventDTOs);
@@ -293,7 +293,7 @@ public class EventServiceImpl implements IEventService {
         updateEventStatus();
         List<Event> events = eventRepository.findByEventStart(eventStart);
         List<EventDTO> eventDTOs = events.stream()
-                .filter(event -> !"Complete".equals(event.getEventStatus()))
+                .filter(event -> !"Complete".equals(event.getEventStatus()) && !"Report".equals(event.getEventStatus()) && !"Draft".equals(event.getEventStatus()))
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
         return sortEventsByStartTime(eventDTOs);
@@ -304,7 +304,7 @@ public class EventServiceImpl implements IEventService {
         updateEventStatus();
         List<Event> events = eventRepository.findByEventHostContainingIgnoreCase(eventHost);
         List<EventDTO> eventDTOs = events.stream()
-                .filter(event -> !"Complete".equals(event.getEventStatus()))
+                .filter(event -> !"Complete".equals(event.getEventStatus()) && !"Report".equals(event.getEventStatus()) && !"Draft".equals(event.getEventStatus()))
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
         return sortEventsByStartTime(eventDTOs);
@@ -315,7 +315,7 @@ public class EventServiceImpl implements IEventService {
         updateEventStatus();
         List<Event> events = eventRepository.findByEventLocationCityContainingIgnoreCase(eventLocation);
         List<EventDTO> eventDTOs = events.stream()
-                .filter(event -> !"Complete".equals(event.getEventStatus()))
+                .filter(event -> !"Complete".equals(event.getEventStatus()) && !"Report".equals(event.getEventStatus()) && !"Draft".equals(event.getEventStatus()))
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
         return sortEventsByStartTime(eventDTOs);
@@ -326,7 +326,7 @@ public class EventServiceImpl implements IEventService {
         updateEventStatus();
         List<Event> events = eventRepository.findByTagsContainingIgnoreCase(tag);
         List<EventDTO> eventDTOs = events.stream()
-                .filter(event -> !"Complete".equals(event.getEventStatus()))
+                .filter(event -> !"Complete".equals(event.getEventStatus()) && !"Report".equals(event.getEventStatus()) && !"Draft".equals(event.getEventStatus()))
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
         return sortEventsByStartTime(eventDTOs);
@@ -342,7 +342,7 @@ public class EventServiceImpl implements IEventService {
         }
         List<Event> events = eventRepository.findByEventType(type);
         List<EventDTO> eventDTOs = events.stream()
-                .filter(event -> !"Complete".equals(event.getEventStatus()))
+                .filter(event -> !"Complete".equals(event.getEventStatus()) && !"Report".equals(event.getEventStatus()) && !"Draft".equals(event.getEventStatus()))
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
         return sortEventsByStartTime(eventDTOs);
@@ -353,7 +353,7 @@ public class EventServiceImpl implements IEventService {
         updateEventStatus();
         List<Event> events = eventRepository.findEventsByCurrentWeek();
         List<EventDTO> eventDTOs = events.stream()
-                .filter(event -> !"Complete".equals(event.getEventStatus()))
+                .filter(event -> !"Complete".equals(event.getEventStatus()) && !"Report".equals(event.getEventStatus()) && !"Draft".equals(event.getEventStatus()))
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
         return sortEventsByStartTime(eventDTOs);
@@ -364,7 +364,7 @@ public class EventServiceImpl implements IEventService {
         updateEventStatus();
         List<Event> events = eventRepository.findEventsByCurrentMonth();
         List<EventDTO> eventDTOs = events.stream()
-                .filter(event -> !"Complete".equals(event.getEventStatus()))
+                .filter(event -> !"Complete".equals(event.getEventStatus()) && !"Report".equals(event.getEventStatus()) && !"Draft".equals(event.getEventStatus()))
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
         return sortEventsByStartTime(eventDTOs);
@@ -375,7 +375,7 @@ public class EventServiceImpl implements IEventService {
         updateEventStatus();
         List<Event> events = eventRepository.findEventsByTicketType(type);
         List<EventDTO> eventDTOs = events.stream()
-                .filter(event -> !"Complete".equals(event.getEventStatus()))
+                .filter(event -> !"Complete".equals(event.getEventStatus()) && !"Report".equals(event.getEventStatus()) && !"Draft".equals(event.getEventStatus()))
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
         return sortEventsByStartTime(eventDTOs);
@@ -428,7 +428,7 @@ public class EventServiceImpl implements IEventService {
         }
 
         List<EventDTO> eventDTOs = resultEvents.stream()
-                .filter(event -> !"Complete".equals(event.getEventStatus()))
+                .filter(event -> !"Complete".equals(event.getEventStatus()) && !"Report".equals(event.getEventStatus()) && !"Draft".equals(event.getEventStatus()))
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
         return sortEventsByStartTime(eventDTOs);
@@ -441,7 +441,7 @@ public class EventServiceImpl implements IEventService {
         List<Event> filteredEvents = eventsByLocation.stream()
                 .filter(event -> event.getEventName() != null &&
                         event.getEventName().toLowerCase().contains(name.toLowerCase()) &&
-                        !"Complete".equals(event.getEventStatus()))
+                        !"Complete".equals(event.getEventStatus()) && !"Report".equals(event.getEventStatus()) && !"Draft".equals(event.getEventStatus()))
                 .collect(Collectors.toList());
         List<EventDTO> eventDTOs = filteredEvents.stream()
                 .map(this::convertToDTO)
@@ -483,6 +483,7 @@ public class EventServiceImpl implements IEventService {
                     .findByEventNameContainingIgnoreCaseAndEventLocationCityContainingIgnoreCase(searchTerm, cityKey);
         }
         List<EventDTO> eventDTOs = filteredEvents.stream()
+                .filter(event -> !"Complete".equals(event.getEventStatus()) && !"Report".equals(event.getEventStatus()) && !"Draft".equals(event.getEventStatus()))
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
         return sortEventsByStartTime(eventDTOs);
@@ -572,7 +573,7 @@ public class EventServiceImpl implements IEventService {
         Pageable pageable = PageRequest.of(0, 10);
         List<Event> topEvents = eventRepository.findTopEventsByTicketsSold("PAID", "SUCCESSFULLY", pageable);
         List<EventDTO> topEventDTO = topEvents.stream()
-                .filter(event -> !"Complete".equals(event.getEventStatus()))
+                .filter(event -> !"Complete".equals(event.getEventStatus()) && !"Report".equals(event.getEventStatus()) && !"Draft".equals(event.getEventStatus()))
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
         return sortEventsByStartTime(topEventDTO);
@@ -584,7 +585,7 @@ public class EventServiceImpl implements IEventService {
         Pageable pageable = PageRequest.of(0, 10);
         List<Event> topEvents = eventRepository.findTop10FavoriteEvents(pageable);
         List<EventDTO> topEventDTO = topEvents.stream()
-                .filter(event -> !"Complete".equals(event.getEventStatus()))
+                .filter(event -> !"Complete".equals(event.getEventStatus()) && !"Report".equals(event.getEventStatus()) && !"Draft".equals(event.getEventStatus()))
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
         return sortEventsByStartTime(topEventDTO);
@@ -668,7 +669,7 @@ public class EventServiceImpl implements IEventService {
         }
 
         Set<EventDTO> eventDTOS = matchedEvents.stream()
-                .filter(event -> !"Complete".equals(event.getEventStatus()))
+                .filter(event -> !"Complete".equals(event.getEventStatus()) && !"Report".equals(event.getEventStatus()) && !"Draft".equals(event.getEventStatus()))
                 .map(this::convertToDTO)
                 .collect(Collectors.toSet());
         List<EventDTO> sortedEventDTOs = sortEventsByStartTime(new ArrayList<>(eventDTOS));
@@ -697,7 +698,7 @@ public class EventServiceImpl implements IEventService {
         }
 
         Set<EventDTO> eventDTOS = matchedEvents.stream()
-                .filter(event -> !"Complete".equals(event.getEventStatus()))
+                .filter(event -> !"Complete".equals(event.getEventStatus()) && !"Report".equals(event.getEventStatus()) && !"Draft".equals(event.getEventStatus()))
                 .map(this::convertToDTO)
                 .collect(Collectors.toSet());
         List<EventDTO> sortedEventDTOs = sortEventsByStartTime(new ArrayList<>(eventDTOS));
@@ -743,7 +744,7 @@ public class EventServiceImpl implements IEventService {
         }
 
         List<EventDTO> eventDTOs = matchedEvents.stream()
-                .filter(event -> !"Complete".equals(event.getEventStatus()))
+                .filter(event -> !"Complete".equals(event.getEventStatus()) && !"Report".equals(event.getEventStatus()) && !"Draft".equals(event.getEventStatus()))
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
         return sortEventsByStartTime(eventDTOs);
