@@ -74,4 +74,8 @@ public interface IEventService {
     void recordEventView(Integer eventId, Integer userId);
 
     List<EventViewDTO> getTopViewedEvents(int limit);
+
+    Response publishEvent(int eventId);
+
+    Response reportEvent(int eventId, String reason);
 }

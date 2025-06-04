@@ -11,6 +11,7 @@ import hcmute.fit.event_management.service.Impl.EventServiceImpl;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.rest.webmvc.ResourceNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -21,10 +22,7 @@ import payload.Response;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 @RestController
 @RequestMapping("/api/events")
@@ -60,13 +58,19 @@ public class EventController {
     @Autowired
     private IFollowService followService;
 
+
+
     @PostMapping("/create")
     @PreAuthorize("hasRole('ORGANIZER')")
     public ResponseEntity<Response> createEvent(@RequestBody EventDTO event) throws IOException {
+        // Gán trạng thái mặc định nếu không được cung cấp
+        if (event.getEventStatus() == null || event.getEventStatus().isEmpty()) {
+            event.setEventStatus("Draft");
+        }
         // Create notification for Organizer
         NotificationDTO notificationDTO = new NotificationDTO();
         notificationDTO.setTitle("Tin nhắn mới");
-        notificationDTO.setMessage(event.getEventName() + " được tạo thành công");
+        notificationDTO.setMessage(event.getEventName() + " được tạo thành công với trạng thái " + event.getEventStatus());
         notificationDTO.setUserId(event.getUserId());
         notificationDTO.setRead(false);
         notificationDTO.setCreatedAt(new Date());
@@ -79,7 +83,7 @@ public class EventController {
             EventDTO createdEvent = (EventDTO) response.getBody().getData();
             // Get Organizer's ID
             OrganizerDTO organizer = organizerService.getOrganizerInforByEventHost(event.getEventHost());
-            if (organizer != null && organizer.getOrganizerId() > 0  ) {
+            if (organizer != null && organizer.getOrganizerId() > 0 && "public".equals(createdEvent.getEventStatus())) {
                 List<User> followers = followService.getFollowers(organizer.getOrganizerId());
                 List<UserDTO> followersDTO = new ArrayList<>();
                 for (User user : followers) {
@@ -87,7 +91,7 @@ public class EventController {
                     BeanUtils.copyProperties(user, userDTO);
                     followersDTO.add(userDTO);
                 }
-                // Send email to each follower
+                // Send email to each follower only if event is public
                 String eventUrl = "http://localhost:3000/events/detail/" + createdEvent.getEventId();
                 String eventLocation = createdEvent.getEventLocation().getVenueName() + ", " +
                         createdEvent.getEventLocation().getAddress() + ", " +
@@ -102,7 +106,6 @@ public class EventController {
                                 eventUrl
                         );
                     } catch (Exception e) {
-                        // Log error but don't fail the event creation
                         System.err.println("Failed to send email to " + follower.getEmail() + ": " + e.getMessage());
                     }
                 }
@@ -110,6 +113,13 @@ public class EventController {
         }
 
         return response;
+    }
+    @PutMapping("/publish/{eventId}")
+    @PreAuthorize("hasRole('ORGANIZER')")
+    public ResponseEntity<Response> publishEvent(@PathVariable int eventId) {
+        Response response = eventService.publishEvent(eventId);
+
+        return ResponseEntity.ok(response);
     }
     @PostMapping("/create-event")
     @PreAuthorize("hasRole('ORGANIZER')")
@@ -145,7 +155,18 @@ public class EventController {
         }
         return ResponseEntity.ok(detailDTO);
     }
-
+    @PostMapping("/report/{eventId}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Response> reportEvent(@PathVariable int eventId, @RequestBody Map<String, String> body) {
+        String reason = body.get("reason");
+        if (reason == null || reason.trim().isEmpty()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new Response(400, "Bad Request", "Reason for reporting is required"));
+        }
+        Response response = eventService.reportEvent(eventId, reason);
+        return ResponseEntity.status(response.getStatusCode() == 200 ? HttpStatus.OK : HttpStatus.BAD_REQUEST)
+                .body(response);
+    }
     @PutMapping("/edit")
     @PreAuthorize("hasRole('ORGANIZER')")
     public ResponseEntity<EventEditDTO> editEvent( @RequestBody EventEditDTO eventEditDTO) throws Exception {
