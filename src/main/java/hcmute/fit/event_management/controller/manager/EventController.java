@@ -121,6 +121,13 @@ public class EventController {
 
         return ResponseEntity.ok(response);
     }
+    @PostMapping("/reopen/{eventId}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Response> reopenEvent(@PathVariable int eventId) {
+        Response response = eventService.reopenEvent(eventId);
+        return ResponseEntity.status(response.getStatusCode() == 200 ? HttpStatus.OK : HttpStatus.BAD_REQUEST)
+                .body(response);
+    }
     @PostMapping("/create-event")
     @PreAuthorize("hasRole('ORGANIZER')")
     public ResponseEntity<Response> saveEvent(@RequestBody EventDTO event)  {

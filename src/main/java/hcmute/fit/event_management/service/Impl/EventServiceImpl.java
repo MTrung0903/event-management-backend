@@ -887,4 +887,42 @@ public class EventServiceImpl implements IEventService {
 
         return new Response(200, "Success", "Event reported successfully");
     }
+    @Override
+    public Response reopenEvent(int eventId) {
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new ResourceNotFoundException("Event not found with id " + eventId));
+
+        if (!"Report".equals(event.getEventStatus())) {
+            return new Response(400, "Bad Request", "Only reported events can be reopened");
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+        if (event.getEventEnd().isBefore(now)) {
+            // Sự kiện đã kết thúc
+            event.setEventStatus("Complete");
+            logger.info("Event {} reopened and set to Complete as it has ended", event.getEventName());
+        } else if (event.getEventStart().isAfter(now)) {
+            // Sự kiện chưa diễn ra
+            event.setEventStatus("public");
+            event.setPublishTime(LocalDateTime.now());
+            logger.info("Event {} reopened and set to public as it has not started", event.getEventName());
+        } else {
+            // Sự kiện đang diễn ra
+            event.setEventStatus("public");
+            logger.info("Event {} reopened and set to public as it is ongoing", event.getEventName());
+        }
+
+        eventRepository.save(event);
+
+        // Gửi thông báo cho người tổ chức
+        NotificationDTO notificationDTO = new NotificationDTO();
+        notificationDTO.setTitle("Sự kiện được mở lại");
+        notificationDTO.setMessage("Sự kiện " + event.getEventName() + " đã được mở lại với trạng thái " + event.getEventStatus());
+        notificationDTO.setUserId(event.getUser().getUserId());
+        notificationDTO.setRead(false);
+        notificationDTO.setCreatedAt(new Date());
+        notificationService.createNotification(notificationDTO);
+
+        return new Response(200, "Success", convertToDTO(event));
+    }
 }

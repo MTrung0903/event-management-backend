@@ -78,4 +78,6 @@ public interface IEventService {
     Response publishEvent(int eventId);
 
     Response reportEvent(int eventId, String reason);
+
+    Response reopenEvent(int eventId);
 }
