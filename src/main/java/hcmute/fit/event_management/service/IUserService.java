@@ -41,4 +41,9 @@ public interface IUserService {
     Optional<User> findByEmail(String email);
 
 
+    @Transactional
+    ResponseEntity<Response> lockUser(String email);
+
+    @Transactional
+    ResponseEntity<Response> unlockUser(String email);
 }

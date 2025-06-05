@@ -105,6 +105,16 @@ public class AuthController {
         List<UserDTO> users = userService.getAllUsers();
         return ResponseEntity.ok(new Response(200, "Success", users));
     }
+    @PostMapping("/users/{email}/lock")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Response> lockUser(@PathVariable @Email String email) {
+        return userService.lockUser(email);
+    }
 
+    @PostMapping("/users/{email}/unlock")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Response> unlockUser(@PathVariable @Email String email) {
+        return userService.unlockUser(email);
+    }
 
 }
