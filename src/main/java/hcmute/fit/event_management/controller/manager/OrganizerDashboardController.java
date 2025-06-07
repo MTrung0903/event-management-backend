@@ -75,7 +75,7 @@ public class OrganizerDashboardController {
             String dateStr = transaction.getTransactionDate();
             int monthIndex = Integer.parseInt(dateStr.substring(4, 6), 10) - 1;
             if (monthIndex >= 0 && monthIndex < 12) {
-                revenueByMonth[monthIndex] += transaction.getTransactionAmount() * 0.95;
+                revenueByMonth[monthIndex] += transaction.getTransactionAmount() * 0.97;
             }
         });
 
@@ -88,7 +88,7 @@ public class OrganizerDashboardController {
                     .sum();
             double eventRevenue = event.getBookings().stream()
                     .mapToDouble(booking -> booking.getTransaction() != null
-                            ? booking.getTransaction().getTransactionAmount() * 0.05
+                            ? booking.getTransaction().getTransactionAmount() * 0.97
                             : 0)
                     .sum();
             EventDTO eventDTO = eventService.convertToDTO(event);

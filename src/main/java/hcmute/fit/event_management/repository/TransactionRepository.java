@@ -27,7 +27,7 @@ public interface TransactionRepository extends JpaRepository<Transaction, Intege
 
 
     // organizer
-    @Query("SELECT COALESCE(SUM(t.transactionAmount),0) FROM Transaction t WHERE t.booking.event.user.userId = :userId")
+    @Query("SELECT COALESCE(SUM(t.transactionAmount),0) * 0.97 FROM Transaction t WHERE t.booking.event.user.userId = :userId")
     double sumRevenueByOrganizer(int userId);
 
     @Query("SELECT t FROM Transaction t WHERE t.booking.event.user.userId = :userId")
@@ -35,7 +35,7 @@ public interface TransactionRepository extends JpaRepository<Transaction, Intege
     @Query("SELECT t FROM Transaction t WHERE t.booking.event.user.userId = :userId AND SUBSTRING(t.transactionDate, 1, 4) = CAST(:year AS string) AND t.transactionStatus = 'SUCCESSFULLY'")
     List<Transaction> findByOrganizerAndYear(@Param("userId") int userId, @Param("year") int year);
 
-    @Query("SELECT COALESCE(SUM(t.transactionAmount), 0) FROM Transaction t WHERE t.booking.event.user.userId = :userId AND SUBSTRING(t.transactionDate, 1, 4) = CAST(:year AS string) AND t.transactionStatus = 'SUCCESSFULLY'")
+    @Query("SELECT COALESCE(SUM(t.transactionAmount), 0) * 0.97 FROM Transaction t WHERE t.booking.event.user.userId = :userId AND SUBSTRING(t.transactionDate, 1, 4) = CAST(:year AS string) AND t.transactionStatus = 'SUCCESSFULLY'")
     double sumRevenueByOrganizerAndYear(@Param("userId") int userId, @Param("year") int year);
     @Query("SELECT t FROM Transaction t WHERE SUBSTRING(t.transactionDate, 1, 4) = CAST(:year AS string) AND t.transactionStatus = 'SUCCESSFULLY'")
     List<Transaction> findByYear(@Param("year") int year);

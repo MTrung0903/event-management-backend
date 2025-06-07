@@ -142,7 +142,6 @@ public class TicketController {
         List<Booking> bookings = bookingService.findByEventEventIDOrderByCreateDateDesc(eventId);
         List<Map<String, String>> orders = new ArrayList<>();
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-
         for (Booking booking : bookings) {
             for (BookingDetails detail : booking.getBookingDetails()) {
                 Map<String, String> order = new HashMap<>();
