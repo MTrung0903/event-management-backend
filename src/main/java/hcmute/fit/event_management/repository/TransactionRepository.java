@@ -15,11 +15,11 @@ public interface TransactionRepository extends JpaRepository<Transaction, Intege
     @Query("select t from Transaction t where t.referenceCode = :orderCode")
     Optional<Transaction> findByOrderCode(@Param("orderCode") String orderCode);
     // admin
-    @Query(value = "SELECT COALESCE(SUM(transaction_amount)*0.05,0) FROM transaction WHERE SUBSTRING(transaction_date, 1, 6) = :yearMonth AND transaction_status = 'SUCCESSFULLY'", nativeQuery = true)
+    @Query(value = "SELECT COALESCE(SUM(transaction_amount)*0.03,0) FROM transaction WHERE SUBSTRING(transaction_date, 1, 6) = :yearMonth AND transaction_status = 'SUCCESSFULLY'", nativeQuery = true)
     Double getRevenueByMonth(@Param("yearMonth") String yearMonth); // Ví dụ: "202505"
-    @Query("SELECT COALESCE(SUM(t.transactionAmount) * 0.05, 0) FROM Transaction t WHERE SUBSTRING(t.transactionDate, 1, 4) = CAST(:year AS string) AND t.transactionStatus = 'SUCCESSFULLY'")
+    @Query("SELECT COALESCE(SUM(t.transactionAmount) * 0.03, 0) FROM Transaction t WHERE SUBSTRING(t.transactionDate, 1, 4) = CAST(:year AS string) AND t.transactionStatus = 'SUCCESSFULLY'")
     Double getRevenueByYear(@Param("year") int year);
-    @Query(value = "SELECT COALESCE(SUM(transaction_amount)*0.05,0) FROM transaction WHERE transaction_status = 'SUCCESSFULLY'", nativeQuery = true)
+    @Query(value = "SELECT COALESCE(SUM(transaction_amount)*0.03,0) FROM transaction WHERE transaction_status = 'SUCCESSFULLY'", nativeQuery = true)
     Double getRevenue();
 
     @Query("select t from Transaction t where t.booking.event.eventID = :eventId")

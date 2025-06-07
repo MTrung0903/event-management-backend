@@ -65,8 +65,8 @@ public class EventController {
     public ResponseEntity<Response> createEvent(@RequestBody EventDTO event) throws IOException {
         // Create notification for Organizer
         NotificationDTO notificationDTO = new NotificationDTO();
-        notificationDTO.setTitle("Tin nhắn mới");
-        notificationDTO.setMessage(event.getEventName() + " được tạo thành công");
+        notificationDTO.setTitle("New Event");
+        notificationDTO.setMessage(event.getEventName() + " was successfully created");
         notificationDTO.setUserId(event.getUserId());
         notificationDTO.setRead(false);
         notificationDTO.setCreatedAt(new Date());

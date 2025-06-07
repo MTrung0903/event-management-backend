@@ -43,8 +43,8 @@ public class FavoriteEventController {
 
         // Tạo và gửi thông báo cho người nhận
         NotificationDTO notificationDTO = new NotificationDTO();
-        notificationDTO.setTitle("Tin nhắn mới");
-        notificationDTO.setMessage("Bạn đã lưu event " +eventName+" vào danh mục yêu thích");
+        notificationDTO.setTitle("Notification");
+        notificationDTO.setMessage("You have saved the " +eventName+" event on your favorite list");
         notificationDTO.setUserId(favorite.getUserId());
         notificationDTO.setRead(false);
         notificationDTO.setCreatedAt(new Date());
