@@ -109,7 +109,7 @@ public class AdminServiceImpl {
                     .sum();
             double eventRevenue = event.getBookings().stream()
                     .mapToDouble(booking -> booking.getTransaction() != null
-                            ? booking.getTransaction().getTransactionAmount() * 0.05
+                            ? booking.getTransaction().getTransactionAmount() * 0.03
                             : 0)
                     .sum();
             EventDTO eventDTO = eventService.convertToDTO(event);
@@ -153,7 +153,7 @@ public class AdminServiceImpl {
                         event -> event.getEventType().getTypeName(),
                         event -> event.getBookings().stream()
                                 .filter(b -> "PAID".equals(b.getBookingStatus()))
-                                .mapToDouble(b -> b.getTransaction() != null ? b.getTransaction().getTransactionAmount() * 0.05 : 0.0)
+                                .mapToDouble(b -> b.getTransaction() != null ? b.getTransaction().getTransactionAmount() * 0.03 : 0.0)
                                 .sum(),
                         Double::sum
                 ));

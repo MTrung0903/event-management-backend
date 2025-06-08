@@ -521,5 +521,73 @@ public class UserServiceImpl implements IUserService {
         return userRepository.findByEmail(email);
     }
 
+    @Transactional
+    @Override
+    public ResponseEntity<Response> lockUser(String email) {
+        if (email == null || email.isEmpty()) {
+            logger.error("Invalid email provided");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new Response(400, "Bad Request", "Email là bắt buộc"));
+        }
+
+        Optional<User> userOpt = userRepository.findByEmail(email);
+        if (!userOpt.isPresent()) {
+            logger.error("User with email {} not found", email);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new Response(404, "Not Found", "Không tìm thấy người dùng"));
+        }
+
+        User user = userOpt.get();
+
+        // Kiểm tra nếu user là admin mặc định
+        if (user.getEmail().equals("admin@gmail.com")) {
+            logger.warn("Cannot lock default admin account: {}", email);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new Response(400, "Bad Request", "Không thể khóa tài khoản admin mặc định"));
+        }
+
+        if (!user.isActive()) {
+            logger.warn("User with email {} is already locked", email);
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(new Response(409, "Conflict", "Tài khoản đã bị khóa"));
+        }
+
+        user.setActive(false);
+        userRepository.save(user);
+
+        logger.info("User with email {} locked successfully", email);
+        return ResponseEntity.ok(new Response(200, "Success", "Tài khoản đã được khóa thành công"));
+    }
+
+
+    @Transactional
+    @Override
+    public ResponseEntity<Response> unlockUser(String email) {
+        if (email == null || email.isEmpty()) {
+            logger.error("Invalid email provided");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new Response(400, "Bad Request", "Email là bắt buộc"));
+        }
+
+        Optional<User> userOpt = userRepository.findByEmail(email);
+        if (!userOpt.isPresent()) {
+            logger.error("User with email {} not found", email);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new Response(404, "Not Found", "Không tìm thấy người dùng"));
+        }
+
+        User user = userOpt.get();
+        if (user.isActive()) {
+            logger.warn("User with email {} is already unlocked", email);
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(new Response(409, "Conflict", "Tài khoản đã được mở khóa"));
+        }
+
+        user.setActive(true);
+        userRepository.save(user);
+
+        logger.info("User with email {} unlocked successfully", email);
+        return ResponseEntity.ok(new Response(200, "Success", "Tài khoản đã được mở khóa thành công"));
+    }
 
 }

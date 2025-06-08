@@ -87,7 +87,7 @@ public interface EventRepository extends JpaRepository<Event, Integer> {
             "(SELECT COALESCE(SUM(bd.quantity), 0) " +
             " FROM Booking b JOIN b.bookingDetails bd " +
             " WHERE b.event = e) AS sold, " +
-            "(SELECT COALESCE(SUM(t.transactionAmount * 0.05), 0) " +
+            "(SELECT COALESCE(SUM(t.transactionAmount * 0.03), 0) " +
             " FROM Booking b JOIN b.transaction t " +
             " WHERE b.event = e AND t.transactionStatus = 'SUCCESSFULLY') AS eventRevenue " +
             "FROM Event e " +

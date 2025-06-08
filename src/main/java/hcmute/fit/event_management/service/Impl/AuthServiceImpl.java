@@ -54,7 +54,15 @@ public class AuthServiceImpl implements AuthService {
             if (userOpt.isEmpty()) {
                 logger.warn("Login failed: Email {} not found", account.getEmail());
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .body(new Response(401, "Unauthorized", "Invalid email or password"));
+                        .body(new Response(401, "Unauthorized", "Email hoặc mật khẩu không hợp lệ"));
+            }
+
+            User user = userOpt.get();
+            // Kiểm tra trạng thái is_active
+            if (!user.isActive()) {
+                logger.warn("Login failed: Account {} is locked", account.getEmail());
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(new Response(403, "Forbidden", "Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên."));
             }
 
             Authentication authentication = authenticationManager.authenticate(
@@ -74,7 +82,7 @@ public class AuthServiceImpl implements AuthService {
         } catch (AuthenticationException e) {
             logger.error("Login failed for email {}: {}", account.getEmail(), e.getMessage());
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(new Response(401, "Unauthorized", "Invalid email or password"));
+                    .body(new Response(401, "Unauthorized", "Email hoặc mật khẩu không hợp lệ"));
         }
     }
     @Transactional
