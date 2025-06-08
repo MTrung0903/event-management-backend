@@ -5,6 +5,7 @@ import hcmute.fit.event_management.dto.*;
 import hcmute.fit.event_management.entity.*;
 import hcmute.fit.event_management.repository.*;
 import hcmute.fit.event_management.service.IEventService;
+import hcmute.fit.event_management.service.INotificationService;
 import hcmute.fit.event_management.service.ISegmentService;
 import hcmute.fit.event_management.service.ITicketService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -50,6 +51,9 @@ public class EventServiceImpl implements IEventService {
     private VNPAYService vnpayService;
     @Autowired
     private EventViewRepository eventViewRepository;
+
+    @Autowired
+    private INotificationService notificationService;
 
     Logger logger = LoggerFactory.getLogger(this.getClass());
     private static final Map<String, String> cityMap = Map.ofEntries(
@@ -113,7 +117,7 @@ public class EventServiceImpl implements IEventService {
     private void updateEventStatus() {
         LocalDateTime today = LocalDateTime.now().withHour(0).withMinute(0).withSecond(0).withNano(0);
         LocalDateTime endOfDay = today.plusDays(1).minusNanos(1);
-        List<Event> events = eventRepository.findEventsForStatusUpdate(Arrays.asList("public", "Complete"), endOfDay);
+        List<Event> events = eventRepository.findEventsForStatusUpdate(Arrays.asList("public"), endOfDay);
         List<Event> eventsToUpdate = new ArrayList<>();
 
         for (Event event : events) {
@@ -124,15 +128,6 @@ public class EventServiceImpl implements IEventService {
                     eventsToUpdate.add(event);
                     logger.info("Updated event {} to status Complete as it has ended (end: {})",
                             event.getEventName(), event.getEventEnd());
-                } else if ("Complete".equals(event.getEventStatus()) && event.getEventStart() != null) {
-                    LocalDateTime eventStart = event.getEventStart();
-                    LocalDateTime eventEnd = event.getEventEnd();
-                    if (eventStart.isAfter(today) && eventEnd.isAfter(today)) {
-                        event.setEventStatus("public");
-                        eventsToUpdate.add(event);
-                        logger.info("Reopened event {} to status public due to future dates (start: {}, end: {})",
-                                event.getEventName(), eventStart, eventEnd);
-                    }
                 }
             }
         }
@@ -175,7 +170,7 @@ public class EventServiceImpl implements IEventService {
         updateEventStatus();
         List<Event> events = eventRepository.findAll();
         List<EventDTO> eventDTOs = events.stream()
-                .filter(event -> !"Complete".equals(event.getEventStatus()))
+                .filter(event -> !"Complete".equals(event.getEventStatus()) && !"Report".equals(event.getEventStatus()) && !"Draft".equals(event.getEventStatus()))
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
         return sortEventsByStartTime(eventDTOs);
@@ -276,7 +271,7 @@ public class EventServiceImpl implements IEventService {
         updateEventStatus();
         List<Event> events = eventRepository.findByEventNameContainingIgnoreCase(eventName);
         List<EventDTO> eventDTOs = events.stream()
-                .filter(event -> !"Complete".equals(event.getEventStatus()))
+                .filter(event -> !"Complete".equals(event.getEventStatus()) && !"Draft".equals(event.getEventStatus()))
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
         return sortEventsByStartTime(eventDTOs);
@@ -287,7 +282,7 @@ public class EventServiceImpl implements IEventService {
         updateEventStatus();
         List<Event> events = eventRepository.findByEventStatusIgnoreCase(eventStatus);
         List<EventDTO> eventDTOs = events.stream()
-                .filter(event -> !"Complete".equals(event.getEventStatus()))
+               // .filter(event -> !"Complete".equals(event.getEventStatus()) && !"Draft".equals(event.getEventStatus()))
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
         return sortEventsByStartTime(eventDTOs);
@@ -298,7 +293,7 @@ public class EventServiceImpl implements IEventService {
         updateEventStatus();
         List<Event> events = eventRepository.findByEventStart(eventStart);
         List<EventDTO> eventDTOs = events.stream()
-                .filter(event -> !"Complete".equals(event.getEventStatus()))
+                .filter(event -> !"Complete".equals(event.getEventStatus()) && !"Report".equals(event.getEventStatus()) && !"Draft".equals(event.getEventStatus()))
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
         return sortEventsByStartTime(eventDTOs);
@@ -309,7 +304,7 @@ public class EventServiceImpl implements IEventService {
         updateEventStatus();
         List<Event> events = eventRepository.findByEventHostContainingIgnoreCase(eventHost);
         List<EventDTO> eventDTOs = events.stream()
-                .filter(event -> !"Complete".equals(event.getEventStatus()))
+                .filter(event -> !"Complete".equals(event.getEventStatus()) && !"Report".equals(event.getEventStatus()) && !"Draft".equals(event.getEventStatus()))
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
         return sortEventsByStartTime(eventDTOs);
@@ -320,7 +315,7 @@ public class EventServiceImpl implements IEventService {
         updateEventStatus();
         List<Event> events = eventRepository.findByEventLocationCityContainingIgnoreCase(eventLocation);
         List<EventDTO> eventDTOs = events.stream()
-                .filter(event -> !"Complete".equals(event.getEventStatus()))
+                .filter(event -> !"Complete".equals(event.getEventStatus()) && !"Report".equals(event.getEventStatus()) && !"Draft".equals(event.getEventStatus()))
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
         return sortEventsByStartTime(eventDTOs);
@@ -331,7 +326,7 @@ public class EventServiceImpl implements IEventService {
         updateEventStatus();
         List<Event> events = eventRepository.findByTagsContainingIgnoreCase(tag);
         List<EventDTO> eventDTOs = events.stream()
-                .filter(event -> !"Complete".equals(event.getEventStatus()))
+                .filter(event -> !"Complete".equals(event.getEventStatus()) && !"Report".equals(event.getEventStatus()) && !"Draft".equals(event.getEventStatus()))
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
         return sortEventsByStartTime(eventDTOs);
@@ -347,7 +342,7 @@ public class EventServiceImpl implements IEventService {
         }
         List<Event> events = eventRepository.findByEventType(type);
         List<EventDTO> eventDTOs = events.stream()
-                .filter(event -> !"Complete".equals(event.getEventStatus()))
+                .filter(event -> !"Complete".equals(event.getEventStatus()) && !"Report".equals(event.getEventStatus()) && !"Draft".equals(event.getEventStatus()))
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
         return sortEventsByStartTime(eventDTOs);
@@ -358,7 +353,7 @@ public class EventServiceImpl implements IEventService {
         updateEventStatus();
         List<Event> events = eventRepository.findEventsByCurrentWeek();
         List<EventDTO> eventDTOs = events.stream()
-                .filter(event -> !"Complete".equals(event.getEventStatus()))
+                .filter(event -> !"Complete".equals(event.getEventStatus()) && !"Report".equals(event.getEventStatus()) && !"Draft".equals(event.getEventStatus()))
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
         return sortEventsByStartTime(eventDTOs);
@@ -369,7 +364,7 @@ public class EventServiceImpl implements IEventService {
         updateEventStatus();
         List<Event> events = eventRepository.findEventsByCurrentMonth();
         List<EventDTO> eventDTOs = events.stream()
-                .filter(event -> !"Complete".equals(event.getEventStatus()))
+                .filter(event -> !"Complete".equals(event.getEventStatus()) && !"Report".equals(event.getEventStatus()) && !"Draft".equals(event.getEventStatus()))
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
         return sortEventsByStartTime(eventDTOs);
@@ -380,7 +375,7 @@ public class EventServiceImpl implements IEventService {
         updateEventStatus();
         List<Event> events = eventRepository.findEventsByTicketType(type);
         List<EventDTO> eventDTOs = events.stream()
-                .filter(event -> !"Complete".equals(event.getEventStatus()))
+                .filter(event -> !"Complete".equals(event.getEventStatus()) && !"Report".equals(event.getEventStatus()) && !"Draft".equals(event.getEventStatus()))
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
         return sortEventsByStartTime(eventDTOs);
@@ -433,7 +428,7 @@ public class EventServiceImpl implements IEventService {
         }
 
         List<EventDTO> eventDTOs = resultEvents.stream()
-                .filter(event -> !"Complete".equals(event.getEventStatus()))
+                .filter(event -> !"Complete".equals(event.getEventStatus()) && !"Report".equals(event.getEventStatus()) && !"Draft".equals(event.getEventStatus()))
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
         return sortEventsByStartTime(eventDTOs);
@@ -446,7 +441,7 @@ public class EventServiceImpl implements IEventService {
         List<Event> filteredEvents = eventsByLocation.stream()
                 .filter(event -> event.getEventName() != null &&
                         event.getEventName().toLowerCase().contains(name.toLowerCase()) &&
-                        !"Complete".equals(event.getEventStatus()))
+                        !"Complete".equals(event.getEventStatus()) && !"Report".equals(event.getEventStatus()) && !"Draft".equals(event.getEventStatus()))
                 .collect(Collectors.toList());
         List<EventDTO> eventDTOs = filteredEvents.stream()
                 .map(this::convertToDTO)
@@ -488,6 +483,7 @@ public class EventServiceImpl implements IEventService {
                     .findByEventNameContainingIgnoreCaseAndEventLocationCityContainingIgnoreCase(searchTerm, cityKey);
         }
         List<EventDTO> eventDTOs = filteredEvents.stream()
+                .filter(event -> !"Complete".equals(event.getEventStatus()) && !"Report".equals(event.getEventStatus()) && !"Draft".equals(event.getEventStatus()))
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
         return sortEventsByStartTime(eventDTOs);
@@ -515,6 +511,8 @@ public class EventServiceImpl implements IEventService {
         BeanUtils.copyProperties(eventDTO, event, "eventLocation", "eventImages", "mediaContent", "eventTypeId");
         event.setEventHost(name);
         event.setUser(user);
+        // Gán trạng thái mặc định là "Draft" nếu không được chỉ định
+        event.setEventStatus(eventDTO.getEventStatus() != null ? eventDTO.getEventStatus() : "Draft");
 
         EventType eventType = eventTypeRepository.findById(eventDTO.getEventTypeId())
                 .orElseThrow(() -> new IllegalArgumentException("Invalid event type ID: " + eventDTO.getEventTypeId()));
@@ -535,7 +533,7 @@ public class EventServiceImpl implements IEventService {
         }
 
         Event tmp = eventRepository.save(event);
-        logger.info("Event {} created successfully by user {}", event.getEventName(), name);
+        logger.info("Event {} created successfully by user {} with status {}", event.getEventName(), name, event.getEventStatus());
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(new Response(201, "Success", convertToDTO(tmp)));
     }
@@ -575,7 +573,7 @@ public class EventServiceImpl implements IEventService {
         Pageable pageable = PageRequest.of(0, 10);
         List<Event> topEvents = eventRepository.findTopEventsByTicketsSold("PAID", "SUCCESSFULLY", pageable);
         List<EventDTO> topEventDTO = topEvents.stream()
-                .filter(event -> !"Complete".equals(event.getEventStatus()))
+                .filter(event -> !"Complete".equals(event.getEventStatus()) && !"Report".equals(event.getEventStatus()) && !"Draft".equals(event.getEventStatus()))
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
         return sortEventsByStartTime(topEventDTO);
@@ -587,7 +585,7 @@ public class EventServiceImpl implements IEventService {
         Pageable pageable = PageRequest.of(0, 10);
         List<Event> topEvents = eventRepository.findTop10FavoriteEvents(pageable);
         List<EventDTO> topEventDTO = topEvents.stream()
-                .filter(event -> !"Complete".equals(event.getEventStatus()))
+                .filter(event -> !"Complete".equals(event.getEventStatus()) && !"Report".equals(event.getEventStatus()) && !"Draft".equals(event.getEventStatus()))
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
         return sortEventsByStartTime(topEventDTO);
@@ -671,7 +669,7 @@ public class EventServiceImpl implements IEventService {
         }
 
         Set<EventDTO> eventDTOS = matchedEvents.stream()
-                .filter(event -> !"Complete".equals(event.getEventStatus()))
+                .filter(event -> !"Complete".equals(event.getEventStatus()) && !"Report".equals(event.getEventStatus()) && !"Draft".equals(event.getEventStatus()))
                 .map(this::convertToDTO)
                 .collect(Collectors.toSet());
         List<EventDTO> sortedEventDTOs = sortEventsByStartTime(new ArrayList<>(eventDTOS));
@@ -700,7 +698,7 @@ public class EventServiceImpl implements IEventService {
         }
 
         Set<EventDTO> eventDTOS = matchedEvents.stream()
-                .filter(event -> !"Complete".equals(event.getEventStatus()))
+                .filter(event -> !"Complete".equals(event.getEventStatus()) && !"Report".equals(event.getEventStatus()) && !"Draft".equals(event.getEventStatus()))
                 .map(this::convertToDTO)
                 .collect(Collectors.toSet());
         List<EventDTO> sortedEventDTOs = sortEventsByStartTime(new ArrayList<>(eventDTOS));
@@ -746,7 +744,7 @@ public class EventServiceImpl implements IEventService {
         }
 
         List<EventDTO> eventDTOs = matchedEvents.stream()
-                .filter(event -> !"Complete".equals(event.getEventStatus()))
+                .filter(event -> !"Complete".equals(event.getEventStatus()) && !"Report".equals(event.getEventStatus()) && !"Draft".equals(event.getEventStatus()))
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
         return sortEventsByStartTime(eventDTOs);
@@ -849,5 +847,82 @@ public class EventServiceImpl implements IEventService {
                 })
                 .filter(dto -> dto != null)
                 .collect(Collectors.toList());
+    }
+    @Override
+    public Response publishEvent(int eventId){
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new ResourceNotFoundException("Event not found with id " + eventId));
+        if (!"Draft".equals(event.getEventStatus())) {
+            return new Response(400, "Bad Request", "Only Draft events can be published");
+        }
+        event.setEventStatus("public");
+        event.setPublishTime(LocalDateTime.now());
+        eventRepository.save(event);
+
+        return new Response(200, "Success", convertToDTO(event));
+    }
+
+    @Override
+    public Response reportEvent(int eventId, String reason) {
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new ResourceNotFoundException("Event not found with id " + eventId));
+        if ("Report".equals(event.getEventStatus())) {
+            return new Response(400, "Bad Request", "Event is already reported");
+        }
+        if ("Complete".equals(event.getEventStatus())) {
+            return new Response(400, "Bad Request", "Cannot report a completed event");
+        }
+        event.setEventStatus("Report");
+        eventRepository.save(event);
+        logger.info("Event {} reported with reason: {}", event.getEventName(), reason);
+
+        // Gửi thông báo cho người tổ chức
+        NotificationDTO notificationDTO = new NotificationDTO();
+        notificationDTO.setTitle("Sự kiện bị báo cáo");
+        notificationDTO.setMessage("Sự kiện " + event.getEventName() + " đã bị báo cáo vì lý do: " + reason);
+        notificationDTO.setUserId(event.getUser().getUserId());
+        notificationDTO.setRead(false);
+        notificationDTO.setCreatedAt(new Date());
+        notificationService.createNotification(notificationDTO);
+
+        return new Response(200, "Success", "Event reported successfully");
+    }
+    @Override
+    public Response reopenEvent(int eventId) {
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new ResourceNotFoundException("Event not found with id " + eventId));
+
+        if (!"Report".equals(event.getEventStatus())) {
+            return new Response(400, "Bad Request", "Only reported events can be reopened");
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+        if (event.getEventEnd().isBefore(now)) {
+            // Sự kiện đã kết thúc
+            event.setEventStatus("Complete");
+            logger.info("Event {} reopened and set to Complete as it has ended", event.getEventName());
+        } else if (event.getEventStart().isAfter(now)) {
+            // Sự kiện chưa diễn ra
+            event.setEventStatus("public");
+            event.setPublishTime(LocalDateTime.now());
+            logger.info("Event {} reopened and set to public as it has not started", event.getEventName());
+        } else {
+            // Sự kiện đang diễn ra
+            event.setEventStatus("public");
+            logger.info("Event {} reopened and set to public as it is ongoing", event.getEventName());
+        }
+
+        eventRepository.save(event);
+
+        // Gửi thông báo cho người tổ chức
+        NotificationDTO notificationDTO = new NotificationDTO();
+        notificationDTO.setTitle("Sự kiện được mở lại");
+        notificationDTO.setMessage("Sự kiện " + event.getEventName() + " đã được mở lại với trạng thái " + event.getEventStatus());
+        notificationDTO.setUserId(event.getUser().getUserId());
+        notificationDTO.setRead(false);
+        notificationDTO.setCreatedAt(new Date());
+        notificationService.createNotification(notificationDTO);
+
+        return new Response(200, "Success", convertToDTO(event));
     }
 }
