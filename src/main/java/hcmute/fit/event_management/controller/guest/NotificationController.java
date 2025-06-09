@@ -44,4 +44,5 @@ public class NotificationController {
             System.out.println("Failed to send notification: " + e.getMessage());
         }
     }
+
 }
