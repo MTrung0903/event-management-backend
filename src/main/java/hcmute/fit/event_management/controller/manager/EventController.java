@@ -92,7 +92,7 @@ public class EventController {
                     followersDTO.add(userDTO);
                 }
                 // Send email to each follower only if event is public
-                String eventUrl = "http://localhost:3000/events/detail/" + createdEvent.getEventId();
+                String eventUrl = "http://localhost:3000/event/" + createdEvent.getEventId();
                 String eventLocation = createdEvent.getEventLocation().getVenueName() + ", " +
                         createdEvent.getEventLocation().getAddress() + ", " +
                         createdEvent.getEventLocation().getCity();
@@ -118,6 +118,53 @@ public class EventController {
     @PreAuthorize("hasRole('ORGANIZER')")
     public ResponseEntity<Response> publishEvent(@PathVariable int eventId) {
         Response response = eventService.publishEvent(eventId);
+
+        // Kiểm tra nếu xuất bản thành công và trạng thái là public
+        if (response.getStatusCode() == 200 && response.getData() instanceof EventDTO) {
+            EventDTO publishedEvent = (EventDTO) response.getData();
+            if ("public".equals(publishedEvent.getEventStatus())) {
+                // Lấy thông tin tổ chức
+                OrganizerDTO organizer = organizerService.getOrganizerInforByEventHost(publishedEvent.getEventHost());
+                if (organizer != null && organizer.getOrganizerId() > 0) {
+                    // Lấy danh sách người theo dõi
+                    List<User> followers = followService.getFollowers(organizer.getOrganizerId());
+                    List<UserDTO> followersDTO = new ArrayList<>();
+                    for (User user : followers) {
+                        UserDTO userDTO = new UserDTO();
+                        BeanUtils.copyProperties(user, userDTO);
+                        followersDTO.add(userDTO);
+                    }
+
+                    // Gửi email thông báo cho từng người theo dõi
+                    String eventUrl = "http://localhost:3000/event/" + publishedEvent.getEventId();
+                    String eventLocation = publishedEvent.getEventLocation().getVenueName() + ", " +
+                            publishedEvent.getEventLocation().getAddress() + ", " +
+                            publishedEvent.getEventLocation().getCity();
+                    for (UserDTO follower : followersDTO) {
+                        try {
+                            emailService.sendNewEventNotification(
+                                    follower.getEmail(),
+                                    publishedEvent.getEventName(),
+                                    publishedEvent.getEventStart().toString(),
+                                    eventLocation,
+                                    eventUrl
+                            );
+                        } catch (Exception e) {
+                            System.err.println("Failed to send email to " + follower.getEmail() + ": " + e.getMessage());
+                        }
+                    }
+                }
+
+                // Tạo thông báo cho tổ chức
+                NotificationDTO notificationDTO = new NotificationDTO();
+                notificationDTO.setTitle("Sự kiện được xuất bản");
+                notificationDTO.setMessage(publishedEvent.getEventName() + " đã được xuất bản thành công");
+                notificationDTO.setUserId(publishedEvent.getUserId());
+                notificationDTO.setRead(false);
+                notificationDTO.setCreatedAt(new Date());
+                notificationService.createNotification(notificationDTO);
+            }
+        }
 
         return ResponseEntity.ok(response);
     }
