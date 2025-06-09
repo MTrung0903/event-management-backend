@@ -142,7 +142,6 @@ public class TicketController {
         List<Booking> bookings = bookingService.findByEventEventIDOrderByCreateDateDesc(eventId);
         List<Map<String, String>> orders = new ArrayList<>();
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-
         for (Booking booking : bookings) {
             for (BookingDetails detail : booking.getBookingDetails()) {
                 Map<String, String> order = new HashMap<>();
@@ -158,7 +157,7 @@ public class TicketController {
         return orders;
     }
     @GetMapping("{eventId}/check-in-tickets")
-    @PreAuthorize("hasRole('ORGANIZER')")
+    @PreAuthorize("hasAnyRole('ORGANIZER','TICKET MANAGER','CHECK-IN STAFF')")
     public List<Map<String, String>> getCheckInTickets(@PathVariable int eventId) {
         List<CheckInTicket> checkInTickets = checkInTicketService.findByBookingDetailsBookingEventEventID(eventId);
         List<Map<String, String>> checkInTicketList = new ArrayList<>();

@@ -31,7 +31,7 @@ public class DashboardStatsDTO {
     private long newOrganizersThisMonth;
     private Double bookingConversionRate;
     private String topEventCategory;
-    private long userEngagementScore;
+    private double averageAttendanceRate;
     private long totalActiveEvents;
     private List<EventDTO> events;
 

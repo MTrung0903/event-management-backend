@@ -5,6 +5,7 @@ import hcmute.fit.event_management.dto.EventDTO;
 import hcmute.fit.event_management.dto.TransactionDTO;
 import hcmute.fit.event_management.entity.*;
 import hcmute.fit.event_management.repository.*;
+import hcmute.fit.event_management.service.ICheckInTicketService;
 import hcmute.fit.event_management.service.IEventService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,6 +46,9 @@ public class AdminServiceImpl {
 
     @Autowired
     IEventService eventService;
+
+    @Autowired
+    ICheckInTicketService checkInTicketService;
 
     public DashboardStatsDTO getDashboardStats(Integer year) {
         int currentMonth = LocalDate.now().getMonthValue();
@@ -96,8 +100,7 @@ public class AdminServiceImpl {
         long totalOrganizers = year != null ? organizerRepo.countOrganizersByYear(currentYear) : organizerRepo.count();
 
         // 6. Lấy danh sách sự kiện
-
-        List<Event> events = eventRepo.findAll();
+        List<Event> events = eventRepo.findByYear(currentYear);
         List<EventDTO> eventDTOs = events.stream().map(event -> {
             long sold = event.getBookings().stream()
                     .mapToLong(booking -> booking.getBookingDetails().stream()
@@ -106,7 +109,7 @@ public class AdminServiceImpl {
                     .sum();
             double eventRevenue = event.getBookings().stream()
                     .mapToDouble(booking -> booking.getTransaction() != null
-                            ? booking.getTransaction().getTransactionAmount() * 0.05
+                            ? booking.getTransaction().getTransactionAmount() * 0.03
                             : 0)
                     .sum();
             EventDTO eventDTO = eventService.convertToDTO(event);
@@ -150,7 +153,7 @@ public class AdminServiceImpl {
                         event -> event.getEventType().getTypeName(),
                         event -> event.getBookings().stream()
                                 .filter(b -> "PAID".equals(b.getBookingStatus()))
-                                .mapToDouble(b -> b.getTransaction() != null ? b.getTransaction().getTransactionAmount() * 0.05 : 0.0)
+                                .mapToDouble(b -> b.getTransaction() != null ? b.getTransaction().getTransactionAmount() * 0.03 : 0.0)
                                 .sum(),
                         Double::sum
                 ));
@@ -159,13 +162,20 @@ public class AdminServiceImpl {
                 .map(Map.Entry::getKey)
                 .orElse("N/A");
 
-        // 7.7 User Engagement Score
-        long userEngagementScore = userRepo.findAll().stream()
-                .mapToLong(user -> user.getListBooking().stream()
-                        .flatMap(booking -> booking.getBookingDetails().stream())
-                        .mapToLong(bd -> bd.getCheckInTickets().size())
-                        .sum())
-                .sum();
+        List<CheckInTicket> tickets = checkInTicketService.findAll().stream()
+                .filter(t -> t.getBookingDetails().getTicket().getEvent().getEventStart().getYear() == currentYear)
+                .toList();
+        double totalCheckInTickets = tickets
+                .stream()
+                .filter(t -> t.getStatus() == 1)
+                .count();
+        double totalTickets = tickets
+                .stream()
+                .filter(t -> t.getStatus() != -1)
+                .count();
+        double averageAttendanceRate = (totalCheckInTickets > 0) ? (totalCheckInTickets / totalTickets * 100) : 0.0;
+
+
         // 7.8 Total Active Events
         long totalActiveEvents = events.stream()
                 .filter(e -> "public".equals(e.getEventStatus()))
@@ -179,7 +189,7 @@ public class AdminServiceImpl {
                 transactionDTOS,
                 totalRevenueYTD, refundRate,
                 newOrganizersThisMonth, bookingConversionRate,
-                topEventCategory, userEngagementScore,
+                topEventCategory, averageAttendanceRate,
                 totalActiveEvents,
                 eventDTOs
         );
