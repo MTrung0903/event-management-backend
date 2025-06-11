@@ -95,4 +95,7 @@ public interface EventRepository extends JpaRepository<Event, Integer> {
             "LOWER(e.eventName) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
             "LOWER(e.eventHost) LIKE LOWER(CONCAT('%', :search, '%'))) ")
     Page<Object[]> findWithFiltersAndCalculations(@Param("search") String search, Pageable pageable);
+
+    @Query("select e.eventID from Event e ORDER BY e.eventID ASC")
+    List<Integer> getAllEventIDs();
 }

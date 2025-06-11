@@ -22,6 +22,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import payload.Response;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -51,6 +53,9 @@ public class EventServiceImpl implements IEventService {
     private VNPAYService vnpayService;
     @Autowired
     private EventViewRepository eventViewRepository;
+
+    @Autowired
+    private BookingRepository bookingRepository;
 
     @Autowired
     private INotificationService notificationService;
@@ -127,7 +132,8 @@ public class EventServiceImpl implements IEventService {
         return cityMap.getOrDefault(slug, slug);
     }
 
-    private List<EventDTO> sortEventsByStartTime(List<EventDTO> eventDTOs) {
+    @Override
+    public List<EventDTO> sortEventsByStartTime(List<EventDTO> eventDTOs) {
         if (eventDTOs == null) {
             return new ArrayList<>();
         }
@@ -977,5 +983,36 @@ public class EventServiceImpl implements IEventService {
         notificationService.createNotification(notificationDTO);
 
         return new Response(200, "Success", convertToDTO(event));
+    }
+
+    @Override
+    public void exportEventViewsToCSV(String filePath) {
+        List<EventView> views = eventViewRepository.findAll();
+        List<Booking> bookings = bookingRepository.findAll();
+        Map<String, Integer> ratings = new HashMap<>();
+
+        // Lượt xem
+        for (EventView view : views) {
+            String key = view.getUser().getUserId() + "_" + view.getEvent().getEventID();
+            ratings.merge(key, 1, Integer::sum);
+        }
+
+        // Mua vé
+        for (Booking booking : bookings) {
+            String key = booking.getUser().getUserId() + "_" + booking.getEvent().getEventID();
+            ratings.merge(key, 5, Integer::sum);
+        }
+
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath))) {
+            writer.write("userId,eventId,rating\n");
+            for (Map.Entry<String, Integer> entry : ratings.entrySet()) {
+                String[] parts = entry.getKey().split("_");
+                writer.write(String.format("%s,%s,%d\n", parts[0], parts[1], entry.getValue()));
+            }
+            logger.info("Exported event views to {}", filePath);
+        } catch (IOException e) {
+            logger.error("Error exporting event views", e);
+            throw new RuntimeException("Failed to export event views", e);
+        }
     }
 }
