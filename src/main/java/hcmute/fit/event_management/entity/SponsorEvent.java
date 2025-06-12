@@ -20,10 +20,18 @@ public class SponsorEvent {
     @MapsId("sponsor_id")
     @JoinColumn(name = "sponsor_id", referencedColumnName = "sponsor_id", nullable = false)
     private Sponsor sponsor;
-
     @ManyToOne
     @MapsId("event_id")
     @JoinColumn(name = "event_id", referencedColumnName = "event_id", nullable = false)
     private Event event;
-
+    @Column(name = "type")
+    private String sponsorType;
+    @Column(name = "level")
+    private String sponsorLevel;
+    @Column(name = "start_date")
+    private String sponsorStartDate;
+    @Column(name = "end_date")
+    private String sponsorEndDate;
+    @Column(name = "status")
+    private String sponsorStatus;
 }

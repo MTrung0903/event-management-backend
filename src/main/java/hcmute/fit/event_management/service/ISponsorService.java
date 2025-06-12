@@ -1,8 +1,11 @@
 package hcmute.fit.event_management.service;
 
 import hcmute.fit.event_management.dto.SponsorDTO;
+import hcmute.fit.event_management.dto.SponsorEventDTO;
 import hcmute.fit.event_management.entity.Sponsor;
 import org.springframework.data.domain.Example;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -11,25 +14,28 @@ import java.util.Optional;
 
 public interface ISponsorService {
 
-    List<SponsorDTO> getAllSponsors();
+    <S extends Sponsor> List<S> findAll(Example<S> example);
 
-    SponsorDTO getSponsorById(int id);
+    <S extends Sponsor> List<S> findAll(Example<S> example, Sort sort);
 
-    boolean addSponsor(MultipartFile sponsorLogo, SponsorDTO sponsorDTO);
+    List<Sponsor> findAll();
 
-    boolean updateSponsor(MultipartFile sponsorLogo, SponsorDTO sponsorDTO);
+    List<Sponsor> findAllById(Iterable<Integer> integers);
 
-    boolean updateSponsor(SponsorDTO sponsorDTO);
+    Optional<Sponsor> findById(Integer integer);
 
-    boolean deleteSponsor(int id);
+    long count();
 
-    boolean addSponsorForEvent(int sponsorId, int eventId);
+    void deleteById(Integer integer);
 
-    boolean addNewSponsorForEvent(int eventId, MultipartFile logo, SponsorDTO sponsorDTO);
+    <S extends Sponsor> S save(S entity);
 
-    List<SponsorDTO> getAllSponsorByEventId(int eventId);
+    List<Sponsor> findAll(Sort sort);
 
-    List<SponsorDTO> getSponsorForAddNew(int eventId);
+    Page<Sponsor> findAll(Pageable pageable);
 
-    boolean deleteSponsorEvent(int eventId, int sponsorId);
+    List<SponsorEventDTO> getAllSponsorsInEvent(int eventId);
+
+    Optional<Sponsor> findBySponsorEmailOrSponsorPhone(String email, String phone);
+
 }

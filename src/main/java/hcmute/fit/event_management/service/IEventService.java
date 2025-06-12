@@ -1,33 +1,87 @@
 package hcmute.fit.event_management.service;
 
-import hcmute.fit.event_management.dto.EventDTO;
-import hcmute.fit.event_management.entity.Event;
-import org.springframework.data.domain.Example;
-import org.springframework.data.domain.Sort;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.multipart.MultipartFile;
 
+import hcmute.fit.event_management.dto.EventDTO;
+import hcmute.fit.event_management.dto.EventEditDTO;
+import hcmute.fit.event_management.dto.EventViewDTO;
+import hcmute.fit.event_management.entity.Event;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.transaction.Transactional;
+import org.springframework.http.ResponseEntity;
+import payload.Response;
+
+import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 public interface IEventService {
+    List<EventDTO> sortEventsByStartTime(List<EventDTO> eventDTOs);
 
+    Event saveEvent(EventDTO eventDTO) throws IOException;
+    Optional<Event> findById(Integer eventId);
+    EventDTO getEventById(int eventId);
+    EventDTO convertToDTO(Event event);
+    List<EventDTO> getAllEvent();
 
-    List<EventDTO> getAllEvents();
+    EventEditDTO getEventAfterEdit(int eventId);
+    EventEditDTO saveEditEvent(EventEditDTO eventEditDTO) throws Exception;
+    void deleteEvent(int eventId);
+    List<EventDTO> findEventsByName(String eventName);
 
-    EventDTO getEventById(int id);
+    List<EventDTO> findEventsStatus(String eventStatus);
 
-    boolean addEvent(MultipartFile image, EventDTO eventDTO);
+    List<EventDTO> findEventsByDate(LocalDateTime eventStart);
+    List<EventDTO> findEventsByHost(String eventHost);
+    List<EventDTO> findEventsByLocation(String eventLocation);
+    List<EventDTO> findEventsByTags(String tag);
+    List<EventDTO> findEventsByType(String eventType);
 
-    boolean deleteEvent(int eventId);
+    List<EventDTO> findEventsByCurrentWeek();
 
-    boolean updateEvent(MultipartFile image, EventDTO eventDTO);
+    List<EventDTO> findEventsByCurrentMonth();
 
-    boolean addMc(int eventId, int mcId);
+    List<EventDTO> findEventsByTicketType(String type);
 
-    List<EventDTO> getAllEventByEmp(int empId);
+    List<EventDTO> searchEventsByMultipleFilters(String eventCategory, String eventLocation, String eventStart, String ticketType);
 
-    String getListAttendeeByEventId(int eventId);
+    List<EventDTO> findEventsByNameAndLocation(String name, String location);
+    List<EventDTO> searchEventsByNameAndCity(String searchTerm, String cityKey);
 
-    String addAttendee(int eventId, MultipartFile attendee);
+    @Transactional
+    ResponseEntity<Response> saveEventToDB(EventDTO eventDTO);
+
+    List<EventDTO> getAllEventByHost(String email);
+
+    List<EventDTO> topEventsByTicketsSold();
+
+    List<EventDTO> top10FavoriteEvents();
+
+    List<String> top10Cities();
+
+    List<EventDTO> getEventsByUSer(int userId);
+
+    Response deleteEventAndRefunds(HttpServletRequest request, int eventId) throws Exception;
+    List<Event> findByUserUserId(int userId);
+    List<Event> findByUserUserIdAndYear(int userId, int year);
+    Set<EventDTO> findEventsByPreferredEventTypes(String email);
+
+    Set<EventDTO> findEventsByPreferredTags(String email);
+
+    List<EventDTO> findEventsByPreferredTypesAndTags(String email);
+
+    List<String> getAllTags();
+
+    void recordEventView(Integer eventId, Integer userId);
+
+    List<EventViewDTO> getTopViewedEvents(int limit);
+
+    Response publishEvent(int eventId);
+
+    Response reportEvent(int eventId, String reason);
+
+    Response reopenEvent(int eventId);
+
+    String getEventViewsAsCSV();
 }

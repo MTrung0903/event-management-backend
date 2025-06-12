@@ -13,10 +13,10 @@ import java.io.Serializable;
 @NoArgsConstructor
 @AllArgsConstructor
 public class AccountRoleId implements Serializable {
-    @Column(name = "account_id")
-    private int accountID;
+    @Column(name = "user_id")
+    private int userId;
 
     @Column(name = "role_id")
-    private int roleID;
+    private int roleId;
 
 }

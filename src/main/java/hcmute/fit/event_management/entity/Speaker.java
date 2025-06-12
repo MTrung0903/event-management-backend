@@ -18,21 +18,18 @@ public class Speaker {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "speaker_id")
     private int speakerId;
-    @Column(name = "image")
+    @Column(name = "speaker_image")
     private String speakerImage;
     @Column(name = "speaker_name")
     private String speakerName;
     @Column(name = "speaker_email")
     private String speakerEmail;
-    @Column(name = "speaker_title")
-    private String speakerTitle;
     @Column(name = "speaker_phone")
     private String speakerPhone;
-    @Column(name = "speaker_address")
-    private String speakerAddress;
     @Column(name = "speaker_desc")
     private String speakerDesc;
-
     @OneToMany(mappedBy = "speaker",cascade = CascadeType.ALL)
     private List<Segment> segments;
+    @OneToMany(mappedBy = "speaker",cascade = CascadeType.ALL)
+    private List<SpeakerEvent> speakerEvents;
 }

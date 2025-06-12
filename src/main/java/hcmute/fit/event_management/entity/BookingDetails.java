@@ -5,6 +5,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Entity
 @Data
 @AllArgsConstructor
@@ -30,4 +32,6 @@ public class BookingDetails {
     @JoinColumn(name = "ticket_id")
     private Ticket ticket;
 
+    @OneToMany(mappedBy = "bookingDetails",cascade = CascadeType.ALL)
+    private List<CheckInTicket> checkInTickets;
 }

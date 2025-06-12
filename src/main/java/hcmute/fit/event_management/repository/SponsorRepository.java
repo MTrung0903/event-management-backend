@@ -7,12 +7,9 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface SponsorRepository extends JpaRepository<Sponsor, Integer> {
-    @Query("select s from Sponsor s join SponsorEvent se on s.id = se.event.eventID where se.event.eventID =:eventid")
-    List<Sponsor> findSponsorsByEventId(@Param("eventid") int eventid);
-
-    @Query("select s from Sponsor s where s.sponsorship.sponsorShipID = :id")
-    List<Sponsor> findSponsorsBySponsorshipId(@Param("id") int id);
+    Optional<Sponsor> findBySponsorEmailOrSponsorPhone(String email, String phone);
 }

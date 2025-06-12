@@ -5,9 +5,11 @@ import hcmute.fit.event_management.service.Impl.UserDetailService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -16,68 +18,101 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
 
 import java.util.List;
 
 
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
     @Autowired
-    private AuthEntryPointJwt unauthorizedHandler;
+    private UserDetailService accountDetailService;
 
     @Autowired
-    private CustomAccessDeniedHandler accessDeniedHandler;
+    private AuthTokenFilter authTokenFilter;
 
-    @Autowired
-    UserDetailService userDetailService;
-
-    @Autowired
-    public AuthTokenFilter authTokenFilter;
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
 
     @Bean
     public AuthenticationManager authenticationManager(HttpSecurity httpSecurity) throws Exception {
         AuthenticationManagerBuilder authenticationManagerBuilder = httpSecurity.getSharedObject(AuthenticationManagerBuilder.class);
-        authenticationManagerBuilder.userDetailsService(userDetailService).passwordEncoder(passwordEncoder());
+        authenticationManagerBuilder.userDetailsService(accountDetailService).passwordEncoder(passwordEncoder());
+
         return authenticationManagerBuilder.build();
     }
+
     @Bean
     public DaoAuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
-        authProvider.setUserDetailsService(userDetailService);
+        authProvider.setUserDetailsService(accountDetailService);
+
         authProvider.setPasswordEncoder(passwordEncoder());
         return authProvider;
     }
 
     @Bean
-    public static PasswordEncoder passwordEncoder(){
-        return new BCryptPasswordEncoder();
-    }
-
-    @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+
         http
                 .cors(cors -> cors.configurationSource(request -> {
-                    org.springframework.web.cors.CorsConfiguration config = new org.springframework.web.cors.CorsConfiguration();
-                    config.setAllowedOrigins(List.of("http://localhost:3000")); // Thêm domain React của bạn
-                    config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-                    config.setAllowedHeaders(List.of("Authorization", "Content-Type"));
-                    config.setAllowCredentials(true);
-                    return config;
+                    CorsConfiguration configuration = new CorsConfiguration();
+                    configuration.setAllowedOrigins(List.of("http://localhost:3000","http://localhost:5000"));
+                    configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+                    configuration.setAllowedHeaders(List.of("*"));
+                    configuration.setAllowCredentials(true);
+                    return configuration;
                 }))
-                .csrf(AbstractHttpConfigurer::disable)
+                .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/login","/forgot","/reset-password","/file").permitAll()
-                        .requestMatchers("/admin/**").hasRole("ADMIN")
-                        .requestMatchers("/man/**").hasAnyRole("MANAGER", "ADMIN")
-                        .requestMatchers("/emp/**").hasAnyRole("EMPLOYEE","MANAGER", "ADMIN")
-                        .anyRequest().authenticated()
-                ).addFilterBefore(authTokenFilter, UsernamePasswordAuthenticationFilter.class)
+                        .requestMatchers(
+                                "/api/auth/login",
+                                "/api/auth/register",
+                                "/api/auth/forgot",
+                                "/api/auth/reset-password",
+                                "/api/auth/logout",
+                                "/change-password",
+                                "/ws/**",
+                                "/api/storage/**",
+                                "/api/events/search/**",
+                                "/api/v1/payment/vnpay-ipn",
+                                "/api/v1/payment/vnpay-return",
+                                "/api/v1/payment/momo-ipn",
+                                "/api/v1/payment/momo-return",
+                                "/api/v1/payment/paypal/success",
+                                "/api/v1/payment/paypal/cancel",
+                                "/api/auth/send-verification-code/**",
+                                "/chat/**",
+                                "/chat/upload/**",
+                                "/uploads/**",
+                                "/api/events/all",
+                                "/api/events/detail/**",
+                                "/api/ticket/detail/**",
+                                "/api/segment/detail/**",
+                                "/api/events-type/get-all-event-types",
+                                "/api/events/search/upcoming",
+                                "/api/events/export-event-views",
+                                "/api/events/active-ids"
+                        ).permitAll()
+                        .anyRequest().authenticated())
+                .userDetailsService(accountDetailService)
+                .addFilterBefore(authTokenFilter, UsernamePasswordAuthenticationFilter.class)
                 .exceptionHandling(configurer -> configurer
-                                .accessDeniedHandler(accessDeniedHandler) // Xử lý lỗi 403;
-                                .authenticationEntryPoint(unauthorizedHandler)  // Xử lý lỗi 401
+                        .accessDeniedHandler((req, res, ex) -> {
+                            res.setStatus(HttpStatus.FORBIDDEN.value());
+                            res.getWriter().write("Access Denied");
+                        })
+                        .authenticationEntryPoint((req, res, ex) -> {
+                            res.setStatus(HttpStatus.UNAUTHORIZED.value());
+                            res.getWriter().write("Unauthorized");
+                        })
                 );
         return http.build();
+
     }
 }
