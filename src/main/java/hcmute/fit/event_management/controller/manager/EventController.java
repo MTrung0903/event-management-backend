@@ -375,8 +375,6 @@ public class EventController {
         return ResponseEntity.ok(topEvents);
     }
 
-
-
     private final RestTemplate restTemplate = new RestTemplate();
     private static final String RECOMMENDATION_API_URL = "http://localhost:5000/recommendations";
 
