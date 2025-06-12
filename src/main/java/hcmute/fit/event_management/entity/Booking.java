@@ -20,7 +20,7 @@ public class Booking {
     private int bookingId;
     @Column(name = "total_price")
     private double totalPrice;
-    @Column(name = "total_price_usd")
+    @Column(name = "total_price_usd", columnDefinition = "DOUBLE DEFAULT 0")
     private double totalPriceUSD;
     @Column(name = "create_date")
     private Date createDate;

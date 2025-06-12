@@ -70,14 +70,35 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/login", "/api/auth/register", "/api/auth/forgot", "/api/auth/reset-password",
-                                "/api/auth/logout", "/change-password", "/ws/**", "/api/storage/**", "/api/events/search/**",
-                                "/api/v1/payment/vnpay-ipn", "/api/v1/payment/vnpay-return", "/api/v1/payment/momo-ipn", "/api/v1/payment/momo-return", "/api/v1/payment/paypal/success","/api/v1/payment/paypal/cancel",
-                                "/api/auth/send-verification-code/**", "/chat/**", "/api/auth/logout", "/change-password", "/ws/**",
-                                "/api/events/all", "/api/events/detail/**", "/api/ticket/detail/**", "/api/segment/detail/**", "/chat/upload/**", "/uploads/**",
-                                "/api/events-type/get-all-event-types", "/api/events/search/upcoming", "/api/events/all", "/api/events/search/upcoming").permitAll()
-                                 "/api/events/all","/api/events/detail/**","/api/ticket/detail/**","/api/segment/detail/**","/chat/upload/**","/uploads/**",
-                                "/api/events-type/get-all-event-types","/api/events/search/upcoming","/api/events/all","/api/events/search/upcoming","/api/events/export-event-views", "/api/events/active-ids").permitAll()
+                        .requestMatchers(
+                                "/api/auth/login",
+                                "/api/auth/register",
+                                "/api/auth/forgot",
+                                "/api/auth/reset-password",
+                                "/api/auth/logout",
+                                "/change-password",
+                                "/ws/**",
+                                "/api/storage/**",
+                                "/api/events/search/**",
+                                "/api/v1/payment/vnpay-ipn",
+                                "/api/v1/payment/vnpay-return",
+                                "/api/v1/payment/momo-ipn",
+                                "/api/v1/payment/momo-return",
+                                "/api/v1/payment/paypal/success",
+                                "/api/v1/payment/paypal/cancel",
+                                "/api/auth/send-verification-code/**",
+                                "/chat/**",
+                                "/chat/upload/**",
+                                "/uploads/**",
+                                "/api/events/all",
+                                "/api/events/detail/**",
+                                "/api/ticket/detail/**",
+                                "/api/segment/detail/**",
+                                "/api/events-type/get-all-event-types",
+                                "/api/events/search/upcoming",
+                                "/api/events/export-event-views",
+                                "/api/events/active-ids"
+                        ).permitAll()
                         .anyRequest().authenticated())
                 .userDetailsService(accountDetailService)
                 .addFilterBefore(authTokenFilter, UsernamePasswordAuthenticationFilter.class)

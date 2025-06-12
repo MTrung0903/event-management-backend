@@ -25,7 +25,7 @@ public class Refund {
     @Column(name = "refund_amount")
     private double refundAmount;
 
-    @Column(name = "refund_amount_usd")
+    @Column(name = "refund_amount_usd", columnDefinition = "DOUBLE DEFAULT 0")
     private double refundAmountUSD;
 
     @Column(name = "status")
