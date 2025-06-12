@@ -62,5 +62,8 @@ public class NotificationServiceImpl implements INotificationService {
         }
         return notificationDTOList;
     }
-
+    @Override
+    public long getUnreadNotificationCount(int userId) {
+        return notificationRepository.countUnreadNotificationsByUserId(userId);
+    }
 }

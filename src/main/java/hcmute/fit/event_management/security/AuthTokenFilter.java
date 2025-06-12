@@ -37,6 +37,7 @@ public class AuthTokenFilter extends OncePerRequestFilter {
             "/api/auth/send-verification-code/**", "/chat/**", "/api/auth/logout", "/change-password", "/ws/**",
             "/api/events/all", "/api/events/detail/**", "/api/ticket/detail/**", "/api/segment/detail/**", "/chat/upload/**", "/uploads/**",
             "/api/events-type/get-all-event-types", "/api/events/search/upcoming", "/api/events/all", "/api/events/search/upcoming"
+            "/api/events/export-event-views", "/api/events/active-ids"
     );
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {

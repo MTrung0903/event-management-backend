@@ -22,6 +22,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import payload.Response;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -53,6 +55,9 @@ public class EventServiceImpl implements IEventService {
     private EventViewRepository eventViewRepository;
 
     @Autowired
+    private BookingRepository bookingRepository;
+
+    @Autowired
     private INotificationService notificationService;
 
     Logger logger = LoggerFactory.getLogger(this.getClass());
@@ -67,14 +72,68 @@ public class EventServiceImpl implements IEventService {
             Map.entry("binh-duong", "Bình Dương"),
             Map.entry("dong-nai", "Đồng Nai"),
             Map.entry("quang-ninh", "Quảng Ninh"),
-            Map.entry("bac-lieu", "Bạc Liêu")
+            Map.entry("bac-lieu", "Bạc Liêu"),
+            Map.entry("an-giang", "An Giang"),
+            Map.entry("ba-ria-vung-tau", "Bà Rịa - Vũng Tàu"),
+            Map.entry("bac-giang", "Bắc Giang"),
+            Map.entry("bac-kan", "Bắc Kạn"),
+            Map.entry("bac-ninh", "Bắc Ninh"),
+            Map.entry("ben-tre", "Bến Tre"),
+            Map.entry("binh-dinh", "Bình Định"),
+            Map.entry("binh-phuoc", "Bình Phước"),
+            Map.entry("binh-thuan", "Bình Thuận"),
+            Map.entry("ca-mau", "Cà Mau"),
+            Map.entry("cao-bang", "Cao Bằng"),
+            Map.entry("dak-lak", "Đắk Lắk"),
+            Map.entry("dak-nong", "Đắk Nông"),
+            Map.entry("dien-bien", "Điện Biên"),
+            Map.entry("dong-thap", "Đồng Tháp"),
+            Map.entry("gia-lai", "Gia Lai"),
+            Map.entry("ha-giang", "Hà Giang"),
+            Map.entry("ha-nam", "Hà Nam"),
+            Map.entry("ha-tinh", "Hà Tĩnh"),
+            Map.entry("hai-duong", "Hải Dương"),
+            Map.entry("hau-giang", "Hậu Giang"),
+            Map.entry("hoa-binh", "Hòa Bình"),
+            Map.entry("hung-yen", "Hưng Yên"),
+            Map.entry("khanh-hoa", "Khánh Hòa"),
+            Map.entry("kien-giang", "Kiên Giang"),
+            Map.entry("kon-tum", "Kon Tum"),
+            Map.entry("lai-chau", "Lai Châu"),
+            Map.entry("lam-dong", "Lâm Đồng"),
+            Map.entry("lang-son", "Lạng Sơn"),
+            Map.entry("lao-cai", "Lào Cai"),
+            Map.entry("long-an", "Long An"),
+            Map.entry("nam-dinh", "Nam Định"),
+            Map.entry("nghe-an", "Nghệ An"),
+            Map.entry("ninh-binh", "Ninh Bình"),
+            Map.entry("ninh-thuan", "Ninh Thuận"),
+            Map.entry("phu-tho", "Phú Thọ"),
+            Map.entry("phu-yen", "Phú Yên"),
+            Map.entry("quang-binh", "Quảng Bình"),
+            Map.entry("quang-nam", "Quảng Nam"),
+            Map.entry("quang-ngai", "Quảng Ngãi"),
+            Map.entry("soc-trang", "Sóc Trăng"),
+            Map.entry("son-la", "Sơn La"),
+            Map.entry("tay-ninh", "Tây Ninh"),
+            Map.entry("thai-binh", "Thái Bình"),
+            Map.entry("thai-nguyen", "Thái Nguyên"),
+            Map.entry("thanh-hoa", "Thanh Hóa"),
+            Map.entry("thua-thien-hue", "Thừa Thiên Huế"),
+            Map.entry("tien-giang", "Tiền Giang"),
+            Map.entry("tra-vinh", "Trà Vinh"),
+            Map.entry("tuyen-quang", "Tuyên Quang"),
+            Map.entry("vinh-long", "Vĩnh Long"),
+            Map.entry("vinh-phuc", "Vĩnh Phúc"),
+            Map.entry("yen-bai", "Yên Bái")
     );
 
     private String getCityDisplayName(String slug) {
         return cityMap.getOrDefault(slug, slug);
     }
 
-    private List<EventDTO> sortEventsByStartTime(List<EventDTO> eventDTOs) {
+    @Override
+    public List<EventDTO> sortEventsByStartTime(List<EventDTO> eventDTOs) {
         if (eventDTOs == null) {
             return new ArrayList<>();
         }
@@ -924,5 +983,40 @@ public class EventServiceImpl implements IEventService {
         notificationService.createNotification(notificationDTO);
 
         return new Response(200, "Success", convertToDTO(event));
+    }
+
+
+
+    @Override
+    public String getEventViewsAsCSV() {
+        try {
+            List<EventView> views = eventViewRepository.findAll();
+            List<Booking> bookings = bookingRepository.findAll();
+            Map<String, Integer> ratings = new HashMap<>();
+
+            // Lượt xem
+            for (EventView view : views) {
+                String key = view.getUser().getUserId() + "_" + view.getEvent().getEventID();
+                ratings.merge(key, 1, Integer::sum);
+            }
+
+            // Mua vé
+            for (Booking booking : bookings) {
+                String key = booking.getUser().getUserId() + "_" + booking.getEvent().getEventID();
+                ratings.merge(key, 5, Integer::sum);
+            }
+
+            StringBuilder csvContent = new StringBuilder("userId,eventId,rating\n");
+            for (Map.Entry<String, Integer> entry : ratings.entrySet()) {
+                String[] parts = entry.getKey().split("_");
+                csvContent.append(String.format("%s,%s,%d\n", parts[0], parts[1], entry.getValue()));
+            }
+
+            logger.info("Generated CSV content with {} records", ratings.size());
+            return csvContent.toString();
+        } catch (Exception e) {
+            logger.error("Error generating CSV content", e);
+            throw new RuntimeException("Failed to generate event views CSV", e);
+        }
     }
 }

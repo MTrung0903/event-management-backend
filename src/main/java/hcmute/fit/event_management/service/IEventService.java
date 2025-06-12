@@ -17,6 +17,8 @@ import java.util.Optional;
 import java.util.Set;
 
 public interface IEventService {
+    List<EventDTO> sortEventsByStartTime(List<EventDTO> eventDTOs);
+
     Event saveEvent(EventDTO eventDTO) throws IOException;
     Optional<Event> findById(Integer eventId);
     EventDTO getEventById(int eventId);
@@ -80,4 +82,6 @@ public interface IEventService {
     Response reportEvent(int eventId, String reason);
 
     Response reopenEvent(int eventId);
+
+    String getEventViewsAsCSV();
 }

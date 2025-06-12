@@ -92,4 +92,9 @@ public class NotificationRestController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to mark all notifications as read: " + e.getMessage());
         }
     }
+    @GetMapping("/unread-count/{userId}")
+    public ResponseEntity<Long> getUnreadNotificationCount(@PathVariable("userId") int userId) {
+        long count = notificationService.getUnreadNotificationCount(userId);
+        return ResponseEntity.ok(count);
+    }
 }

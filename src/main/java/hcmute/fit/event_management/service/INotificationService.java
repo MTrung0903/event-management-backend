@@ -13,4 +13,6 @@ public interface INotificationService {
     void markAllAsRead(int userId);
 
     List<NotificationDTO> getAllNotifications(int userId);
+
+    long getUnreadNotificationCount(int userId);
 }
