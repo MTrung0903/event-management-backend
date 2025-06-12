@@ -50,7 +50,6 @@ public class OrderController {
     @GetMapping("/{userId}")
     public ResponseEntity<?> getOrder(@PathVariable("userId") int userId) {
         List<Booking> bookings = bookingService.findByUserId(userId);
-
         // Lọc các đơn hết hạn & chưa thanh toán để xóa
         List<Booking> expiredUnpaidBookings = bookings.stream()
                 .filter(b -> b.getExpireDate().before(new Date()) && "PENDING".equals(b.getBookingStatus()))
@@ -68,11 +67,10 @@ public class OrderController {
         List<MyOrderDTO> myOrderDTOList = paidBookings.stream().map(booking -> {
             MyOrderDTO myOrderDTO = new MyOrderDTO();
             // Set thông tin giao dịch nếu có
-            transactionService.findByOrderCode(booking.getBookingCode()).ifPresent(transaction -> {
-                TransactionDTO transactionDTO = new TransactionDTO();
-                BeanUtils.copyProperties(transaction, transactionDTO);
-                myOrderDTO.setTransaction(transactionDTO);
-            });
+            Transaction transaction = booking.getTransaction();
+            TransactionDTO transactionDTO = new TransactionDTO();
+            BeanUtils.copyProperties(transaction, transactionDTO);
+            myOrderDTO.setTransaction(transactionDTO);
             // Set thông tin sự kiện
             Event event = booking.getEvent();
             EventLocation eventLocation = event.getEventLocation();
@@ -96,8 +94,7 @@ public class OrderController {
                 return ticketDTO;
             }).collect(Collectors.toList());
             myOrderDTO.setTickets(ticketDTOS);
-
-            myOrderDTO.setOrderId(booking.getBookingCode());
+            myOrderDTO.setOrderId(transaction.getReferenceCode());
             return myOrderDTO;
         }).collect(Collectors.toList());
 

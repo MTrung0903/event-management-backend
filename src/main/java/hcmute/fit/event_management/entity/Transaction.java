@@ -24,6 +24,8 @@ public class Transaction {
     private String transactionDate;
     @Column(name = "transaction_amount")
     private double transactionAmount;
+    @Column(name = "transaction_amount_usd")
+    private double transactionAmountUSD;
     @Column(name ="transaction_no")
     private String transactionNo;
     @Column(name = "transaction_status")

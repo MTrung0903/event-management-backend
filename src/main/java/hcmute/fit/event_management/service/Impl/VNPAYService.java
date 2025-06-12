@@ -299,6 +299,12 @@ public class VNPAYService {
                 Booking booking = transaction.getBooking();
                 booking.setBookingStatus("CANCELED");
                 bookingRepository.save(booking);
+                List<Ticket> updatedTickets = booking.getBookingDetails().stream().map(detail -> {
+                    Ticket ticket = detail.getTicket();
+                    ticket.setSold(ticket.getSold() - detail.getQuantity());
+                    return ticket;
+                }).collect(Collectors.toList());
+                ticketRepository.saveAll(updatedTickets);
                 List<BookingDetails> bkts = booking.getBookingDetails();
                 for (BookingDetails bookingDetails : bkts) {
                     List<CheckInTicket> tickets = bookingDetails.getCheckInTickets();

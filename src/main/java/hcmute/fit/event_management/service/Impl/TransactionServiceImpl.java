@@ -199,4 +199,8 @@ public class TransactionServiceImpl implements ITransactionService {
     public List<Transaction> findByOrganizerAndYear(int userId, int year) {
         return transactionRepository.findByOrganizerAndYear(userId, year);
     }
+    @Override
+    public List<Transaction> findByBookingUserUserId(int userId) {
+        return transactionRepository.findByBookingUserUserId(userId);
+    }
 }

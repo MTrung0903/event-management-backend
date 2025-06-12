@@ -31,44 +31,25 @@ public class AuthTokenFilter extends OncePerRequestFilter {
     private JwtTokenUtil jwtTokenUtil;
 
     private static final List<String> PUBLIC_ENDPOINTS = Arrays.asList(
-            "/api/auth/login",
-            "/api/auth/register",
-            "/api/auth/forgot",
-            "/api/auth/reset-password",
-            "/api/auth/send-verification-code/**",
-            "/chat/**",
-            "/api/auth/logout",
-            "/change-password",
-            "/ws/**",
-            "/api/storage/**",
-            "/api/events/search/**",
-            "/api/events/all",
-            "/api/events/detail/**",
-            "/api/ticket/detail/**",
-            "/api/segment/detail/**",
-            "/chat/upload/**",
-            "/uploads/**",
-            "/api/events-type/get-all-event-types",
-            "/api/events/search/upcoming",
-            "/api/events/all",
-            "/api/events/search/upcoming"
+            "/api/auth/login", "/api/auth/register", "/api/auth/forgot", "/api/auth/reset-password",
+            "/api/auth/logout", "/change-password", "/ws/**", "/api/storage/**", "/api/events/search/**",
+            "/api/v1/payment/vnpay-ipn", "/api/v1/payment/vnpay-return", "/api/v1/payment/momo-ipn", "/api/v1/payment/momo-return", "/api/v1/payment/paypal/success","/api/v1/payment/paypal/cancel",
+            "/api/auth/send-verification-code/**", "/chat/**", "/api/auth/logout", "/change-password", "/ws/**",
+            "/api/events/all", "/api/events/detail/**", "/api/ticket/detail/**", "/api/segment/detail/**", "/chat/upload/**", "/uploads/**",
+            "/api/events-type/get-all-event-types", "/api/events/search/upcoming", "/api/events/all", "/api/events/search/upcoming"
     );
-
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
+        String path = request.getRequestURI();
+        return PUBLIC_ENDPOINTS.stream().anyMatch(endpoint ->
+                endpoint.endsWith("/**") ? path.startsWith(endpoint.substring(0, endpoint.length() - 3)) : path.equals(endpoint)
+        );
+    }
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
         String path = request.getRequestURI();
         String authHeader = request.getHeader("Authorization");
-
-
-        //logger.debug("Authorization header for {}: {}", path, authHeader != null ? authHeader : "null");
-
-        // Bỏ qua các endpoint công khai
-        if (isPublicEndpoint(path)) {
-            logger.debug("Skipping JWT validation for public endpoint: {}", path);
-            filterChain.doFilter(request, response);
-            return;
-        }
 
         try {
             String token = getJwtFromRequest(request);
@@ -94,12 +75,6 @@ public class AuthTokenFilter extends OncePerRequestFilter {
         }
 
         filterChain.doFilter(request, response);
-    }
-
-    private boolean isPublicEndpoint(String path) {
-        return PUBLIC_ENDPOINTS.stream().anyMatch(endpoint ->
-                endpoint.endsWith("/**") ? path.startsWith(endpoint.substring(0, endpoint.length() - 3)) : path.equals(endpoint)
-        );
     }
 
     private String getJwtFromRequest(HttpServletRequest request) {

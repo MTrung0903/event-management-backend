@@ -7,6 +7,7 @@ import hcmute.fit.event_management.config.MomoConfig;
 
 import hcmute.fit.event_management.dto.CheckoutDTO;
 import hcmute.fit.event_management.dto.MomoRequestPayment;
+import hcmute.fit.event_management.dto.TransactionDTO;
 import hcmute.fit.event_management.entity.*;
 import hcmute.fit.event_management.repository.*;
 import lombok.AllArgsConstructor;
@@ -44,6 +45,8 @@ public class MomoService {
     private EventRepository eventRepository;
     @Autowired
     private CheckInTicketRepository checkInTicketRepository;
+    @Autowired
+    EmailServiceImpl emailService;
     public ResponseEntity<?> createQRCode(CheckoutDTO checkoutDTO) {
         try {
             // 1. Khởi tạo các biến cần thiết
@@ -54,7 +57,7 @@ public class MomoService {
             String requestType = momoConfig.getRequestType();
             String secretKey = momoConfig.getSecretKey();
 
-            String orderId = UUID.randomUUID().toString();
+            String orderId = String.valueOf(System.currentTimeMillis());
             String requestId = UUID.randomUUID().toString();
             String orderInfo = checkoutDTO.getOrderInfo();
             int amount = (int) checkoutDTO.getAmount();
@@ -123,7 +126,7 @@ public class MomoService {
         }
     }
 
-    public void ipn(Map<String, String> payload) {
+    public void ipn(Map<String, String> payload) throws Exception {
         String partnerCode = momoConfig.getPartnerCode();
         String accessKey = momoConfig.getAccessKey();
         String secretKey = momoConfig.getSecretKey();
@@ -198,8 +201,80 @@ public class MomoService {
             }
         }
         checkInTicketRepository.saveAll(tickets);
-        System.out.println("Thanh toán thành công");
+        emailService.sendThanksPaymentEmail(booking.getUser().getEmail(), booking.getEvent().getEventName(), booking.getBookingCode(), booking.getUser().getFullName(),tickets);
     }
 
+    public ResponseEntity<?> refund(TransactionDTO transactionDTO) {
+        try {
+            // 1. Lấy thông tin cấu hình
+            String partnerCode = momoConfig.getPartnerCode();
+            String accessKey = momoConfig.getAccessKey();
+            String secretKey = momoConfig.getSecretKey();
 
+            // 2. Kiểm tra giao dịch tồn tại
+            Optional<Transaction> optionalTransaction = transactionRepository.findByOrderCode(transactionDTO.getReferenceCode());
+            if (optionalTransaction.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Transaction not found");
+            }
+            Transaction transaction = optionalTransaction.get();
+            Optional<Booking> optionalBooking = bookingRepository.findByBookingCode(transaction.getBooking().getBookingCode());
+            if (optionalBooking.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Booking not found");
+            }
+            Booking booking = optionalBooking.get();
+            if (!"PAID".equalsIgnoreCase(booking.getBookingStatus())) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Booking is not in PAID status");
+            }
+
+            // 3. Tạo requestId và orderId cho refund
+            String requestId = UUID.randomUUID().toString();
+            String orderId = booking.getBookingCode();
+            int amount = (int) transaction.getTransactionAmount();
+            String transId = transaction.getReferenceCode();
+
+            // 4. Tạo chuỗi rawHash và chữ ký cho refund
+            String rawHash = String.format("accessKey=%s&amount=%d&orderId=%s&partnerCode=%s&requestId=%s&transId=%s",
+                    accessKey, amount, orderId, partnerCode, requestId, transId);
+            String signature = hmacSHA256(secretKey, rawHash);
+
+            // 5. Tạo đối tượng request cho refund
+            MomoRequestPayment request = MomoRequestPayment.builder()
+                    .partnerCode(partnerCode)
+                    .orderId(orderId)
+                    .requestId(requestId)
+                    .amount(amount)
+                    .transId(transId)
+                    .signature(signature)
+                    .lang("vi")
+                    .build();
+
+            // 6. Gọi API refund
+            ResponseEntity<?> response = momoAPI.refund(request);
+            // 7. Xử lý phản hồi từ MoMo
+            if (response.getStatusCode().is2xxSuccessful()) {
+                // Cập nhật trạng thái booking và transaction
+                booking.setBookingStatus("REFUNDED");
+                bookingRepository.save(booking);
+                transaction.setTransactionStatus("REFUNDED");
+                transactionRepository.save(transaction);
+
+                // Hoàn lại số lượng vé
+                List<Ticket> updatedTickets = booking.getBookingDetails().stream().map(detail -> {
+                    Ticket ticket = detail.getTicket();
+                    ticket.setSold(ticket.getSold() - detail.getQuantity());
+                    return ticket;
+                }).collect(Collectors.toList());
+                ticketRepository.saveAll(updatedTickets);
+
+                return ResponseEntity.ok("Refund successful");
+            } else {
+                log.error("Refund failed: {}", response.getBody());
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Refund failed: " + response.getBody());
+            }
+
+        } catch (Exception e) {
+            log.error("Failed to process refund: ", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error processing refund");
+        }
+    }
 }

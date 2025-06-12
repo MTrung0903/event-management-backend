@@ -87,4 +87,6 @@ public interface ITransactionService {
     double sumRevenueByOrganizerAndYear(int userId, int year);
 
     List<Transaction> findByOrganizerAndYear(int userId, int year);
+
+    List<Transaction> findByBookingUserUserId(int userId);
 }

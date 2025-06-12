@@ -20,6 +20,8 @@ public class Booking {
     private int bookingId;
     @Column(name = "total_price")
     private double totalPrice;
+    @Column(name = "total_price_usd")
+    private double totalPriceUSD;
     @Column(name = "create_date")
     private Date createDate;
     @Column(name = "expire_date")

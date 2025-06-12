@@ -12,6 +12,7 @@ public class TransactionDTO {
     private int transactionId;
     private String transactionDate;
     private double transactionAmount;
+    private double transactionAmountUSD;
     private String paymentMethod;
     private String transactionStatus;
     private String referenceCode;

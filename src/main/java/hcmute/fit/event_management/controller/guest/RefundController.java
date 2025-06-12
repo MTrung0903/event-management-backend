@@ -4,6 +4,7 @@ import hcmute.fit.event_management.dto.TransactionDTO;
 import hcmute.fit.event_management.entity.Event;
 import hcmute.fit.event_management.entity.Transaction;
 import hcmute.fit.event_management.service.ITransactionService;
+import hcmute.fit.event_management.service.Impl.PayPalService;
 import hcmute.fit.event_management.service.Impl.VNPAYService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.BeanUtils;
@@ -22,6 +23,9 @@ public class RefundController {
     ITransactionService transactionService;
     @Autowired
     private VNPAYService vnPayService;
+
+    @Autowired
+    PayPalService payPalService;
 
     @GetMapping("/valid/{refCode}")
     public ResponseEntity<?> valid(@PathVariable("refCode") String refCode) {
@@ -53,7 +57,12 @@ public class RefundController {
         Transaction transaction = transactionService.findByOrderCode(refCode).orElse(new Transaction());
         TransactionDTO transactionDTO = new TransactionDTO();
         BeanUtils.copyProperties(transaction, transactionDTO);
-        System.out.println(transactionDTO);
-        return vnPayService.refund(request, transaction);
+
+        if (transaction.getPaymentMethod().equals("VNPAY")) {
+            return vnPayService.refund(request, transaction);
+        }
+        else {
+            return payPalService.refundPayment(transaction);
+        }
     }
 }

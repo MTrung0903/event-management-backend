@@ -40,4 +40,5 @@ public interface TransactionRepository extends JpaRepository<Transaction, Intege
     @Query("SELECT t FROM Transaction t WHERE SUBSTRING(t.transactionDate, 1, 4) = CAST(:year AS string) AND t.transactionStatus = 'SUCCESSFULLY'")
     List<Transaction> findByYear(@Param("year") int year);
 
+    List<Transaction> findByBookingUserUserId(int userId);
 }

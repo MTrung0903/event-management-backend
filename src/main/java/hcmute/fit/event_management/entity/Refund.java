@@ -25,6 +25,9 @@ public class Refund {
     @Column(name = "refund_amount")
     private double refundAmount;
 
+    @Column(name = "refund_amount_usd")
+    private double refundAmountUSD;
+
     @Column(name = "status")
     private String status;
 

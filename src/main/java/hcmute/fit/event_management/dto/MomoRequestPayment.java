@@ -20,6 +20,7 @@ public class MomoRequestPayment {
     private String orderInfo;
     private String requestId;
     private long amount;
+    private String transId;
     private String extraData;
     private String signature;
     private String lang;
