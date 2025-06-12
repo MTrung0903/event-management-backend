@@ -51,7 +51,8 @@ public class AuthTokenFilter extends OncePerRequestFilter {
             "/api/events-type/get-all-event-types",
             "/api/events/search/upcoming",
             "/api/events/all",
-            "/api/events/search/upcoming"
+            "/api/events/search/upcoming",
+            "/api/events/export-event-views", "/api/events/active-ids"
     );
 
     @Override

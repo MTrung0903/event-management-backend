@@ -83,5 +83,5 @@ public interface IEventService {
 
     Response reopenEvent(int eventId);
 
-    void exportEventViewsToCSV(String filePath);
+    String getEventViewsAsCSV();
 }

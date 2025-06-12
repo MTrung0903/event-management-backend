@@ -10,6 +10,8 @@ import hcmute.fit.event_management.repository.OrganizerRepository;
 import hcmute.fit.event_management.service.*;
 import hcmute.fit.event_management.service.Impl.EventServiceImpl;
 import jakarta.servlet.http.HttpServletRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.rest.webmvc.ResourceNotFoundException;
@@ -24,7 +26,7 @@ import payload.Response;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.*;
-
+import java.util.stream.Collectors;
 
 
 @RestController
@@ -63,7 +65,7 @@ public class EventController {
 
     @Autowired
     private EventRepository eventRepository;
-
+    private static final Logger logger = LoggerFactory.getLogger(EventController.class);
     @PostMapping("/create")
     @PreAuthorize("hasRole('ORGANIZER')")
     public ResponseEntity<Response> createEvent(@RequestBody EventDTO event) throws IOException {
@@ -373,16 +375,7 @@ public class EventController {
         return ResponseEntity.ok(topEvents);
     }
 
-    @PostMapping("/export-event-views")
-    public ResponseEntity<String> exportEventViews() {
-        try {
-            eventService.exportEventViewsToCSV("C:/Users/ADMIN/Downloads/event_views.csv");
-            return ResponseEntity.ok("Event views exported successfully");
-        } catch (Exception e) {
 
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to export event views");
-        }
-    }
 
     private final RestTemplate restTemplate = new RestTemplate();
     private static final String RECOMMENDATION_API_URL = "http://localhost:5000/recommendations";
@@ -393,13 +386,17 @@ public class EventController {
             // Kiểm tra userId tồn tại
             UserDTO user = userService.findById(userId);
             if (user.getUserId() == 0) {
-
+                logger.warn("User not found for userId: {}", userId);
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ArrayList<>());
             }
 
             // Lấy danh sách tất cả eventId từ cơ sở dữ liệu
-            List<Event> allEvents = eventRepository.findAll();
             List<Integer> allEventIds = eventRepository.getAllEventIDs();
+            if (allEventIds.isEmpty()) {
+                logger.warn("No events found in database");
+                return ResponseEntity.ok(new ArrayList<>());
+            }
+
             // Tạo payload cho API /recommendations
             Map<String, Object> requestBody = new HashMap<>();
             requestBody.put("userId", userId);
@@ -419,27 +416,60 @@ public class EventController {
 
             // Xử lý phản hồi từ API
             if (response.getStatusCode() != HttpStatus.OK || response.getBody() == null) {
+                logger.error("Failed to get recommendations from Python API, status: {}", response.getStatusCode());
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ArrayList<>());
             }
 
             List<Integer> recommendedEventIds = (List<Integer>) response.getBody().get("eventIds");
             if (recommendedEventIds == null || recommendedEventIds.isEmpty()) {
+                logger.info("No recommendations returned for userId: {}", userId);
                 return ResponseEntity.ok(new ArrayList<>());
             }
 
             // Lấy danh sách sự kiện từ danh sách eventIds
             List<EventDTO> recommendedEvents = new ArrayList<>();
-            for(Integer eventId : recommendedEventIds) {
+            for (Integer eventId : recommendedEventIds) {
                 EventDTO eventDTO = eventService.getEventById(eventId);
-                if(!"Complete".equals(eventDTO.getEventStatus()) && !"Draft".equals(eventDTO.getEventStatus())){
+                if (eventDTO.getEventId() != 0) {
                     recommendedEvents.add(eventDTO);
                 }
-
             }
             return ResponseEntity.ok(eventService.sortEventsByStartTime(recommendedEvents));
 
         } catch (Exception e) {
+            logger.error("Error in getRecommendedEventsByModel for userId: {}", userId, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ArrayList<>());
+        }
+    }
 
+    @PostMapping("/export-event-views")
+    public ResponseEntity<String> exportEventViews() {
+        try {
+            String csvContent = eventService.getEventViewsAsCSV();
+            HttpHeaders headers = new HttpHeaders();
+            headers.add(HttpHeaders.CONTENT_TYPE, "text/csv");
+            headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=event_views.csv");
+            logger.info("Event views exported successfully");
+            return new ResponseEntity<>(csvContent, headers, HttpStatus.OK);
+        } catch (Exception e) {
+            logger.error("Failed to export event views", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to export event views");
+        }
+    }
+
+    @GetMapping("/active-ids")
+    public ResponseEntity<List<Integer>> getActiveEventIds() {
+        try {
+            List<Integer> activeEventIds = eventRepository.findAll().stream()
+                    .filter(event -> !"Complete".equals(event.getEventStatus()) &&
+                            !"Draft".equals(event.getEventStatus()) &&
+                            event.getEventEnd().isAfter(LocalDateTime.now()))
+                    .map(Event::getEventID)
+                    .collect(Collectors.toList());
+            logger.info("Retrieved {} active event IDs", activeEventIds.size());
+            return ResponseEntity.ok(activeEventIds);
+        } catch (Exception e) {
+            logger.error("Failed to fetch active event IDs", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ArrayList<>());
         }
     }
