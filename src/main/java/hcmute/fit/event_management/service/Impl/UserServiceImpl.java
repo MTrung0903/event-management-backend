@@ -372,10 +372,9 @@ public class UserServiceImpl implements IUserService {
         }
 
         User user = userOpt.get();
-        deleteRoleInUser(user.getEmail(),"ROLE_ATTENDEE");
-        Optional<List<UserRole>> userRolesOpt = userRoleRepository.findAllByUser(user);
 
         // Kiểm tra xem user có role ROLE_ORGANIZER không
+        Optional<List<UserRole>> userRolesOpt = userRoleRepository.findAllByUser(user);
         boolean hasOrganizerRole = false;
         if (userRolesOpt.isPresent()) {
             for (UserRole ur : userRolesOpt.get()) {
@@ -398,17 +397,28 @@ public class UserServiceImpl implements IUserService {
                     .body(new Response(400, "Bad Request", "Organizer name is required"));
         }
 
-        // Thêm role ROLE_ORGANIZER
+        // Thêm role ROLE_ORGANIZER trước
         Optional<Role> roleOpt = roleRepository.findByName("ROLE_ORGANIZER");
         if (!roleOpt.isPresent()) {
             logger.error("ROLE_ORGANIZER not found in database");
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new Response(500, "Error", "ROLE_ORGANIZER not configured"));
         }
+
         Role organizerRole = roleOpt.get();
         AccountRoleId accountRoleId = new AccountRoleId(user.getUserId(), organizerRole.getRoleId());
         UserRole userRole = new UserRole(accountRoleId, user, organizerRole);
         userRoleRepository.save(userRole);
+        logger.info("Added ROLE_ORGANIZER for user {}", email);
+
+        // Xóa vai trò ROLE_ATTENDEE sau khi đã thêm ROLE_ORGANIZER
+        ResponseEntity<Response> deleteResponse = deleteRoleInUser(email, "ROLE_ATTENDEE");
+        if (deleteResponse.getStatusCode() != HttpStatus.OK) {
+            logger.error("Failed to delete ROLE_ATTENDEE for user {}", email);
+            // Rollback giao dịch nếu cần
+
+            return deleteResponse; // Trả về lỗi nếu không xóa được vai trò
+        }
 
         // Tạo mới Organizer
         if (user.getOrganizer() != null) {
