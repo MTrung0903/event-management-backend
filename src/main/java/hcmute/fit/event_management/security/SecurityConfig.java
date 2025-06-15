@@ -61,7 +61,7 @@ public class SecurityConfig {
         http
                 .cors(cors -> cors.configurationSource(request -> {
                     CorsConfiguration configuration = new CorsConfiguration();
-                    configuration.setAllowedOrigins(List.of("https://event-management-fontend-030c86383874.herokuapp.com/","https://event-recommendation-512c4c8777df.herokuapp.com"));
+                    configuration.setAllowedOrigins(List.of("https://event-management-fontend-030c86383874.herokuapp.com/","https://event-recommendation-512c4c8777df.herokuapp.com", "https://event-management-server-asi9.onrender.com"));
                     configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
                     configuration.setAllowedHeaders(List.of("*"));
                     configuration.setAllowCredentials(true);
