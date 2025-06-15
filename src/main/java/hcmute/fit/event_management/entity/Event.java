@@ -44,6 +44,7 @@ public class Event {
 
     @ElementCollection
     private List<String> mediaContent;
+    private String seatingMapImage;
 
     @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Segment> segments;

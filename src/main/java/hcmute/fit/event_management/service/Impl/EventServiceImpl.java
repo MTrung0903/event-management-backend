@@ -217,6 +217,9 @@ public class EventServiceImpl implements IEventService {
         List<String> mediaUrls = event.getMediaContent().stream()
                 .map(publicId -> cloudinary.url().generate(publicId))
                 .collect(Collectors.toList());
+        if (event.getSeatingMapImage() != null) {
+            dto.setSeatingMapImage(cloudinary.url().generate(event.getSeatingMapImage()));
+        }
         dto.setMediaContent(mediaUrls);
         dto.setUserId(event.getUser().getUserId());
         long viewCount = eventViewRepository.countByEventEventID(event.getEventID());
@@ -285,6 +288,9 @@ public class EventServiceImpl implements IEventService {
         if (eventEditDTO.getEvent().getMediaContent() != null) {
             event.getMediaContent().clear();
             event.getMediaContent().addAll(eventEditDTO.getEvent().getMediaContent());
+        }
+        if(eventEditDTO.getEvent().getSeatingMapImage() != null) {
+            event.setSeatingMapImage(eventEditDTO.getEvent().getSeatingMapImage());
         }
 
         List<TicketDTO> ticketDTOs = eventEditDTO.getTicket();
@@ -590,7 +596,9 @@ public class EventServiceImpl implements IEventService {
         if (eventDTO.getMediaContent() != null) {
             event.setMediaContent(new ArrayList<>(eventDTO.getMediaContent()));
         }
-
+        if (eventDTO.getSeatingMapImage() != null) {
+            event.setSeatingMapImage(eventDTO.getSeatingMapImage());
+        }
         Event tmp = eventRepository.save(event);
         logger.info("Event {} created successfully by user {} with status {}", event.getEventName(), name, event.getEventStatus());
         return ResponseEntity.status(HttpStatus.CREATED)
