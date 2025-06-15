@@ -376,7 +376,7 @@ public class EventController {
     }
 
     private final RestTemplate restTemplate = new RestTemplate();
-    private static final String RECOMMENDATION_API_URL = "https://event-recommendation-512c4c8777df.herokuapp.com/recommendations";
+    private static final String RECOMMENDATION_API_URL = "https://event-recommendation.onrender.com/recommendations";
 
     @PostMapping("/recommended/{userId}")
     public ResponseEntity<List<EventDTO>> getRecommendedEventsByModel(@PathVariable int userId) {
