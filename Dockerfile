@@ -8,7 +8,7 @@ RUN mvn clean package -DskipTests
 FROM openjdk:21-jdk-slim
 WORKDIR /app
 
-COPY --from=build /app/target/event-management-0.0.1-SNAPSHOT.war event-managermen-server.war
+COPY --from=build /app/target/event-management-0.0.1-SNAPSHOT.jar event-managermen-server.jar
 EXPOSE 8080
 
-ENTRYPOINT ["java", "-jar", "event-managermen-server.war"]
+ENTRYPOINT ["java", "-jar", "event-managermen-server.jar"]
