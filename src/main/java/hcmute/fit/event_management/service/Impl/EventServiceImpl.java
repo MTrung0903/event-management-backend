@@ -220,6 +220,15 @@ public class EventServiceImpl implements IEventService {
         if (event.getSeatingMapImage() != null) {
             dto.setSeatingMapImage(cloudinary.url().generate(event.getSeatingMapImage()));
         }
+        if (event.getSeatingLayout() != null) {
+            dto.setSeatingLayout(event.getSeatingLayout());
+        }
+        if (event.getSeatingMapImageVersions() != null) {
+            List<String> versionUrls = event.getSeatingMapImageVersions().stream()
+                    .map(publicId -> cloudinary.url().generate(publicId))
+                    .collect(Collectors.toList());
+            dto.setSeatingMapImageVersions(versionUrls);
+        }
         dto.setMediaContent(mediaUrls);
         dto.setUserId(event.getUser().getUserId());
         long viewCount = eventViewRepository.countByEventEventID(event.getEventID());
@@ -292,7 +301,13 @@ public class EventServiceImpl implements IEventService {
         if(eventEditDTO.getEvent().getSeatingMapImage() != null) {
             event.setSeatingMapImage(eventEditDTO.getEvent().getSeatingMapImage());
         }
-
+        if (eventEditDTO.getEvent().getSeatingLayout() != null) {
+            event.setSeatingLayout(eventEditDTO.getEvent().getSeatingLayout());
+        }
+        if (eventEditDTO.getEvent().getSeatingMapImageVersions() != null) {
+            event.getSeatingMapImageVersions().clear();
+            event.getSeatingMapImageVersions().addAll(eventEditDTO.getEvent().getSeatingMapImageVersions());
+        }
         List<TicketDTO> ticketDTOs = eventEditDTO.getTicket();
         if (ticketDTOs != null) {
             for (TicketDTO ticketDTO : ticketDTOs) {
@@ -598,6 +613,12 @@ public class EventServiceImpl implements IEventService {
         }
         if (eventDTO.getSeatingMapImage() != null) {
             event.setSeatingMapImage(eventDTO.getSeatingMapImage());
+        }
+        if (eventDTO.getSeatingLayout() != null) {
+            event.setSeatingLayout(eventDTO.getSeatingLayout());
+        }
+        if (eventDTO.getSeatingMapImageVersions() != null) {
+            event.setSeatingMapImageVersions(new ArrayList<>(eventDTO.getSeatingMapImageVersions()));
         }
         Event tmp = eventRepository.save(event);
         logger.info("Event {} created successfully by user {} with status {}", event.getEventName(), name, event.getEventStatus());

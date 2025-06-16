@@ -184,9 +184,6 @@ public class EventController {
     @PostMapping("/create-event")
     @PreAuthorize("hasRole('ORGANIZER')")
     public ResponseEntity<Response> saveEvent(@RequestBody EventDTO event)  {
-
-
-
         return eventService.saveEventToDB(event);
     }
     @GetMapping("/all")

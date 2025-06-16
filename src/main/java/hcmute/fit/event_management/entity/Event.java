@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -45,6 +46,12 @@ public class Event {
     @ElementCollection
     private List<String> mediaContent;
     private String seatingMapImage;
+
+    @Column(columnDefinition = "TEXT")
+    private String seatingLayout; // Thêm trường mới
+
+    @ElementCollection
+    private List<String> seatingMapImageVersions = new ArrayList<>(); // Thêm trường mới
 
     @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Segment> segments;

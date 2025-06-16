@@ -36,6 +36,8 @@ public class EventDTO {
     private int validityDays;
     private List<String> eventImages;
     private String seatingMapImage;
+    private String seatingLayout;
+    private List<String> seatingMapImageVersions;
     private String eventImage;
     private String textContent;
     private List<String> mediaContent;
