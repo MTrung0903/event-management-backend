@@ -11,9 +11,10 @@ import java.util.Date;
 @AllArgsConstructor
 @NoArgsConstructor
 public class TicketDTO {
-    private int ticketId;
+    private Integer ticketId;
     private String ticketName;
     private String ticketType;
+
     private double price;
     private int quantity;
     private int sold;
