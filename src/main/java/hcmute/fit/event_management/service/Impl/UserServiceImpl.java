@@ -184,6 +184,7 @@ public class UserServiceImpl implements IUserService {
                 .body(new Response(201, "Success", "User registered successfully"));
     }
 
+
     @Override
     public ResponseEntity<Response> saveChangeInfor(UserDTO userChange) {
         if (userChange.getEmail() == null || userChange.getEmail().isEmpty()) {
@@ -209,7 +210,6 @@ public class UserServiceImpl implements IUserService {
             user.setEmail(userChange.getEmail());
         }
         user.setFullName(userChange.getFullName());
-
         user.setGender(userChange.getGender());
         if (userChange.getBirthday().isAfter(LocalDate.now())) {
             logger.error("Invalid birthday: {}", userChange.getBirthday());
@@ -217,10 +217,7 @@ public class UserServiceImpl implements IUserService {
                     .body(new Response(400, "Bad Request", "Birthday cannot be in the future"));
         }
         user.setBirthday(userChange.getBirthday());
-
-
         user.setAddress(userChange.getAddress());
-
 
         if (userChange.getOrganizer() != null) {
             OrganizerDTO organizerDTO = userChange.getOrganizer();
@@ -230,9 +227,15 @@ public class UserServiceImpl implements IUserService {
             }
 
             Organizer organizer = user.getOrganizer();
-            BeanUtils.copyProperties(organizerDTO, organizer);
+            if (organizer == null) {
+                // Nếu user chưa có Organizer, tạo mới
+                organizer = new Organizer();
+                organizer.setUser(user);
+                user.setOrganizer(organizer);
+            }
+            // Sao chép thuộc tính nhưng bỏ qua organizerId
+            BeanUtils.copyProperties(organizerDTO, organizer, "organizerId");
             organizerRepository.save(organizer);
-            user.setOrganizer(organizer);
         }
 
         // Lưu user
