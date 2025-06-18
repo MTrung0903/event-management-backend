@@ -113,7 +113,8 @@ public class OrderController {
     @GetMapping("/{orderCode}/tickets")
     public ResponseEntity<?> getTickets(@PathVariable("orderCode") String orderCode) throws Exception {
         ViewTicketDTO viewTicketDTO = new ViewTicketDTO();
-        Booking booking = bookingService.findByBookingCode(orderCode).orElse(new Booking());
+        Transaction transaction = transactionService.findByOrderCode(orderCode).orElse(new Transaction());
+        Booking booking = transaction.getBooking();
         // Lay event
         Event event = booking.getEvent();
         EventDTO eventDTO = new EventDTO();
