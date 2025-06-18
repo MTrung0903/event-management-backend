@@ -1,6 +1,9 @@
 package hcmute.fit.event_management.service.Impl;
 
 import com.cloudinary.Cloudinary;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import hcmute.fit.event_management.dto.*;
 import hcmute.fit.event_management.entity.*;
 import hcmute.fit.event_management.repository.*;
@@ -217,6 +220,18 @@ public class EventServiceImpl implements IEventService {
         List<String> mediaUrls = event.getMediaContent().stream()
                 .map(publicId -> cloudinary.url().generate(publicId))
                 .collect(Collectors.toList());
+        if (event.getSeatingMapImage() != null) {
+            dto.setSeatingMapImage(cloudinary.url().generate(event.getSeatingMapImage()));
+        }
+        if (event.getSeatingLayout() != null) {
+            dto.setSeatingLayout(event.getSeatingLayout());
+        }
+        if (event.getSeatingMapImageVersions() != null) {
+            List<String> versionUrls = event.getSeatingMapImageVersions().stream()
+                    .map(publicId -> cloudinary.url().generate(publicId))
+                    .collect(Collectors.toList());
+            dto.setSeatingMapImageVersions(versionUrls);
+        }
         dto.setMediaContent(mediaUrls);
         dto.setUserId(event.getUser().getUserId());
         long viewCount = eventViewRepository.countByEventEventID(event.getEventID());
@@ -286,18 +301,104 @@ public class EventServiceImpl implements IEventService {
             event.getMediaContent().clear();
             event.getMediaContent().addAll(eventEditDTO.getEvent().getMediaContent());
         }
+        if(eventEditDTO.getEvent().getSeatingMapImage() != null) {
+            event.setSeatingMapImage(eventEditDTO.getEvent().getSeatingMapImage());
+        }
 
+        if (eventEditDTO.getEvent().getSeatingMapImageVersions() != null) {
+            event.getSeatingMapImageVersions().clear();
+            event.getSeatingMapImageVersions().addAll(eventEditDTO.getEvent().getSeatingMapImageVersions());
+        }
+        // Xử lý vé
         List<TicketDTO> ticketDTOs = eventEditDTO.getTicket();
         if (ticketDTOs != null) {
             for (TicketDTO ticketDTO : ticketDTOs) {
-                if (ticketDTO.getTicketId() == 0) {
+                // Kiểm tra ticketId để phân biệt vé mới và vé hiện có
+                if (ticketDTO.getTicketId() == null) {
+                    // Thêm vé mới
                     ticketService.addTicket(eventId, ticketDTO);
                 } else {
+                    // Cập nhật vé hiện có
                     ticketService.saveEditTicket(eventId, ticketDTO);
                 }
             }
         }
 
+        // Xử lý seatingLayout
+        if (eventEditDTO.getEvent().getSeatingLayout() != null) {
+            String seatingLayoutJson = eventEditDTO.getEvent().getSeatingLayout();
+            ObjectMapper mapper = new ObjectMapper();
+            JsonNode seatingLayoutNode = mapper.readTree(seatingLayoutJson);
+            JsonNode seatingAreasNode = seatingLayoutNode.get("seatingAreas");
+
+            Map<String, Integer> newTicketIds = new HashMap<>();
+            if (ticketDTOs != null) {
+                for (TicketDTO ticketDTO : ticketDTOs) {
+                    if (ticketDTO.getTicketId() == null) {
+                        Optional<Ticket> existingTicket = ticketRepository.findByEventIdAndTicketNameAndTicketTypeAndPriceAndQuantityAndStartTimeAndEndTime(
+                                eventId,
+                                ticketDTO.getTicketName(),
+                                ticketDTO.getTicketType(),
+                                ticketDTO.getPrice(),
+                                ticketDTO.getQuantity(),
+                                ticketDTO.getStartTime(),
+                                ticketDTO.getEndTime()
+                        );
+                        if (existingTicket.isPresent()) {
+                            newTicketIds.put(ticketDTO.getTicketName(), existingTicket.get().getTicketId());
+                        } else {
+                            Ticket ticket = new Ticket();
+                            ticket.setTicketName(ticketDTO.getTicketName());
+                            ticket.setTicketType(ticketDTO.getTicketType());
+                            ticket.setPrice(ticketDTO.getPrice());
+                            ticket.setQuantity(ticketDTO.getQuantity());
+                            ticket.setStartTime(ticketDTO.getStartTime());
+                            ticket.setEndTime(ticketDTO.getEndTime());
+                            ticket.setSold(ticketDTO.getSold() != 0 ? ticketDTO.getSold() : 0);
+                            ticket.setEvent(event);
+                            ticket = ticketRepository.save(ticket);
+                            newTicketIds.put(ticketDTO.getTicketName(), ticket.getTicketId());
+                        }
+                    } else {
+                        newTicketIds.put(ticketDTO.getTicketName(), ticketDTO.getTicketId());
+                    }
+                }
+            }
+
+            if (seatingAreasNode.isArray()) {
+                List<JsonNode> updatedAreas = new ArrayList<>();
+                for (JsonNode areaNode : seatingAreasNode) {
+                    ObjectNode updatedArea = areaNode.deepCopy();
+                    String ticketIdStr = areaNode.has("ticketId") && !areaNode.get("ticketId").isNull()
+                            ? areaNode.get("ticketId").asText()
+                            : null;
+                    Integer ticketId = null;
+                    if (ticketIdStr != null) {
+                        if (ticketIdStr.startsWith("ticket-new-")) {
+                            String areaId = ticketIdStr.replace("ticket-new-", "");
+                            String ticketName = areaNode.get("name").asText();
+                            ticketId = newTicketIds.get(ticketName);
+                        } else if (ticketIdStr.startsWith("ticket-")) {
+                            ticketId = Integer.parseInt(ticketIdStr.replace("ticket-", ""));
+                        }
+                    }
+                    if (ticketId != null) {
+                        Optional<Ticket> ticket = ticketRepository.findById(ticketId);
+                        if (!ticket.isPresent()) {
+                            logger.error("Invalid ticketId {} in seating layout", ticketId);
+                            throw new IllegalArgumentException("Invalid ticketId in seating layout: " + ticketId);
+                        }
+                        updatedArea.put("ticketId", "ticket-" + ticketId);
+                    } else {
+                        updatedArea.putNull("ticketId");
+                    }
+                    updatedAreas.add(updatedArea);
+                }
+                ((ObjectNode) seatingLayoutNode).set("seatingAreas", mapper.valueToTree(updatedAreas));
+                seatingLayoutJson = mapper.writeValueAsString(seatingLayoutNode);
+            }
+            event.setSeatingLayout(seatingLayoutJson);
+        }
         List<SegmentDTO> segmentDTOs = eventEditDTO.getSegment();
         if (segmentDTOs != null) {
             for (SegmentDTO segmentDTO : segmentDTOs) {
@@ -590,7 +691,15 @@ public class EventServiceImpl implements IEventService {
         if (eventDTO.getMediaContent() != null) {
             event.setMediaContent(new ArrayList<>(eventDTO.getMediaContent()));
         }
-
+        if (eventDTO.getSeatingMapImage() != null) {
+            event.setSeatingMapImage(eventDTO.getSeatingMapImage());
+        }
+        if (eventDTO.getSeatingLayout() != null) {
+            event.setSeatingLayout(eventDTO.getSeatingLayout());
+        }
+        if (eventDTO.getSeatingMapImageVersions() != null) {
+            event.setSeatingMapImageVersions(new ArrayList<>(eventDTO.getSeatingMapImageVersions()));
+        }
         Event tmp = eventRepository.save(event);
         logger.info("Event {} created successfully by user {} with status {}", event.getEventName(), name, event.getEventStatus());
         return ResponseEntity.status(HttpStatus.CREATED)

@@ -4,8 +4,11 @@ import hcmute.fit.event_management.dto.TicketDTO;
 import hcmute.fit.event_management.entity.*;
 import hcmute.fit.event_management.repository.*;
 import hcmute.fit.event_management.service.ITicketService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.rest.webmvc.ResourceNotFoundException;
 import org.springframework.stereotype.Service;
 import payload.Response;
 
@@ -24,7 +27,7 @@ public class TicketServiceImpl implements ITicketService {
     private BookingRepository bookingRepository;
     @Autowired
     private UserRepository userRepository;
-
+    Logger logger = LoggerFactory.getLogger(this.getClass());
     public TicketServiceImpl(TicketRepository ticketRepository) {
         this.ticketRepository = ticketRepository;
     }
@@ -68,14 +71,41 @@ public class TicketServiceImpl implements ITicketService {
 
     @Override
     public void addTicket(int eventId, TicketDTO ticketDTO) {
+        // Kiểm tra vé trùng lặp
+        Optional<Ticket> existingTicket = ticketRepository.findByEventIdAndTicketNameAndTicketTypeAndPriceAndQuantityAndStartTimeAndEndTime(
+                eventId,
+                ticketDTO.getTicketName(),
+                ticketDTO.getTicketType(),
+                ticketDTO.getPrice(),
+                ticketDTO.getQuantity(),
+                ticketDTO.getStartTime(),
+                ticketDTO.getEndTime()
+        );
+
+        if (existingTicket.isPresent()) {
+            // Nếu vé đã tồn tại, không thêm mới mà ghi log
+            logger.info("Ticket already exists for event id {} with ticket id {}", eventId, existingTicket.get().getTicketId());
+            return;
+        }
+
+        // Tạo vé mới
         Ticket ticket = new Ticket();
-        BeanUtils.copyProperties(ticketDTO, ticket);
+        ticket.setTicketName(ticketDTO.getTicketName());
+        ticket.setTicketType(ticketDTO.getTicketType());
+        ticket.setPrice(ticketDTO.getPrice());
+        ticket.setQuantity(ticketDTO.getQuantity());
+        ticket.setStartTime(ticketDTO.getStartTime());
+        ticket.setEndTime(ticketDTO.getEndTime());
+        ticket.setSold(ticketDTO.getSold() != 0 ? ticketDTO.getSold() : 0);
+
         Optional<Event> optionalEvent = eventRepository.findById(eventId);
         if (optionalEvent.isEmpty()) {
             throw new RuntimeException("Event not found with id: " + eventId);
         }
         ticket.setEvent(optionalEvent.get());
+
         ticketRepository.save(ticket);
+        logger.info("Added new ticket for event id {}: {}", eventId, ticketDTO.getTicketName());
     }
 
     public TicketDTO convertToDTO(Ticket ticket) {
@@ -97,23 +127,27 @@ public class TicketServiceImpl implements ITicketService {
 
     @Override
     public void saveEditTicket(int eventId, TicketDTO ticketDTO) throws Exception {
-        Optional<Ticket> existingTicketOpt = ticketRepository.findById(ticketDTO.getTicketId());
-        Ticket ticket;
-
-        if (existingTicketOpt.isPresent()) {
-            // Update existing ticket
-            ticket = existingTicketOpt.get();
-            BeanUtils.copyProperties(ticketDTO, ticket, "event");
-        } else {
-            // Create new ticket
-            ticket = new Ticket();
-            BeanUtils.copyProperties(ticketDTO, ticket);
-            Optional<Event> optionalEvent = eventRepository.findById(eventId);
-            if (optionalEvent.isEmpty()) {
-                throw new RuntimeException("Event not found with id: " + eventId);
-            }
-            ticket.setEvent(optionalEvent.get());
+        if (ticketDTO.getTicketId() == null) {
+            throw new IllegalArgumentException("Ticket ID cannot be null for updating");
         }
+
+        Optional<Ticket> existingTicketOpt = ticketRepository.findById(ticketDTO.getTicketId());
+        if (existingTicketOpt.isEmpty()) {
+            throw new ResourceNotFoundException("Ticket not found with id: " + ticketDTO.getTicketId());
+        }
+
+        Ticket ticket = existingTicketOpt.get();
+        if (ticket.getEvent().getEventID() != eventId) {
+            throw new IllegalArgumentException("Ticket does not belong to event id " + eventId);
+        }
+
+        ticket.setTicketName(ticketDTO.getTicketName());
+        ticket.setTicketType(ticketDTO.getTicketType());
+        ticket.setPrice(ticketDTO.getPrice());
+        ticket.setQuantity(ticketDTO.getQuantity());
+        ticket.setStartTime(ticketDTO.getStartTime());
+        ticket.setEndTime(ticketDTO.getEndTime());
+        ticket.setSold(ticketDTO.getSold() != 0 ? ticketDTO.getSold() : ticket.getSold());
 
         ticketRepository.save(ticket);
     }

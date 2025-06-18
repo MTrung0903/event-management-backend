@@ -184,9 +184,6 @@ public class EventController {
     @PostMapping("/create-event")
     @PreAuthorize("hasRole('ORGANIZER')")
     public ResponseEntity<Response> saveEvent(@RequestBody EventDTO event)  {
-
-
-
         return eventService.saveEventToDB(event);
     }
     @GetMapping("/all")
@@ -197,7 +194,7 @@ public class EventController {
     @GetMapping("detail/{eventId}")
     public ResponseEntity<EventDetailDTO> getEventById(@PathVariable int eventId,@RequestParam(required = false) Integer userId) {
         // Ghi lại lượt xem
-        eventService.recordEventView(eventId, userId);
+        if(userId !=null) eventService.recordEventView(eventId, userId);
 
         EventDetailDTO detailDTO = new EventDetailDTO();
         detailDTO.setEvent(eventService.getEventById(eventId));
