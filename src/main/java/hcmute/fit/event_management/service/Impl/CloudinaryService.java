@@ -31,12 +31,14 @@ public class CloudinaryService {
     // Download file (trả về URL để client tự tải)
     @Named("getFileUrl")
     public String getFileUrl(String publicId) {
-        return cloudinary.url().secure(true).resourceType("image").generate(publicId);
+        // Determine resource type dynamically based on publicId or context
+        // For simplicity, we assume the resource type is stored or can be inferred
+        return cloudinary.url().secure(true).resourceType("auto").generate(publicId);
     }
 
     // Delete file
     public boolean deleteFile(String publicId) throws IOException {
-        Map result = cloudinary.uploader().destroy(publicId, ObjectUtils.asMap("resource_type", "image"));
+        Map result = cloudinary.uploader().destroy(publicId, ObjectUtils.asMap("resource_type", "auto"));
         return "ok".equals(result.get("result"));
     }
 

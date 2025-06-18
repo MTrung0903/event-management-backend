@@ -4,6 +4,7 @@ import hcmute.fit.event_management.dto.MessageDTO;
 import hcmute.fit.event_management.dto.UserDTO;
 import hcmute.fit.event_management.service.IMessageService;
 import hcmute.fit.event_management.service.IUserService;
+import hcmute.fit.event_management.service.Impl.CloudinaryService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -11,9 +12,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 
 @RestController
@@ -26,25 +24,19 @@ public class ChatRestController {
     @Autowired
     private IUserService userService;
 
+    @Autowired
+    private CloudinaryService cloudinaryService;
+
     @PostMapping("/upload")
     public ResponseEntity<String> uploadFile(@RequestParam("file") MultipartFile file) {
         try {
-            String fileName = uploadToStorage(file);
-            System.out.println("Uploaded file: " + fileName);
-            return new ResponseEntity<>(fileName, HttpStatus.OK);
+            String publicId = cloudinaryService.uploadFile(file);
+            System.out.println("Uploaded file to Cloudinary with publicId: " + publicId);
+            return new ResponseEntity<>(publicId, HttpStatus.OK);
         } catch (Exception e) {
-            System.err.println("File upload failed: " + e.getMessage());
+            System.err.println("File upload to Cloudinary failed: " + e.getMessage());
             return new ResponseEntity<>("File upload failed: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
-    }
-
-    private String uploadToStorage(MultipartFile file) throws IOException {
-        String fileName = System.currentTimeMillis() + "_" + file.getOriginalFilename();
-        Path filePath = Paths.get("D:/Uploads", fileName);
-        Files.createDirectories(filePath.getParent());
-        Files.write(filePath, file.getBytes());
-        System.out.println("File saved at: " + filePath.toAbsolutePath());
-        return fileName;
     }
 
     @GetMapping("/history/{user1Id}/{user2Id}")
