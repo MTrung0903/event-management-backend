@@ -10,7 +10,7 @@ public class WebConfig implements WebMvcConfigurer {
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/uploads/**")
-                .allowedOrigins("https://event-management-b0t4.onrender.com/")
+                .allowedOrigins("https://utevent.vercel.app/")
                 .allowedMethods("GET");
         System.out.println("WebConfig loaded, CORS enabled for /uploads/**");
     }

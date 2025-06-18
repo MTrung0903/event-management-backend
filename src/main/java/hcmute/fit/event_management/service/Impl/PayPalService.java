@@ -267,7 +267,7 @@ public class PayPalService {
                 checkInTicketRepository.saveAll(tickets);
                 emailService.sendThanksPaymentEmail(booking.getUser().getEmail(), booking.getEvent().getEventName(), booking.getBookingCode(), booking.getUser().getFullName(), tickets);
                 LOGGER.info("Payment successful for order: {}, captureId: {}", orderCode, captureId);
-                response.sendRedirect("https://event-management-b0t4.onrender.com/payment-result?orderCode=" + captureId);
+                response.sendRedirect("https://utevent.vercel.app/payment-result?orderCode=" + captureId);
             }
         } else {
             LOGGER.error(" yment not completed for order: {}. Status: {}", orderCode, responsePaypal.get("status"));

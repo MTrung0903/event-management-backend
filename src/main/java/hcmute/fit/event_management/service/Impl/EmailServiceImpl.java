@@ -32,7 +32,7 @@ public class EmailServiceImpl implements EmailService {
     @Override
     public void sendResetEmail(String to, String resetToken) {
         String subject = "Yêu cầu đặt lại mật khẩu";
-        String resetUrl = "https://event-management-b0t4.onrender.com/reset-password?token=" + resetToken;
+        String resetUrl = "https://utevent.vercel.app/reset-password?token=" + resetToken;
         String htmlContent = "<!DOCTYPE html>" +
                 "<html lang='vi'>" +
                 "<head>" +
@@ -111,7 +111,7 @@ public class EmailServiceImpl implements EmailService {
                 .append("<th>Price</th>")
                 .append("</tr>");
 
-        String qrUrl = "https://event-management-b0t4.onrender.com/view-tickets/" + orderCode;
+        String qrUrl = "https://utevent.vercel.app/view-tickets/" + orderCode;
         for (CheckInTicket ticket : tickets) {
             try {
                 content.append("<tr>")

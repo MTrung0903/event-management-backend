@@ -21,7 +21,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/ws")
-                .setAllowedOrigins("https://event-management-b0t4.onrender.com")
+                .setAllowedOrigins("https://utevent.vercel.app")
                 .withSockJS();
     }
 }

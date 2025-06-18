@@ -61,7 +61,7 @@ public class SecurityConfig {
         http
                 .cors(cors -> cors.configurationSource(request -> {
                     CorsConfiguration configuration = new CorsConfiguration();
-                    configuration.setAllowedOrigins(List.of("https://event-management-b0t4.onrender.com", "https://event-recommendation.onrender.com"));
+                    configuration.setAllowedOrigins(List.of("https://utevent.vercel.app", "https://event-recommendation.onrender.com"));
                     configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
                     configuration.setAllowedHeaders(List.of("*"));
                     configuration.setAllowCredentials(true);

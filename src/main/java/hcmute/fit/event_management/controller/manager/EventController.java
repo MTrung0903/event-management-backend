@@ -98,7 +98,7 @@ public class EventController {
                     followersDTO.add(userDTO);
                 }
                 // Send email to each follower only if event is public
-                String eventUrl = "https://event-management-b0t4.onrender.com/event/" + createdEvent.getEventId();
+                String eventUrl = "https://utevent.vercel.app/event/" + createdEvent.getEventId();
                 String eventLocation = createdEvent.getEventLocation().getVenueName() + ", " +
                         createdEvent.getEventLocation().getAddress() + ", " +
                         createdEvent.getEventLocation().getCity();
@@ -142,7 +142,7 @@ public class EventController {
                     }
 
                     // Gửi email thông báo cho từng người theo dõi
-                    String eventUrl = "https://event-management-b0t4.onrender.com/event/" + publishedEvent.getEventId();
+                    String eventUrl = "https://utevent.vercel.app/event/" + publishedEvent.getEventId();
                     String eventLocation = publishedEvent.getEventLocation().getVenueName() + ", " +
                             publishedEvent.getEventLocation().getAddress() + ", " +
                             publishedEvent.getEventLocation().getCity();
