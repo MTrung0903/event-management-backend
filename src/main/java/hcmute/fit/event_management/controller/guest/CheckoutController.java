@@ -65,7 +65,7 @@ public class CheckoutController {
 
     @GetMapping("/vnpay-return")
     public void vnpayReturn(HttpServletRequest request, HttpServletResponse response) throws Exception {
-        response.sendRedirect("https://event-management-fontend-030c86383874.herokuapp.com/payment-result?orderCode=" + request.getParameter("vnp_TxnRef"));
+        response.sendRedirect("http://localhost:3000/payment-result?orderCode=" + request.getParameter("vnp_TxnRef"));
     }
 
     @PostMapping("/create-momo")
@@ -81,7 +81,7 @@ public class CheckoutController {
 
     @GetMapping("/momo-return")
     public void momoReturn(@RequestParam Map<String, String> params, HttpServletResponse response) throws IOException {
-        response.sendRedirect("https://event-management-fontend-030c86383874.herokuapp.com/payment-result?orderCode=" + params.get("orderCode"));
+        response.sendRedirect("http://localhost:3000/payment-result?orderCode=" + params.get("orderCode"));
     }
 
     @GetMapping("/status/{orderCode}")

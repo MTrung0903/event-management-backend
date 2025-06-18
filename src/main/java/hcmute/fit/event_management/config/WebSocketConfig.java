@@ -21,7 +21,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/ws")
-                .setAllowedOrigins("https://event-management-fontend-030c86383874.herokuapp.com")
+                .setAllowedOrigins("http://localhost:3000")
                 .withSockJS();
     }
 }

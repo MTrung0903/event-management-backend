@@ -267,7 +267,7 @@ public class PayPalService {
                 checkInTicketRepository.saveAll(tickets);
                 emailService.sendThanksPaymentEmail(booking.getUser().getEmail(), booking.getEvent().getEventName(), booking.getBookingCode(), booking.getUser().getFullName(), tickets);
                 LOGGER.info("Payment successful for order: {}, captureId: {}", orderCode, captureId);
-                response.sendRedirect("https://event-management-fontend-030c86383874.herokuapp.com/payment-result?orderCode=" + captureId);
+                response.sendRedirect("http://localhost:3000/payment-result?orderCode=" + captureId);
             }
         } else {
             LOGGER.error(" yment not completed for order: {}. Status: {}", orderCode, responsePaypal.get("status"));

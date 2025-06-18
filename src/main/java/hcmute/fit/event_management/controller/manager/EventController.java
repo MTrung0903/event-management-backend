@@ -98,7 +98,7 @@ public class EventController {
                     followersDTO.add(userDTO);
                 }
                 // Send email to each follower only if event is public
-                String eventUrl = "https://event-management-fontend-030c86383874.herokuapp.com/event/" + createdEvent.getEventId();
+                String eventUrl = "http://localhost:3000/event/" + createdEvent.getEventId();
                 String eventLocation = createdEvent.getEventLocation().getVenueName() + ", " +
                         createdEvent.getEventLocation().getAddress() + ", " +
                         createdEvent.getEventLocation().getCity();
@@ -142,7 +142,7 @@ public class EventController {
                     }
 
                     // Gửi email thông báo cho từng người theo dõi
-                    String eventUrl = "https://event-management-fontend-030c86383874.herokuapp.com/event/" + publishedEvent.getEventId();
+                    String eventUrl = "http://localhost:3000/event/" + publishedEvent.getEventId();
                     String eventLocation = publishedEvent.getEventLocation().getVenueName() + ", " +
                             publishedEvent.getEventLocation().getAddress() + ", " +
                             publishedEvent.getEventLocation().getCity();
@@ -373,7 +373,7 @@ public class EventController {
     }
 
     private final RestTemplate restTemplate = new RestTemplate();
-    private static final String RECOMMENDATION_API_URL = "https://event-recommendation-512c4c8777df.herokuapp.com/recommendations";
+    private static final String RECOMMENDATION_API_URL = "http://localhost:5000";
 
     @PostMapping("/recommended/{userId}")
     public ResponseEntity<List<EventDTO>> getRecommendedEventsByModel(@PathVariable int userId) {
