@@ -18,6 +18,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.text.SimpleDateFormat;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -82,22 +84,17 @@ public class MomoService {
                     .lang("vi")
                     .build();
 
-            // 4. Tạo thời gian tạo và hết hạn của booking
-            Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("Etc/GMT+7"));
-            SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMddHHmmss");
-            Date createDate = formatter.parse(formatter.format(calendar.getTime()));
-            calendar.add(Calendar.HOUR, 1);
-            calendar.add(Calendar.MINUTE, 40);
-            Date expireDate = formatter.parse(formatter.format(calendar.getTime()));
-
+            ZoneId zoneId = ZoneId.of("Asia/Ho_Chi_Minh");
+            ZonedDateTime now = ZonedDateTime.now(zoneId);
+            ZonedDateTime expireDate = now.plusMinutes(100);
             // 5. Tạo Booking và lưu vào DB
             Booking booking = new Booking();
             booking.setBookingCode(orderId);
             booking.setBookingMethod("Momo");
             booking.setBookingStatus("Pending");
             booking.setTotalPrice(amount);
-            booking.setCreateDate(createDate);
-            booking.setExpireDate(expireDate);
+            booking.setCreateDate(java.util.Date.from(now.toInstant()));
+            booking.setExpireDate(java.util.Date.from(expireDate.toInstant()));
 
             Event event = eventRepository.findById(checkoutDTO.getEventId()).orElseThrow(() -> new RuntimeException("Event not found"));
             User user = userRepository.findById(checkoutDTO.getUserId()).orElseThrow(() -> new RuntimeException("User not found"));
@@ -118,11 +115,16 @@ public class MomoService {
             }
 
             // 7. Gọi API Momo
-            return momoAPI.createMomoQR(request);
+            try {
+                return momoAPI.createMomoQR(request);
+            }
+            catch (Exception e) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("MoMo API error: " + e.getMessage());
+            }
 
         } catch (Exception e) {
             log.error("Failed to create MoMo QR code: ", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Lỗi tạo QR code thanh toán.");
+            return ResponseEntity.ok("Lỗi tạo QR code thanh toán.");
         }
     }
 
