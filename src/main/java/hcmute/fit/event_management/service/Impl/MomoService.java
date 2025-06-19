@@ -200,7 +200,11 @@ public class MomoService {
         transaction.setTransactionInfo(payload.get("extraData"));
         transaction.setMessage(payload.get("message"));
         transaction.setPaymentMethod("MOMO");
-        transaction.setTransactionDate(payload.get("responseTime"));
+        ZoneId zoneId = ZoneId.of("Asia/Ho_Chi_Minh");
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
+        ZonedDateTime now = ZonedDateTime.now(zoneId);
+        String payDate = now.format(formatter);
+        transaction.setTransactionDate(payDate);
         transaction.setTransactionAmount(Double.parseDouble(payload.get("amount")));
         transaction.setTransactionStatus("SUCCESSFULLY");
         transaction.setReferenceCode(payload.get("transId"));
