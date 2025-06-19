@@ -116,10 +116,10 @@ public class MomoService {
                 details.setPrice(entry.getValue() * ticket.getPrice());
                 bookingDetailsRepository.save(details);
             }
+            ResponseEntity<?> response = momoAPI.createMomoQR(request);
+            log.info("MoMo API response: Status={}, Body={}", response.getStatusCode(), response.getBody());
+            return response;
 
-
-            return momoAPI.createMomoQR(request);
-            
 
         } catch (Exception e) {
             log.error("Failed to create MoMo QR code: {}", e.getMessage(), e);
