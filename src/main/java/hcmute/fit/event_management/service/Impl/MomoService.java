@@ -118,7 +118,21 @@ public class MomoService {
             }
             ResponseEntity<?> response = momoAPI.createMomoQR(request);
             log.info("MoMo API response: Status={}, Body={}", response.getStatusCode(), response.getBody());
-            return response;
+            if (response.getStatusCode().is2xxSuccessful() && response.getBody() instanceof Map) {
+                Map<String, Object> momoResponse = (Map<String, Object>) response.getBody();
+                String payUrl = (String) momoResponse.get("payUrl");
+                if (payUrl != null) {
+                    return ResponseEntity.ok(Collections.singletonMap("payUrl", payUrl));
+                } else {
+                    log.error("MoMo response missing payUrl: {}", momoResponse);
+                    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                            .body("Invalid MoMo response: missing payUrl");
+                }
+            } else {
+                log.error("Invalid MoMo API response: Status={}, Body={}", response.getStatusCode(), response.getBody());
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                        .body("Failed to create MoMo QR code: " + response.getBody());
+            }
 
 
         } catch (Exception e) {
