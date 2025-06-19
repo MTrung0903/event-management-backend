@@ -51,6 +51,7 @@ public class MomoService {
     private CheckInTicketRepository checkInTicketRepository;
     @Autowired
     EmailServiceImpl emailService;
+
     public ResponseEntity<?> createQRCode(CheckoutDTO checkoutDTO) {
         try {
             // 1. Khởi tạo các biến cần thiết
@@ -116,17 +117,14 @@ public class MomoService {
                 bookingDetailsRepository.save(details);
             }
 
-            // 7. Gọi API Momo
-            try {
-                return momoAPI.createMomoQR(request);
-            }
-            catch (Exception e) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("MoMo API error: " + e.getMessage());
-            }
+
+            return momoAPI.createMomoQR(request);
+            
 
         } catch (Exception e) {
-            log.error("Failed to create MoMo QR code: ", e);
-            return ResponseEntity.ok("Lỗi tạo QR code thanh toán.");
+            log.error("Failed to create MoMo QR code: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error creating MoMo QR code: " + e.getMessage());
         }
     }
 
@@ -205,7 +203,7 @@ public class MomoService {
             }
         }
         checkInTicketRepository.saveAll(tickets);
-        emailService.sendThanksPaymentEmail(booking.getUser().getEmail(), booking.getEvent().getEventName(), booking.getBookingCode(), booking.getUser().getFullName(),tickets);
+        emailService.sendThanksPaymentEmail(booking.getUser().getEmail(), booking.getEvent().getEventName(), booking.getBookingCode(), booking.getUser().getFullName(), tickets);
     }
 
     public ResponseEntity<?> refund(TransactionDTO transactionDTO) {
