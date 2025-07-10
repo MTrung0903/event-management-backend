@@ -1,6 +1,8 @@
 package hcmute.fit.event_management.repository;
 
 import hcmute.fit.event_management.entity.FavoriteEvent;
+import hcmute.fit.event_management.entity.keys.FavoriteEventId;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -10,7 +12,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface FavoriteEventRepository extends JpaRepository<FavoriteEvent, Integer> {
+public interface FavoriteEventRepository extends JpaRepository<FavoriteEvent, FavoriteEventId> {
     @Query("SELECT COUNT(f) > 0 FROM FavoriteEvent f WHERE f.user.userId = :userId AND f.event.eventID = :eventId")
     boolean existsByUserIdAndEventId(@Param("userId") int userId,@Param("eventId") int eventId);
 
