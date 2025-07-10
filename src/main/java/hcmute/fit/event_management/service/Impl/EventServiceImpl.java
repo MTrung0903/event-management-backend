@@ -464,7 +464,7 @@ public class EventServiceImpl implements IEventService {
         updateEventStatus();
         List<Event> events = eventRepository.findByEventHostContainingIgnoreCase(eventHost);
         List<EventDTO> eventDTOs = events.stream()
-                .filter(event -> !"Complete".equals(event.getEventStatus()) && !"Report".equals(event.getEventStatus()) && !"Draft".equals(event.getEventStatus()))
+                .filter(event ->  !"Report".equals(event.getEventStatus()) && !"Draft".equals(event.getEventStatus()))
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
         return sortEventsByStartTime(eventDTOs);

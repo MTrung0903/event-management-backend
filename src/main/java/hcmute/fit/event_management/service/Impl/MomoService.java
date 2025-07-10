@@ -20,10 +20,12 @@ import org.springframework.stereotype.Service;
 import java.text.SimpleDateFormat;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static hcmute.fit.event_management.util.PaymentUtil.hmacSHA256;
+import static hcmute.fit.event_management.util.PaymentUtil.*;
+
 @Service
 @Slf4j
 @AllArgsConstructor
@@ -49,6 +51,7 @@ public class MomoService {
     private CheckInTicketRepository checkInTicketRepository;
     @Autowired
     EmailServiceImpl emailService;
+
     public ResponseEntity<?> createQRCode(CheckoutDTO checkoutDTO) {
         try {
             // 1. Khởi tạo các biến cần thiết
@@ -113,18 +116,29 @@ public class MomoService {
                 details.setPrice(entry.getValue() * ticket.getPrice());
                 bookingDetailsRepository.save(details);
             }
+            ResponseEntity<?> response = momoAPI.createMomoQR(request);
+            log.info("MoMo API response: Status={}, Body={}", response.getStatusCode(), response.getBody());
+            if (response.getStatusCode().is2xxSuccessful() && response.getBody() instanceof Map) {
+                Map<String, Object> momoResponse = (Map<String, Object>) response.getBody();
+                String payUrl = (String) momoResponse.get("payUrl");
+                if (payUrl != null) {
+                    return ResponseEntity.ok(Collections.singletonMap("payUrl", payUrl));
+                } else {
+                    log.error("MoMo response missing payUrl: {}", momoResponse);
+                    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                            .body("Invalid MoMo response: missing payUrl");
+                }
+            } else {
+                log.error("Invalid MoMo API response: Status={}, Body={}", response.getStatusCode(), response.getBody());
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                        .body("Failed to create MoMo QR code: " + response.getBody());
+            }
 
-            // 7. Gọi API Momo
-            try {
-                return momoAPI.createMomoQR(request);
-            }
-            catch (Exception e) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("MoMo API error: " + e.getMessage());
-            }
 
         } catch (Exception e) {
-            log.error("Failed to create MoMo QR code: ", e);
-            return ResponseEntity.ok("Lỗi tạo QR code thanh toán.");
+            log.error("Failed to create MoMo QR code: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error creating MoMo QR code: " + e.getMessage());
         }
     }
 
@@ -186,7 +200,11 @@ public class MomoService {
         transaction.setTransactionInfo(payload.get("extraData"));
         transaction.setMessage(payload.get("message"));
         transaction.setPaymentMethod("MOMO");
-        transaction.setTransactionDate(payload.get("responseTime"));
+        ZoneId zoneId = ZoneId.of("Asia/Ho_Chi_Minh");
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
+        ZonedDateTime now = ZonedDateTime.now(zoneId);
+        String payDate = now.format(formatter);
+        transaction.setTransactionDate(payDate);
         transaction.setTransactionAmount(Double.parseDouble(payload.get("amount")));
         transaction.setTransactionStatus("SUCCESSFULLY");
         transaction.setReferenceCode(payload.get("transId"));
@@ -203,7 +221,7 @@ public class MomoService {
             }
         }
         checkInTicketRepository.saveAll(tickets);
-        emailService.sendThanksPaymentEmail(booking.getUser().getEmail(), booking.getEvent().getEventName(), booking.getBookingCode(), booking.getUser().getFullName(),tickets);
+        emailService.sendThanksPaymentEmail(booking.getUser().getEmail(), booking.getEvent().getEventName(), booking.getBookingCode(), booking.getUser().getFullName(), tickets);
     }
 
     public ResponseEntity<?> refund(TransactionDTO transactionDTO) {

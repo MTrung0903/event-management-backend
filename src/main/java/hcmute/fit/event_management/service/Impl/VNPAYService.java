@@ -1,6 +1,6 @@
 package hcmute.fit.event_management.service.Impl;
 
-import com.google.zxing.WriterException;
+
 import hcmute.fit.event_management.config.VNPAYAPI;
 import hcmute.fit.event_management.config.VNPAYConfig;
 import hcmute.fit.event_management.dto.CheckoutDTO;
@@ -10,7 +10,7 @@ import hcmute.fit.event_management.dto.VNPAYRefund;
 import hcmute.fit.event_management.entity.*;
 
 import hcmute.fit.event_management.repository.*;
-import jakarta.mail.MessagingException;
+
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,17 +22,19 @@ import org.springframework.stereotype.Service;
 import payload.Response;
 
 
-import java.io.IOException;
+
 import java.net.URLDecoder;
 import java.net.URLEncoder;
-import java.io.UnsupportedEncodingException;
+
 
 
 import java.nio.charset.StandardCharsets;
-import java.text.SimpleDateFormat;
+
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
+
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -83,9 +85,8 @@ public class VNPAYService {
     @Autowired
     private CheckInTicketRepository checkInTicketRepository;
 
-    public String createPaymentUrl(HttpServletRequest req, CheckoutDTO checkoutDTO) throws Exception  {
 
-
+    public String createPaymentUrl(HttpServletRequest req, CheckoutDTO checkoutDTO) throws Exception {
         String vnp_TxnRef = String.valueOf(System.currentTimeMillis());
         String vnp_OrderInfo = checkoutDTO.getOrderInfo();
         String encodedInfo = URLEncoder.encode(vnp_OrderInfo, StandardCharsets.UTF_8);
@@ -101,33 +102,38 @@ public class VNPAYService {
         vnp_Params.put("vnp_TmnCode", vnPayConfig.getTmnCode());
         vnp_Params.put("vnp_Amount", vnp_Amount);
         vnp_Params.put("vnp_CurrCode", "VND");
-//        if (checkoutDTO.getBankCode() != null && !checkoutDTO.getBankCode().isEmpty()) {
-//            vnp_Params.put("vnp_BankCode", checkoutDTO.getBankCode());
-//        }
         vnp_Params.put("vnp_TxnRef", vnp_TxnRef);
         vnp_Params.put("vnp_OrderInfo", encodedInfo);
         vnp_Params.put("vnp_OrderType", vnp_OrderType);
         vnp_Params.put("vnp_ReturnUrl", vnp_ReturnUrl);
         vnp_Params.put("vnp_IpAddr", vnp_IpAddr);
         vnp_Params.put("vnp_Locale", vnp_Locale);
-        Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("Asia/Ho_Chi_Minh"));
-        SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMddHHmmss");
-        String vnpCreateDate = formatter.format(calendar.getTime());
-        vnp_Params.put("vnp_CreateDate", vnpCreateDate);
-        calendar.add(Calendar.MINUTE, 15);
-        String vnp_ExpireDate = formatter.format(calendar.getTime());
+
+        // Sử dụng ZonedDateTime với múi giờ Asia/Ho_Chi_Minh
+        ZoneId zoneId = ZoneId.of("Asia/Ho_Chi_Minh");
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
+        ZonedDateTime now = ZonedDateTime.now(zoneId);
+        String vnp_CreateDate = now.format(formatter);
+        vnp_Params.put("vnp_CreateDate", vnp_CreateDate);
+
+        // Tính thời gian hết hạn (15 phút sau)
+        ZonedDateTime expireDate = now.plusMinutes(15);
+        String vnp_ExpireDate = expireDate.format(formatter);
         vnp_Params.put("vnp_ExpireDate", vnp_ExpireDate);
+
         String queryUrl = getPaymentURL(vnp_Params, true);
         String hashData = getPaymentURL(vnp_Params, false);
         String vnpSecureHash = hmacSHA512(vnPayConfig.getSecretKey(), hashData);
         queryUrl += "&vnp_SecureHash=" + vnpSecureHash;
+
         // Lưu vào booking với status pending
         try {
             Booking booking = new Booking();
             Event event = eventRepository.findById(checkoutDTO.getEventId()).orElse(new Event());
             User user = userRepository.findById(checkoutDTO.getUserId()).orElse(new User());
-            booking.setCreateDate(formatter.parse(vnpCreateDate));
-            booking.setExpireDate(formatter.parse(vnp_ExpireDate));
+            // Chuyển đổi ZonedDateTime sang java.util.Date để lưu vào entity
+            booking.setCreateDate(java.util.Date.from(now.toInstant()));
+            booking.setExpireDate(java.util.Date.from(expireDate.toInstant()));
             booking.setBookingCode(vnp_TxnRef);
             booking.setBookingMethod("VNPAY");
             booking.setBookingStatus("Pending");
@@ -144,9 +150,8 @@ public class VNPAYService {
                 bkdt.setPrice(ticket.getPrice() * checkoutDTO.getTickets().get(ticketId));
                 bookingDetailsRepository.save(bkdt);
             }
-        }
-        catch (Exception e) {
-            System.out.println(">>>>>>>>>>>>>>"+e);
+        } catch (Exception e) {
+            System.out.println(">>>>>>>>>>>>>>" + e);
         }
         return vnPayConfig.getPayUrl() + "?" + queryUrl;
     }

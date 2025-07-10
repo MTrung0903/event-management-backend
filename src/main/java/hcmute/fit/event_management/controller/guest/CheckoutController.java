@@ -81,7 +81,7 @@ public class CheckoutController {
 
     @GetMapping("/momo-return")
     public void momoReturn(@RequestParam Map<String, String> params, HttpServletResponse response) throws IOException {
-        response.sendRedirect("http://localhost:3000/payment-result?orderCode=" + params.get("orderCode"));
+        response.sendRedirect("http://localhost:3000/payment-result?orderCode=" + params.get("transId"));
     }
 
     @GetMapping("/status/{orderCode}")

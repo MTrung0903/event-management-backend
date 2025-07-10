@@ -373,7 +373,7 @@ public class EventController {
     }
 
     private final RestTemplate restTemplate = new RestTemplate();
-    private static final String RECOMMENDATION_API_URL = "http://localhost:5000";
+    private static final String RECOMMENDATION_API_URL = "http://localhost:5000/recommendations";
 
     @PostMapping("/recommended/{userId}")
     public ResponseEntity<List<EventDTO>> getRecommendedEventsByModel(@PathVariable int userId) {
